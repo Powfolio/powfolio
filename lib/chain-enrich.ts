@@ -8,7 +8,7 @@ import {
   toNumber,
 } from "@/lib/onchain";
 import { kiiLcds, kiiRpcs, loadBankBalances, loadCosmosTxActivity, nativePriceUsd, rpcCall } from "@/lib/chain-rpc";
-import { applyActivity, countNfts, sumNativeFlow } from "@/lib/onchain-fast";
+import { applyActivity, classifyTx, countNfts, mergeActivity, sumNativeFlow, tallyActivity } from "@/lib/onchain-fast";
 
 export function normalizeExtraChains(extra: CustomChainInput[]): CustomChainInput[] {
   return extra.map((c) => {
@@ -86,6 +86,9 @@ export async function enrichFootprint(
                 to?: { hash?: string } | null;
                 from?: { hash?: string } | null;
                 fee?: { value?: string };
+                method?: string | null;
+                created_contract?: { hash?: string } | null;
+                transaction_types?: string[] | null;
               }>(`${host}/api/v2/addresses/${data.address}/transactions`, 3)
             : Promise.resolve([]),
         ]);
@@ -131,11 +134,12 @@ export async function enrichFootprint(
             if (chain.volumeUsd <= 0 && flow.volumeNative > 0) chain.volumeUsd = flow.volumeNative * rate;
             if (chain.feesUsd <= 0 && flow.feesNative > 0) chain.feesUsd = flow.feesNative * rate;
           }
-          applyActivity(
+          mergeActivity(
             chain,
-            txs.map((tx) => tx.timestamp || "")
+            tallyActivity(txs.map((tx) => ({ timestamp: tx.timestamp, kind: classifyTx(tx) })))
           );
-          const deployed = txs.filter((tx) => !tx.to?.hash && (tx.from?.hash || "").toLowerCase() === data.address).length;
+          chain.volumeSampleSize = Math.max(chain.volumeSampleSize || 0, txs.length);
+          const deployed = txs.filter((tx) => (!!tx.created_contract || !tx.to?.hash) && (tx.from?.hash || "").toLowerCase() === data.address).length;
           chain.contractsDeployed = Math.max(chain.contractsDeployed, deployed);
           const contracts = new Set(
             txs.map((tx) => (tx.to?.hash || "").toLowerCase()).filter((h) => h && h !== data.address)
