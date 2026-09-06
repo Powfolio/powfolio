@@ -56,17 +56,13 @@ export async function loadChainDeep(
   extra: CustomChainInput[] = []
 ): Promise<OnchainChain> {
   const host = hostFor(chain, extra);
-  const next = {
+  const next: OnchainChain = {
     ...chain,
+    activityCounts: { ...(chain.activityCounts || {}) },
+    activityKinds: { ...(chain.activityKinds || {}) },
     activityMethods: { ...(chain.activityMethods || {}) },
     activityDays: [...(chain.activityDays || [])],
-  } as OnchainChain & {
-    activityCounts?: Record<string, number>;
-    activityKinds?: Record<string, Record<string, number>>;
-    volumeSampleSize?: number;
-  };
-  next.activityCounts = { ...(((chain as typeof next).activityCounts) || {}) };
-  next.activityKinds = { ...(((chain as typeof next).activityKinds) || {}) };
+  } as OnchainChain;
 
   if (!host) return next;
 
@@ -121,12 +117,21 @@ export async function loadChainDeep(
 
   next.nftMints = Math.max(next.nftMints || 0, countNfts(transfers, nftItems, address));
 
-  const tallied = tallyActivity([
-    ...txs.map((tx) => ({ timestamp: tx.timestamp, kind: classifyTx(tx) })),
-    ...transfers.map((tr) => ({ timestamp: tr.timestamp, kind: classifyTransfer(tr) })),
-  ]);
-  mergeActivity(next, tallied);
-  applyActivity(next, tallied.stamps);
+  const talliedTxs = tallyActivity(txs.map((tx) => ({ timestamp: tx.timestamp, kind: classifyTx(tx) })));
+  const talliedTransfers = tallyActivity(transfers.map((tr) => ({ timestamp: tr.timestamp, kind: classifyTransfer(tr) })));
+  mergeActivity(next, talliedTxs);
+  for (const [day, kindMap] of Object.entries(talliedTransfers.kinds)) {
+    if (!next.activityKinds) next.activityKinds = {};
+    if (!next.activityKinds[day]) next.activityKinds[day] = {};
+    for (const [kind, n] of Object.entries(kindMap)) {
+      next.activityKinds[day][kind] = Math.max(next.activityKinds[day][kind] || 0, n);
+    }
+  }
+  for (const [day, labels] of Object.entries(talliedTransfers.methods)) {
+    if (!next.activityMethods) next.activityMethods = {};
+    next.activityMethods[day] = [...new Set([...(next.activityMethods[day] || []), ...labels])];
+  }
+  applyActivity(next, [...talliedTxs.stamps, ...talliedTransfers.stamps]);
 
   next.interacted = next.txCount > 0 || next.transferCount > 0 || next.hasHoldings || next.imported;
   return next;
