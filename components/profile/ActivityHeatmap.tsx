@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 function monthsBack(count: number) {
   const now = new Date();
@@ -23,7 +23,7 @@ function daysInMonth(year: number, month: number) {
 }
 
 function tone(n: number, empty: boolean) {
-  if (empty) return "bg-transparent border-transparent text-transparent pointer-events-none";
+  if (empty) return "bg-transparent border-transparent text-transparent";
   if (n === 0) return "bg-zinc-800/80 border-white/5 text-zinc-500";
   if (n === 1) return "bg-emerald-500/25 border-emerald-400/30 text-emerald-100 shadow-[0_0_10px_rgba(16,185,129,0.15)]";
   if (n < 4) return "bg-emerald-400/55 border-emerald-300/40 text-emerald-50 shadow-[0_0_12px_rgba(16,185,129,0.28)]";
@@ -58,13 +58,18 @@ export default function ActivityHeatmap({
 }) {
   const counts = useMemo(() => {
     const map = new Map<string, number>();
-    if (countMap && Object.keys(countMap).length) {
-      for (const [key, n] of Object.entries(countMap)) map.set(key.slice(0, 10), n);
+    const hasCounts = countMap && Object.keys(countMap).length > 0;
+    if (hasCounts) {
+      for (const [key, n] of Object.entries(countMap)) {
+        const day = key.slice(0, 10);
+        map.set(day, Math.max(map.get(day) || 0, n));
+      }
       return map;
     }
     for (const day of days) {
       const key = day.slice(0, 10);
-      map.set(key, (map.get(key) || 0) + 1);
+      if (!key) continue;
+      if (!map.has(key)) map.set(key, 1);
     }
     return map;
   }, [days, countMap]);
@@ -81,11 +86,16 @@ export default function ActivityHeatmap({
       return `${slide.key}-${day}`;
     }),
   ];
+
+  useEffect(() => {
+    setOpen(null);
+  }, [days, countMap, chainName]);
+
   const monthActive = useMemo(() => {
     let n = 0;
     let hits = 0;
     for (const [key, count] of counts) {
-      if (key.startsWith(slide.key)) {
+      if (key.startsWith(slide.key) && count > 0) {
         n += 1;
         hits += count;
       }
@@ -159,21 +169,24 @@ export default function ActivityHeatmap({
           {cells.map((key, i) => {
             const n = key ? counts.get(key) || 0 : 0;
             const on = !!key && n > 0;
-            const isOpen = !!key && key === open;
+            const isOpen = Boolean(key) && key === open;
             const dayNum = key ? Number(key.slice(-2)) : 0;
+            if (!key) {
+              return <div key={`empty-${i}`} className="mx-auto h-7 w-7 sm:h-8 sm:w-8" aria-hidden />;
+            }
             return (
               <button
-                key={key || `empty-${i}`}
+                key={key}
                 type="button"
-                disabled={!key}
-                onClick={() => key && setOpen(open === key ? null : key)}
-                className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-semibold leading-none sm:h-8 sm:w-8 sm:text-[11px] ${tone(n, !key)} ${
+                onClick={() => setOpen(open === key ? null : key)}
+                className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-semibold leading-none outline-none sm:h-8 sm:w-8 sm:text-[11px] ${tone(n, false)} ${
                   on ? "cursor-pointer hover:scale-110" : "cursor-default"
                 } ${isOpen ? "ring-2 ring-emerald-300 ring-offset-2 ring-offset-zinc-950" : ""}`}
-                aria-label={key ? `Day ${dayNum}, ${n} interaction${n === 1 ? "" : "s"}` : undefined}
-                title={key ? `${dayNum} · ${n}` : undefined}
+                aria-label={`Day ${dayNum}, ${n} interaction${n === 1 ? "" : "s"}`}
+                aria-pressed={isOpen}
+                title={`${dayNum} · ${n}`}
               >
-                {key ? String(dayNum) : ""}
+                {String(dayNum)}
               </button>
             );
           })}
