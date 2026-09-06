@@ -8,7 +8,7 @@ import {
   toNumber,
 } from "@/lib/onchain";
 import { kiiLcds, kiiRpcs, loadBankBalances, loadCosmosTxActivity, nativePriceUsd, rpcCall } from "@/lib/chain-rpc";
-import { applyActivity, countNfts } from "@/lib/onchain-fast";
+import { applyActivity, countNfts, sumNativeFlow } from "@/lib/onchain-fast";
 
 export function normalizeExtraChains(extra: CustomChainInput[]): CustomChainInput[] {
   return extra.map((c) => {
@@ -51,8 +51,6 @@ export async function enrichFootprint(
     data.chains.map(async (chain) => {
       try {
         const isKii = /kii/i.test(chain.name) || chain.id === "kiichain";
-        const rate = await nativePriceUsd(chain.nativeSymbol);
-        let qty = Number(chain.balance) || 0;
         const extraMatch = extra.find(
           (c) =>
             (c.id || "").toLowerCase() === chain.id ||
@@ -60,38 +58,62 @@ export async function enrichFootprint(
         );
         const host = explorerHost(chain, extra);
         const rpcUrl = extraMatch?.rpc || (isKii ? kiiRpcs()[0] : undefined);
+        let qty = Number(chain.balance) || 0;
 
-        if (qty <= 0 && rpcUrl && isAddress(data.address)) {
-          const [balanceHex, nonceHex] = await Promise.all([
-            rpcCall(isKii ? kiiRpcs() : rpcUrl, "eth_getBalance", [data.address, "latest"]),
-            rpcCall(isKii ? kiiRpcs() : rpcUrl, "eth_getTransactionCount", [data.address, "latest"]),
-          ]);
-          if (typeof balanceHex === "string") {
-            try {
-              qty = Math.max(qty, toNumber(BigInt(balanceHex).toString(), 18));
-            } catch {
-              /* ignore */
-            }
+        const needVolume = chain.volumeUsd <= 0 || chain.feesUsd <= 0;
+        const needBalance = qty <= 0 && !!rpcUrl && isAddress(data.address);
+
+        const [rate, balancePair, bank, activity, txs] = await Promise.all([
+          nativePriceUsd(chain.nativeSymbol),
+          needBalance
+            ? Promise.all([
+                rpcCall(isKii ? kiiRpcs() : rpcUrl!, "eth_getBalance", [data.address, "latest"]),
+                rpcCall(isKii ? kiiRpcs() : rpcUrl!, "eth_getTransactionCount", [data.address, "latest"]),
+              ])
+            : Promise.resolve([null, null] as const),
+          isKii ? loadBankBalances(kiiLcds(), data.address, "kii") : Promise.resolve([]),
+          isKii ? loadCosmosTxActivity(kiiLcds(), data.address, "kii") : Promise.resolve({
+            txCount: 0,
+            volumeNative: 0,
+            firstTx: null as string | null,
+            lastTx: null as string | null,
+            days: [] as string[],
+          }),
+          host && needVolume
+            ? getPagedItems<{
+                value?: string;
+                timestamp?: string;
+                to?: { hash?: string } | null;
+                from?: { hash?: string } | null;
+                fee?: { value?: string };
+              }>(`${host}/api/v2/addresses/${data.address}/transactions`, 3)
+            : Promise.resolve([]),
+        ]);
+
+        const [balanceHex, nonceHex] = balancePair;
+        if (typeof balanceHex === "string") {
+          try {
+            qty = Math.max(qty, toNumber(BigInt(balanceHex).toString(), 18));
+          } catch {
+            /* ignore */
           }
-          if (typeof nonceHex === "string") {
-            try {
-              chain.txCount = Math.max(chain.txCount, Number(BigInt(nonceHex)));
-            } catch {
-              /* ignore */
-            }
+        }
+        if (typeof nonceHex === "string") {
+          try {
+            chain.txCount = Math.max(chain.txCount, Number(BigInt(nonceHex)));
+          } catch {
+            /* ignore */
           }
         }
 
-        if (isKii) {
-          const bank = await loadBankBalances(kiiLcds(), data.address, "kii");
-          for (const bal of bank) {
-            const denom = (bal.denom || "").toLowerCase();
-            const amount = bal.amount || "0";
-            if (denom === "akii") qty = Math.max(qty, toNumber(amount, 18));
-            else if (denom === "ukii") qty = Math.max(qty, toNumber(amount, 6));
-            else if (denom === "kii") qty = Math.max(qty, toNumber(amount, 18));
-          }
-          const activity = await loadCosmosTxActivity(kiiLcds(), data.address, "kii");
+        for (const bal of bank) {
+          const denom = (bal.denom || "").toLowerCase();
+          const amount = bal.amount || "0";
+          if (denom === "akii") qty = Math.max(qty, toNumber(amount, 18));
+          else if (denom === "ukii") qty = Math.max(qty, toNumber(amount, 6));
+          else if (denom === "kii") qty = Math.max(qty, toNumber(amount, 18));
+        }
+        if (activity.txCount) {
           chain.txCount = Math.max(chain.txCount, activity.txCount);
           chain.transferCount = Math.max(chain.transferCount, activity.txCount);
           if (activity.firstTx) chain.firstTx = chain.firstTx && chain.firstTx < activity.firstTx ? chain.firstTx : activity.firstTx;
@@ -102,74 +124,46 @@ export async function enrichFootprint(
           }
         }
 
-        const needsExplorer =
-          !!host &&
-          (
-            (qty <= 0 && (isKii || chain.imported || chain.txCount > 0)) ||
-            (chain.txCount > 0 && !chain.firstTx) ||
-            (chain.transferCount > 0 && chain.nftMints === 0) ||
-            (chain.activeDays > 0 && (chain.activeWeeks === 0 || chain.activeMonths === 0 || !chain.walletAgeDays))
+        if (txs.length) {
+          chain.txCount = Math.max(chain.txCount, txs.length);
+          const flow = sumNativeFlow(txs);
+          if (rate && rate > 0) {
+            if (chain.volumeUsd <= 0 && flow.volumeNative > 0) chain.volumeUsd = flow.volumeNative * rate;
+            if (chain.feesUsd <= 0 && flow.feesNative > 0) chain.feesUsd = flow.feesNative * rate;
+          }
+          applyActivity(
+            chain,
+            txs.map((tx) => tx.timestamp || "")
           );
+          const deployed = txs.filter((tx) => !tx.to?.hash && (tx.from?.hash || "").toLowerCase() === data.address).length;
+          chain.contractsDeployed = Math.max(chain.contractsDeployed, deployed);
+          const contracts = new Set(
+            txs.map((tx) => (tx.to?.hash || "").toLowerCase()).filter((h) => h && h !== data.address)
+          );
+          chain.uniqueContracts = Math.max(chain.uniqueContracts, contracts.size);
+        }
 
-        if (needsExplorer) {
-          const txs = await getPagedItems<{
-            value?: string;
-            timestamp?: string;
-            to?: { hash?: string } | null;
-            from?: { hash?: string } | null;
-            fee?: { value?: string };
-          }>(`${host}/api/v2/addresses/${data.address}/transactions`, 3);
-          if (txs.length) {
-            chain.txCount = Math.max(chain.txCount, txs.length);
-            if (rate) {
-              if (chain.volumeUsd === 0) {
-                chain.volumeUsd = txs.reduce((sum, tx) => sum + toNumber(tx.value || "0", 18) * rate, 0);
-              }
-              if (chain.feesUsd === 0) {
-                chain.feesUsd = txs.reduce((sum, tx) => sum + toNumber(tx.fee?.value || "0", 18) * rate, 0);
-              }
-            }
-            applyActivity(
-              chain,
-              txs.map((tx) => tx.timestamp || "")
-            );
-            const deployed = txs.filter((tx) => !tx.to?.hash && (tx.from?.hash || "").toLowerCase() === data.address).length;
-            chain.contractsDeployed = Math.max(chain.contractsDeployed, deployed);
-          }
-
-          if (chain.nftMints === 0 || chain.tokenCount === 0) {
-            const [nftJson, transfers] = await Promise.all([
-              getJson(`${host}/api/v2/addresses/${data.address}/nft`),
-              getPagedItems<{
-                timestamp?: string;
-                type?: string;
-                token?: { type?: string; address_hash?: string };
-                from?: { hash?: string } | null;
-                to?: { hash?: string } | null;
-                token_id?: string;
-                total?: { token_id?: string };
-              }>(`${host}/api/v2/addresses/${data.address}/token-transfers`, 2),
-            ]);
-            const nftItems = Array.isArray(nftJson)
-              ? nftJson
-              : ((nftJson as { items?: unknown[] } | null)?.items || []);
-            const nftCount = countNfts(transfers, nftItems as never, data.address);
-            chain.nftMints = Math.max(chain.nftMints, nftCount);
-            applyActivity(
-              chain,
-              transfers.map((tr) => tr.timestamp || "")
-            );
-            if (Array.isArray(nftJson) === false) {
-              const tokens = await getJson(`${host}/api/v2/addresses/${data.address}/token-balances`);
-              if (Array.isArray(tokens) && tokens.length) {
-                chain.tokenCount = Math.max(chain.tokenCount, tokens.filter((t) => {
-                  const type = (((t as { token?: { type?: string } }).token?.type) || "").toUpperCase();
-                  return !type || type === "ERC-20";
-                }).length);
-                chain.uniqueTokens = Math.max(chain.uniqueTokens, chain.tokenCount);
-              }
-            }
-          }
+        if (host && chain.nftMints === 0) {
+          const [nftJson, transfers] = await Promise.all([
+            getJson(`${host}/api/v2/addresses/${data.address}/nft`, 2500),
+            getPagedItems<{
+              timestamp?: string;
+              type?: string;
+              token?: { type?: string; address_hash?: string };
+              from?: { hash?: string } | null;
+              to?: { hash?: string } | null;
+              token_id?: string;
+              total?: { token_id?: string };
+            }>(`${host}/api/v2/addresses/${data.address}/token-transfers`, 2),
+          ]);
+          const nftItems = Array.isArray(nftJson)
+            ? nftJson
+            : ((nftJson as { items?: unknown[] } | null)?.items || []);
+          chain.nftMints = Math.max(chain.nftMints, countNfts(transfers, nftItems as never, data.address));
+          applyActivity(
+            chain,
+            transfers.map((tr) => tr.timestamp || "")
+          );
         }
 
         chain.balance = qty > 0 ? String(qty) : chain.balance;
