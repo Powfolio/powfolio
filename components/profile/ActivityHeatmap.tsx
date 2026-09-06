@@ -128,7 +128,7 @@ export default function ActivityHeatmap({
                 type="button"
                 disabled={!key}
                 onClick={() => key && setOpen(open === key ? null : key)}
-                className={`heat-dot mx-auto ${tone(n, !key)} ${on ? "cursor-pointer hover:scale-110" : "cursor-default"} ${
+                className={`mx-auto h-5 w-5 rounded-full border transition-transform duration-150 sm:h-6 sm:w-6 ${tone(n, !key)} ${on ? "cursor-pointer hover:scale-110" : "cursor-default"} ${
                   isOpen ? "ring-2 ring-emerald-300 ring-offset-2 ring-offset-zinc-950" : ""
                 }`}
                 aria-label={key ? `${key}, ${n} interaction${n === 1 ? "" : "s"}` : undefined}
@@ -142,10 +142,10 @@ export default function ActivityHeatmap({
       <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-foreground-subtle">
         <div className="flex items-center gap-1.5">
           <span>Less</span>
-          <span className="heat-dot-legend bg-zinc-800/80 border-white/5" />
-          <span className="heat-dot-legend bg-emerald-500/25 border-emerald-400/30" />
-          <span className="heat-dot-legend bg-emerald-400/55 border-emerald-300/40" />
-          <span className="heat-dot-legend bg-emerald-400 border-emerald-200/50" />
+          <span className="h-2.5 w-2.5 rounded-full border bg-zinc-800/80 border-white/5" />
+          <span className="h-2.5 w-2.5 rounded-full border bg-emerald-500/25 border-emerald-400/30" />
+          <span className="h-2.5 w-2.5 rounded-full border bg-emerald-400/55 border-emerald-300/40" />
+          <span className="h-2.5 w-2.5 rounded-full border bg-emerald-400 border-emerald-200/50" />
           <span>More</span>
         </div>
         <p>Tap a day for detail</p>
