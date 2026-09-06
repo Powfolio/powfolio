@@ -22,29 +22,61 @@ function daysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
 }
 
+function ordinal(n: number) {
+  const v = n % 100;
+  if (v >= 11 && v <= 13) return `${n}th`;
+  if (v % 10 === 1) return `${n}st`;
+  if (v % 10 === 2) return `${n}nd`;
+  if (v % 10 === 3) return `${n}rd`;
+  return `${n}th`;
+}
+
 function tone(n: number, empty: boolean) {
-  if (empty) return "bg-transparent border-transparent pointer-events-none";
-  if (n === 0) return "bg-zinc-800/80 border-white/5";
-  if (n === 1) return "bg-emerald-500/25 border-emerald-400/30 shadow-[0_0_10px_rgba(16,185,129,0.15)]";
-  if (n < 4) return "bg-emerald-400/55 border-emerald-300/40 shadow-[0_0_12px_rgba(16,185,129,0.28)]";
-  return "bg-emerald-400 border-emerald-200/50 shadow-[0_0_14px_rgba(16,185,129,0.45)]";
+  if (empty) return "bg-transparent border-transparent text-transparent pointer-events-none";
+  if (n === 0) return "bg-zinc-800/80 border-white/5 text-zinc-500";
+  if (n === 1) return "bg-emerald-500/25 border-emerald-400/30 text-emerald-100 shadow-[0_0_10px_rgba(16,185,129,0.15)]";
+  if (n < 4) return "bg-emerald-400/55 border-emerald-300/40 text-emerald-50 shadow-[0_0_12px_rgba(16,185,129,0.28)]";
+  return "bg-emerald-400 border-emerald-200/50 text-zinc-950 shadow-[0_0_14px_rgba(16,185,129,0.45)]";
+}
+
+function kindLine(kinds: Record<string, number> | undefined) {
+  if (!kinds) return "";
+  const parts = Object.entries(kinds)
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, n]) => {
+      const plural = n === 1 || /s$/i.test(label) ? label : `${label}s`;
+      return `${n} ${plural.toLowerCase()}`;
+    });
+  return parts.join(", ");
 }
 
 export default function ActivityHeatmap({
   days,
   methods = {},
+  counts: countMap,
+  kinds = {},
+  chainName,
+  loading = false,
 }: {
   days: string[];
   methods?: Record<string, string[]>;
+  counts?: Record<string, number>;
+  kinds?: Record<string, Record<string, number>>;
+  chainName?: string;
+  loading?: boolean;
 }) {
   const counts = useMemo(() => {
     const map = new Map<string, number>();
+    if (countMap && Object.keys(countMap).length) {
+      for (const [key, n] of Object.entries(countMap)) map.set(key.slice(0, 10), n);
+      return map;
+    }
     for (const day of days) {
       const key = day.slice(0, 10);
       map.set(key, (map.get(key) || 0) + 1);
     }
     return map;
-  }, [days]);
+  }, [days, countMap]);
   const slides = useMemo(() => monthsBack(36), []);
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
@@ -74,7 +106,8 @@ export default function ActivityHeatmap({
     ? {
         date: open,
         count: counts.get(open) || 0,
-        methods: methods[open] || [],
+        methods: methods[open] || Object.keys(kinds[open] || {}),
+        kinds: kinds[open] || {},
       }
     : null;
 
@@ -85,8 +118,11 @@ export default function ActivityHeatmap({
           <p className="section-heading mb-0">Activity heatmap</p>
           <p className="mt-1 text-sm font-medium text-foreground">{slide.label}</p>
           <p className="mt-0.5 text-[11px] text-foreground-subtle">
-            {monthActive.days} active day{monthActive.days === 1 ? "" : "s"}
-            {monthActive.hits ? ` · ${monthActive.hits} interaction${monthActive.hits === 1 ? "" : "s"}` : ""}
+            {loading
+              ? "Reading daily interactions…"
+              : `${monthActive.days} active day${monthActive.days === 1 ? "" : "s"}${
+                  monthActive.hits ? ` · ${monthActive.hits} interaction${monthActive.hits === 1 ? "" : "s"}` : ""
+                }`}
           </p>
         </div>
         <div className="flex items-center gap-1 rounded-full border border-border bg-surface-elevated p-0.5">
@@ -111,8 +147,13 @@ export default function ActivityHeatmap({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border/70 bg-zinc-950/40 px-2.5 py-3 sm:px-3">
-        <div className="grid grid-cols-7 gap-y-2 gap-x-1.5">
+      <div className="relative rounded-2xl border border-border/70 bg-zinc-950/40 px-2 py-3 sm:px-3">
+        {loading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-zinc-950/50">
+            <span className="stat-spin" aria-label="Loading heatmap" />
+          </div>
+        )}
+        <div className="grid grid-cols-7 gap-y-2 gap-x-1">
           {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
             <div key={`${d}-${i}`} className="pb-1 text-center text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">
               {d}
@@ -122,18 +163,21 @@ export default function ActivityHeatmap({
             const n = key ? counts.get(key) || 0 : 0;
             const on = !!key && n > 0;
             const isOpen = key === open;
+            const dayNum = key ? Number(key.slice(-2)) : 0;
             return (
               <button
                 key={key || `empty-${i}`}
                 type="button"
                 disabled={!key}
                 onClick={() => key && setOpen(open === key ? null : key)}
-                className={`mx-auto h-5 w-5 rounded-full border transition-transform duration-150 sm:h-6 sm:w-6 ${tone(n, !key)} ${on ? "cursor-pointer hover:scale-110" : "cursor-default"} ${
-                  isOpen ? "ring-2 ring-emerald-300 ring-offset-2 ring-offset-zinc-950" : ""
-                }`}
-                aria-label={key ? `${key}, ${n} interaction${n === 1 ? "" : "s"}` : undefined}
-                title={key ? `${key} · ${n}` : undefined}
-              />
+                className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full border text-[8px] font-semibold leading-none sm:h-8 sm:w-8 sm:text-[9px] ${tone(n, !key)} ${
+                  on ? "cursor-pointer hover:scale-110" : "cursor-default"
+                } ${isOpen ? "ring-2 ring-emerald-300 ring-offset-2 ring-offset-zinc-950" : ""}`}
+                aria-label={key ? `${ordinal(dayNum)}, ${n} interaction${n === 1 ? "" : "s"}` : undefined}
+                title={key ? `${ordinal(dayNum)} · ${n}` : undefined}
+              >
+                {key ? ordinal(dayNum) : ""}
+              </button>
             );
           })}
         </div>
@@ -154,27 +198,29 @@ export default function ActivityHeatmap({
       {selected && (
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3.5 py-3">
           <p className="text-sm font-semibold">
-            {new Date(`${selected.date}T12:00:00`).toLocaleDateString(undefined, {
-              weekday: "long",
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
+            {(() => {
+              const d = new Date(`${selected.date}T12:00:00`);
+              const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+              const month = d.toLocaleDateString(undefined, { month: "short" });
+              return `${weekday}, ${ordinal(d.getDate())} ${month} ${d.getFullYear()}`;
+            })()}
           </p>
           <p className="mt-1 text-xs text-foreground-muted">
             {selected.count === 0
               ? "No onchain activity this day."
-              : `${selected.count} interaction${selected.count === 1 ? "" : "s"} on this chain.`}
+              : `${selected.count} interaction${selected.count === 1 ? "" : "s"} on ${chainName || "this chain"}.`}
           </p>
-          {selected.methods.length > 0 && (
+          {kindLine(selected.kinds) ? (
+            <p className="mt-1 text-xs text-foreground-muted">{kindLine(selected.kinds)}</p>
+          ) : selected.methods.length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-1">
-              {selected.methods.slice(0, 6).map((m) => (
+              {selected.methods.slice(0, 8).map((m) => (
                 <span key={m} className="rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] text-foreground-muted">
                   {m}
                 </span>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </div>
