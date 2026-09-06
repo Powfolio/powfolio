@@ -147,17 +147,31 @@ export async function readErc20(
   };
 }
 
+const KNOWN_NATIVE: Record<string, { chain: string; token: string }> = {
+  KII: { chain: "bsc", token: "0xeec6574eabba52bac3f0277f2cd5ac7e67197886" },
+};
+
 export async function nativePriceUsd(symbol: string): Promise<number | null> {
-  const query = symbol === "KII" ? "KII" : symbol;
-  const json = (await getJson(`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(query)}`)) as {
-    pairs?: Array<{ priceUsd?: string; baseToken?: { symbol?: string } }>;
+  const upper = (symbol || "").toUpperCase();
+  const known = KNOWN_NATIVE[upper];
+  if (known) {
+    const direct = (await getJson(`https://api.dexscreener.com/tokens/v1/${known.chain}/${known.token}`, 2200)) as Array<{ priceUsd?: string }> | null;
+    const priced = Array.isArray(direct) ? direct.find((p) => Number(p.priceUsd) > 0) : null;
+    const n = priced ? Number(priced.priceUsd) : NaN;
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  const query = upper === "KII" ? "Kiichain" : symbol;
+  const json = (await getJson(`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(query)}`, 2200)) as {
+    pairs?: Array<{ priceUsd?: string; baseToken?: { symbol?: string; name?: string } }>;
   } | null;
   const pairs = json?.pairs || [];
   const hit =
-    pairs.find((p) => (p.baseToken?.symbol || "").toUpperCase() === symbol.toUpperCase() && Number(p.priceUsd) > 0) ||
+    pairs.find((p) => (p.baseToken?.symbol || "").toUpperCase() === upper && /kii/i.test(p.baseToken?.name || "") && Number(p.priceUsd) > 0) ||
+    pairs.find((p) => (p.baseToken?.symbol || "").toUpperCase() === upper && Number(p.priceUsd) > 0) ||
     pairs.find((p) => Number(p.priceUsd) > 0);
   const price = hit ? Number(hit.priceUsd) : NaN;
-  return Number.isFinite(price) && price > 0 ? price : null;
+  if (Number.isFinite(price) && price > 0) return price;
+  return null;
 }
 
 type BankBalance = { denom?: string; amount?: string };
