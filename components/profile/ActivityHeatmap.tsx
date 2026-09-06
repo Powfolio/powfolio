@@ -121,7 +121,10 @@ export default function ActivityHeatmap({
             type="button"
             className="flex h-8 w-8 items-center justify-center rounded-full text-foreground-muted transition-colors hover:bg-surface-hover hover:text-foreground disabled:opacity-30"
             disabled={idx >= slides.length - 1}
-            onClick={() => setIdx((v) => Math.min(slides.length - 1, v + 1))}
+            onClick={() => {
+              setOpen(null);
+              setIdx((v) => Math.min(slides.length - 1, v + 1));
+            }}
             aria-label="Previous month"
           >
             ‹
@@ -130,7 +133,10 @@ export default function ActivityHeatmap({
             type="button"
             className="flex h-8 w-8 items-center justify-center rounded-full text-foreground-muted transition-colors hover:bg-surface-hover hover:text-foreground disabled:opacity-30"
             disabled={idx <= 0}
-            onClick={() => setIdx((v) => Math.max(0, v - 1))}
+            onClick={() => {
+              setOpen(null);
+              setIdx((v) => Math.max(0, v - 1));
+            }}
             aria-label="Next month"
           >
             ›
@@ -153,7 +159,7 @@ export default function ActivityHeatmap({
           {cells.map((key, i) => {
             const n = key ? counts.get(key) || 0 : 0;
             const on = !!key && n > 0;
-            const isOpen = key === open;
+            const isOpen = !!key && key === open;
             const dayNum = key ? Number(key.slice(-2)) : 0;
             return (
               <button
