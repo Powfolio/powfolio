@@ -8,15 +8,8 @@ import {
 } from "@/lib/onchain";
 import { nativePriceUsd } from "@/lib/chain-rpc";
 import { normalizeExtraChains } from "@/lib/chain-enrich";
-import {
-  applyActivity,
-  classifyTransfer,
-  classifyTx,
-  countNfts,
-  mergeActivity,
-  sumNativeFlow,
-  tallyActivity,
-} from "@/lib/onchain-fast";
+import { applyActivity, countNfts, sumNativeFlow } from "@/lib/onchain-fast";
+import { classifyTransfer, classifyTx, mergeActivity, tallyActivity } from "@/lib/onchain-activity";
 
 const DEEP_PAGES = 10;
 
@@ -63,13 +56,17 @@ export async function loadChainDeep(
   extra: CustomChainInput[] = []
 ): Promise<OnchainChain> {
   const host = hostFor(chain, extra);
-  const next: OnchainChain = {
+  const next = {
     ...chain,
-    activityCounts: { ...(chain.activityCounts || {}) },
-    activityKinds: { ...(chain.activityKinds || {}) },
     activityMethods: { ...(chain.activityMethods || {}) },
     activityDays: [...(chain.activityDays || [])],
+  } as OnchainChain & {
+    activityCounts?: Record<string, number>;
+    activityKinds?: Record<string, Record<string, number>>;
+    volumeSampleSize?: number;
   };
+  next.activityCounts = { ...(((chain as typeof next).activityCounts) || {}) };
+  next.activityKinds = { ...(((chain as typeof next).activityKinds) || {}) };
 
   if (!host) return next;
 
