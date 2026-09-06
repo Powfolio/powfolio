@@ -22,15 +22,6 @@ function daysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
 }
 
-function ordinal(n: number) {
-  const v = n % 100;
-  if (v >= 11 && v <= 13) return `${n}th`;
-  if (v % 10 === 1) return `${n}st`;
-  if (v % 10 === 2) return `${n}nd`;
-  if (v % 10 === 3) return `${n}rd`;
-  return `${n}th`;
-}
-
 function tone(n: number, empty: boolean) {
   if (empty) return "bg-transparent border-transparent text-transparent pointer-events-none";
   if (n === 0) return "bg-zinc-800/80 border-white/5 text-zinc-500";
@@ -170,13 +161,13 @@ export default function ActivityHeatmap({
                 type="button"
                 disabled={!key}
                 onClick={() => key && setOpen(open === key ? null : key)}
-                className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full border text-[8px] font-semibold leading-none sm:h-8 sm:w-8 sm:text-[9px] ${tone(n, !key)} ${
+                className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-semibold leading-none sm:h-8 sm:w-8 sm:text-[11px] ${tone(n, !key)} ${
                   on ? "cursor-pointer hover:scale-110" : "cursor-default"
                 } ${isOpen ? "ring-2 ring-emerald-300 ring-offset-2 ring-offset-zinc-950" : ""}`}
-                aria-label={key ? `${ordinal(dayNum)}, ${n} interaction${n === 1 ? "" : "s"}` : undefined}
-                title={key ? `${ordinal(dayNum)} · ${n}` : undefined}
+                aria-label={key ? `Day ${dayNum}, ${n} interaction${n === 1 ? "" : "s"}` : undefined}
+                title={key ? `${dayNum} · ${n}` : undefined}
               >
-                {key ? ordinal(dayNum) : ""}
+                {key ? String(dayNum) : ""}
               </button>
             );
           })}
@@ -202,7 +193,7 @@ export default function ActivityHeatmap({
               const d = new Date(`${selected.date}T12:00:00`);
               const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
               const month = d.toLocaleDateString(undefined, { month: "short" });
-              return `${weekday}, ${ordinal(d.getDate())} ${month} ${d.getFullYear()}`;
+              return `${weekday}, ${d.getDate()} ${month} ${d.getFullYear()}`;
             })()}
           </p>
           <p className="mt-1 text-xs text-foreground-muted">
