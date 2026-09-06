@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { type CustomChainInput, type ImportedTokenRef } from "@/lib/onchain";
 import { loadOnchainFootprintFast } from "@/lib/onchain-fast";
-import { normalizeExtraChains } from "@/lib/chain-enrich";
+import { enrichFootprint, normalizeExtraChains } from "@/lib/chain-enrich";
 
 export const revalidate = 60;
-export const maxDuration = 20;
+export const maxDuration = 25;
 
 function parseJson<T>(raw: string | null): T[] {
   if (!raw) return [];
@@ -32,6 +32,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ address:
 
   if (!data) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
+  }
+
+  try {
+    await Promise.race([
+      enrichFootprint(data, extra, imported),
+      new Promise((resolve) => setTimeout(resolve, 8000)),
+    ]);
+  } catch (err) {
+    console.error("[onchain] enrichFootprint failed:", err);
   }
 
   return NextResponse.json(data);

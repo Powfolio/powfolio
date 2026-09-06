@@ -20,13 +20,13 @@ export function normalizeExtraChains(extra: CustomChainInput[]): CustomChainInpu
       ...c,
       id: c.id || "kiichain",
       name: c.name || "KiiChain",
-      host: (c.host || "https://blockscout.kiichain.io").replace(/\/$/, ""),
+      host: "https://blockscout.kiichain.io",
       rpc: c.rpc || kiiRpcs()[0],
       lcd: c.lcd || kiiLcds()[0],
       native: c.native || "KII",
       slug: c.slug || "kiichain",
       chainId: c.chainId || 1783,
-      explorer: c.explorer || "https://blockscout.kiichain.io/address/",
+      explorer: "https://blockscout.kiichain.io/address/",
     };
   });
 }
@@ -37,10 +37,10 @@ function explorerHost(chain: { id: string; name: string; explorer: string }, ext
       (c.id || "").toLowerCase() === chain.id ||
       (c.name || "").toLowerCase() === chain.name.toLowerCase()
   );
-  if (match?.host) return match.host.replace(/\/$/, "");
+  if (/kii/i.test(chain.name) || chain.id === "kiichain") return "https://blockscout.kiichain.io";
+  if (match?.host && /blockscout/i.test(match.host)) return match.host.replace(/\/$/, "");
   const fromExplorer = (chain.explorer || "").replace(/\/address\/?.*$/i, "").replace(/\/$/, "");
   if (/blockscout/i.test(fromExplorer)) return fromExplorer;
-  if (/kii/i.test(chain.name) || chain.id === "kiichain") return "https://blockscout.kiichain.io";
   return fromExplorer || "";
 }
 
@@ -62,8 +62,8 @@ export async function enrichFootprint(
         const rpcUrl = extraMatch?.rpc || (isKii ? kiiRpcs()[0] : undefined);
         let qty = Number(chain.balance) || 0;
 
-        const needVolume = chain.volumeUsd <= 0 || chain.feesUsd <= 0;
-        const needBalance = qty <= 0 && !!rpcUrl && isAddress(data.address);
+        const needVolume = chain.volumeUsd <= 0 || chain.feesUsd <= 0 || chain.txCount === 0 || !(chain.activityDays && chain.activityDays.length);
+        const needBalance = (qty <= 0 || chain.txCount === 0) && !!rpcUrl && isAddress(data.address);
 
         const [rate, balancePair, bank, activity, txs] = await Promise.all([
           nativePriceUsd(chain.nativeSymbol),
