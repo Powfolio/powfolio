@@ -7,6 +7,7 @@ import {
   type OnchainToken,
   mergeChains,
   getJson,
+  getPagedItems,
   isAddress,
   formatUnits,
   toNumber,
@@ -158,6 +159,13 @@ export function countNfts(transfers: TransferItem[], nftItems: NftItem[], addres
   return Math.max(holdings, minted, inbound, nftTransfers.length ? 1 : 0);
 }
 
+export function sumNativeFlow(txs: TxItem[]) {
+  return {
+    volumeNative: txs.reduce((sum, tx) => sum + toNumber(tx.value || "0", 18), 0),
+    feesNative: txs.reduce((sum, tx) => sum + toNumber(tx.fee?.value || "0", 18), 0),
+  };
+}
+
 export async function loadOnchainFootprintFast(
   rawAddress: string,
   extraChains?: CustomChainInput[] | null,
@@ -200,7 +208,7 @@ export async function loadOnchainFootprintFast(
 
           const fallbackRate = await Promise.race([
             pricePromise,
-            new Promise<number | null>((resolve) => setTimeout(() => resolve(null), 1800)),
+            new Promise<number | null>((resolve) => setTimeout(() => resolve(null), 2200)),
           ]);
 
           const rawBalances = Array.isArray(balances) ? balances : pageItems<TokenItem>(balances);
@@ -275,14 +283,25 @@ export async function loadOnchainFootprintFast(
           const transferCount = Number(counters?.token_transfers_count || 0);
           const valuedTokenCount = tokens.filter((t) => !t.isDust).length;
 
-          const txs = pageItems<TxItem>(txsJson);
+          let txs = pageItems<TxItem>(txsJson);
+          const firstFlow = sumNativeFlow(txs);
+          if (host && firstFlow.volumeNative <= 0 && (txCount > txs.length || txs.length >= 50)) {
+            const extraTxs = await withBudget(
+              getPagedItems<TxItem>(`${host}/api/v2/addresses/${address}/transactions`, 3),
+              txs,
+              2500
+            );
+            if (extraTxs.length > txs.length) txs = extraTxs;
+          }
+
           const transfers = pageItems<TransferItem>(transfersJson);
           const nfts = pageItems<NftItem>(nftJson);
+          const flow = sumNativeFlow(txs);
           let volumeUsd = 0;
           let feesUsd = 0;
-          if (nativeRate != null && Number.isFinite(nativeRate)) {
-            volumeUsd += txs.reduce((sum, tx) => sum + toNumber(tx.value || "0", 18) * nativeRate, 0);
-            feesUsd += txs.reduce((sum, tx) => sum + toNumber(tx.fee?.value || "0", 18) * nativeRate, 0);
+          if (nativeRate != null && Number.isFinite(nativeRate) && nativeRate > 0) {
+            volumeUsd += flow.volumeNative * nativeRate;
+            feesUsd += flow.feesNative * nativeRate;
           }
           for (const tr of transfers) {
             const decimals = Number(tr.token?.decimals || 18);
