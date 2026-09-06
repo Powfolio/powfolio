@@ -1,6 +1,7 @@
 import {
   type CustomChainInput,
   type ImportedTokenRef,
+  type OnchainChain,
   type OnchainFootprint,
   getPagedItems,
   getJson,
@@ -8,7 +9,8 @@ import {
   toNumber,
 } from "@/lib/onchain";
 import { kiiLcds, kiiRpcs, loadBankBalances, loadCosmosTxActivity, nativePriceUsd, rpcCall } from "@/lib/chain-rpc";
-import { applyActivity, classifyTx, countNfts, mergeActivity, sumNativeFlow, tallyActivity } from "@/lib/onchain-fast";
+import { applyActivity, countNfts, sumNativeFlow } from "@/lib/onchain-fast";
+import { classifyTx, mergeActivity, tallyActivity } from "@/lib/onchain-activity";
 
 export function normalizeExtraChains(extra: CustomChainInput[]): CustomChainInput[] {
   return extra.map((c) => {
@@ -138,7 +140,6 @@ export async function enrichFootprint(
             chain,
             tallyActivity(txs.map((tx) => ({ timestamp: tx.timestamp, kind: classifyTx(tx) })))
           );
-          chain.volumeSampleSize = Math.max(chain.volumeSampleSize || 0, txs.length);
           const deployed = txs.filter((tx) => (!!tx.created_contract || !tx.to?.hash) && (tx.from?.hash || "").toLowerCase() === data.address).length;
           chain.contractsDeployed = Math.max(chain.contractsDeployed, deployed);
           const contracts = new Set(
