@@ -21,8 +21,8 @@ const STEPS = [
   },
   {
     step: "04",
-    title: "Get discovered",
-    desc: "Share your link or show up in View talents when teams search for builders like you.",
+    title: "Share your link",
+    desc: "One URL for bios, DMs and applications. Your proof stays in one place.",
   },
 ];
 
@@ -30,7 +30,7 @@ const STATS = [
   { label: "Proof tabs", value: "6" },
   { label: "Public scores", value: "2" },
   { label: "AI assistant", value: "Live" },
-  { label: "Talent discovery", value: "Open" },
+  { label: "Public URL", value: "Yours" },
 ];
 
 const ROLES = [
@@ -92,9 +92,6 @@ export default async function HomePage() {
             <a href="#how" className="btn-ghost text-xs">
               How it works
             </a>
-            <Link href="/talents" className="btn-ghost text-xs">
-              View talents
-            </Link>
             <Link href="/faq" className="btn-ghost text-xs">
               FAQ
             </Link>
@@ -128,17 +125,17 @@ export default async function HomePage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-70" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
               </span>
-              Live scores · real proof · talent discovery
+              Live scores · real proof · one public link
             </div>
 
             <h1 className="landing-reveal landing-delay-2 mt-7 text-4xl sm:text-5xl lg:text-[3.75rem] font-bold tracking-tight leading-[1.06]">
               Your Web3 work.{" "}
-              <span className="hero-gradient-text">Verified. Visible. Hireable.</span>
+              <span className="hero-gradient-text">Verified. Visible.</span>
             </h1>
 
             <p className="landing-reveal landing-delay-3 mt-6 text-base sm:text-lg text-foreground-muted max-w-2xl mx-auto leading-relaxed">
               Stop scattering trades, threads and roles across ten apps.
-              One sleek public profile with strict scores teams actually trust.
+              One sleek public profile with strict scores that reflect real evidence.
               Built for people who ship, not just claim.
             </p>
 
@@ -158,9 +155,6 @@ export default async function HomePage() {
                   Create free profile →
                 </Link>
               )}
-              <Link href="/talents" className="btn-secondary px-8 py-3.5 text-sm hover:border-primary/40">
-                Browse talents
-              </Link>
               <Link href="/faq" className="btn-ghost px-6 py-3.5 text-sm text-foreground-muted hover:text-foreground">
                 FAQ
               </Link>
@@ -209,15 +203,15 @@ export default async function HomePage() {
               {[
                 {
                   t: "Scattered proof",
-                  d: "Trades on one app, threads on X, roles in Discord. Recruiters will not dig.",
+                  d: "Trades on one app, threads on X, roles in Discord. A visitor should not have to dig.",
                 },
                 {
                   t: "Soft resumes",
-                  d: "Buzzwords without charts, links or campaign history fail in Web3 hiring.",
+                  d: "Buzzwords without charts, links or campaign history do not hold up in Web3.",
                 },
                 {
-                  t: "Hard to discover",
-                  d: "Great builders stay invisible without a public, searchable proof profile.",
+                  t: "No single home",
+                  d: "Great builders stay hard to read without one public proof profile they control.",
                 },
               ].map((x) => (
                 <div
@@ -265,44 +259,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="container-app pb-16 sm:pb-20">
-          <div className="overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-surface via-surface to-primary/10 p-6 sm:p-10">
-            <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-foreground-subtle">
-                  For teams
-                </p>
-                <h2 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight">
-                  Hire builders with real proof
-                </h2>
-                <p className="mt-3 text-sm text-foreground-muted leading-relaxed">
-                  Browse trading records, research, community roles and onchain activity.
-                  Filter open-to-work talent. Skip the noise.
-                </p>
-                <Link href="/talents" className="btn-primary mt-6 inline-flex text-sm cta-pulse">
-                  Browse talents
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { k: "Track record", v: "Trades & ROI" },
-                  { k: "Research", v: "Writing you can read" },
-                  { k: "Community", v: "Roles you can verify" },
-                  { k: "Scores", v: "Profile + Builder" },
-                ].map((row) => (
-                  <div
-                    key={row.k}
-                    className="rounded-xl border border-border/80 bg-background/80 p-4 transition duration-300 hover:border-primary/40 hover:-translate-y-1 hover:shadow-md"
-                  >
-                    <p className="text-[11px] text-foreground-subtle">{row.k}</p>
-                    <p className="mt-1 text-sm font-medium">{row.v}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section className="container-app pb-20 sm:pb-28">
           <div className="relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-primary/40 bg-surface/90 px-6 py-14 sm:px-12 text-center shine-border">
             <div
@@ -310,10 +266,10 @@ export default async function HomePage() {
               aria-hidden
             />
             <h2 className="relative text-2xl sm:text-3xl font-bold tracking-tight">
-              Ready to get discovered?
+              Ready to share your proof?
             </h2>
             <p className="relative mt-3 text-sm sm:text-base text-foreground-muted">
-              Create your Pow3Folio in minutes. One link. Real scores. Real opportunities.
+              Create your Pow3Folio in minutes. One link. Real scores. Real work on record.
             </p>
             <div className="relative mt-8 flex flex-col sm:flex-row gap-3 justify-center">
               {user ? (
@@ -325,9 +281,6 @@ export default async function HomePage() {
                   Get started free →
                 </Link>
               )}
-              <Link href="/talents" className="btn-secondary px-8 py-3.5 text-sm">
-                Browse talents
-              </Link>
             </div>
           </div>
         </section>
@@ -342,9 +295,6 @@ export default async function HomePage() {
             <span>© {new Date().getFullYear()} Pow3Folio</span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/talents" className="hover:text-foreground transition-colors">
-              View talents
-            </Link>
             <Link href="/faq" className="hover:text-foreground transition-colors">
               FAQ
             </Link>
