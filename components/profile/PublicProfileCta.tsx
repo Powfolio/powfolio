@@ -27,10 +27,6 @@ export default function PublicProfileCta({ isOwner }: Props) {
           </Link>
         </>
       )}
-      {" · "}
-      <Link href="/talents" className="text-foreground-muted hover:text-primary transition-colors">
-        View talents
-      </Link>
     </p>
   );
 }

@@ -3,17 +3,13 @@ import ThemeToggle from "@/components/theme/ThemeToggle";
 
 export const metadata = {
   title: "FAQ",
-  description: "Answers about Pow3Folio profiles, proof of work, scores, and discovery.",
+  description: "Answers about Pow3Folio profiles, proof of work, and scores.",
 };
 
 const FAQS: { q: string; a: string }[] = [
   {
     q: "What is Pow3Folio?",
     a: "A public proof of work portfolio for Web3 builders: traders, researchers, community leads, airdrop hunters and developers. One clean URL shows trades, writing, community, airdrops, credentials and onchain presence.",
-  },
-  {
-    q: "Who are builders and talents?",
-    a: "Everyone with a public profile is a builder (also called a talent). Teams discover builders on the View talents page.",
   },
   {
     q: "What is Profile Score?",
@@ -48,10 +44,6 @@ const FAQS: { q: string; a: string }[] = [
     a: "The in-product assistant for Pow3Folio only. It helps with setup, copy, scores and how-tos. It does not give investment advice or support for other apps.",
   },
   {
-    q: "How do I get Featured on View talents?",
-    a: "Featured is a curator flag on high quality public profiles. Contact the team or improve completeness and proof until you are selected.",
-  },
-  {
     q: "Can I hide my email?",
     a: "Yes. Primary and secondary emails only show when you enable the public toggles in Profile.",
   },
@@ -75,7 +67,6 @@ export default function FaqPage() {
             </span>
           </Link>
           <div className="flex items-center gap-2">
-            <Link href="/talents" className="btn-ghost text-xs">View talents</Link>
             <ThemeToggle />
           </div>
         </div>
@@ -84,7 +75,7 @@ export default function FaqPage() {
         <p className="text-[11px] font-medium uppercase tracking-wider text-foreground-subtle">Help</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight">FAQ</h1>
         <p className="mt-2 text-sm text-foreground-muted">
-          Product answers for builders and teams. For live help, open Pow3Bot (AI button).
+          Product answers for builders. For live help, open Pow3Bot (AI button).
         </p>
         <ul className="mt-8 space-y-4">
           {FAQS.map((item) => (

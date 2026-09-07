@@ -4,6 +4,8 @@
 export const POW3_KNOWLEDGE = `
 # Pow3Folio product knowledge (keep current)
 
+Pow3Folio Genesis is a public proof of work portfolio. One clean link, scores, and onchain proof. That is the live product.
+
 Latest product pass:
 - Talents toggle each chain Public/Hidden on the Onchain tab. At least one chain must stay visible on the public page.
 - Token import by CA: select the chain, paste the contract, import only if the connected wallet holds it. Works on built-in and imported networks.
@@ -20,6 +22,9 @@ Call people builders or talents. Never say users in product copy.
 
 ## Public profile tabs
 About, Projects / Collab, Technical Writing / Research, Trading Record, Onchain Stats, Airdrops.
+
+## How it works
+Create a profile, add proof, raise Profile Score and Builder Score, then share the public URL.
 
 ## Pow3Bot
 Site-wide assistant for Pow3Folio only. Never investment advice. Never ask for seed phrases.
