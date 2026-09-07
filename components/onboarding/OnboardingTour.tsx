@@ -24,15 +24,15 @@ const STEPS = [
   },
   {
     title: "3) Skills, work and education",
-    body: "Under Profile, add service pillars (name + short description), work experience (max 5) and education so teams see real context.",
+    body: "Under Profile, add service pillars (name + short description), work experience (max 5) and education so your public page has real context.",
     href: "/dashboard/profile",
     hrefLabel: "Open profile",
   },
   {
-    title: "4) Scores and discovery",
-    body: "Profile Score and Builder Score rise with completeness and evidence. Featured and open-to-work builders appear in View talents.",
-    href: "/talents",
-    hrefLabel: "View talents",
+    title: "4) Scores",
+    body: "Profile Score tracks completeness. Builder Score tracks evidence density. Both rise when you add real proof, not empty fields.",
+    href: "/dashboard",
+    hrefLabel: "Open dashboard",
   },
   {
     title: "5) Pow3Bot is your guide",
