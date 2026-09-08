@@ -34,7 +34,10 @@ export type OnchainChain = {
   activeWeeks: number;
   activeMonths: number;
   activityDays: string[];
+  activityCounts?: Record<string, number>;
+  activityKinds?: Record<string, Record<string, number>>;
   activityMethods: Record<string, string[]>;
+  volumeSampleSize?: number;
   firstTx: string | null;
   lastTx: string | null;
   interacted: boolean;
@@ -317,7 +320,10 @@ function emptyChain(chain: ChainDef, address: string, extra?: Partial<OnchainCha
       activeWeeks: extra?.activeWeeks || 0,
       activeMonths: extra?.activeMonths || 0,
       activityDays: extra?.activityDays || [],
+      activityCounts: extra?.activityCounts || {},
+      activityKinds: extra?.activityKinds || {},
       activityMethods: extra?.activityMethods || {},
+      volumeSampleSize: extra?.volumeSampleSize,
       firstTx: extra?.firstTx || null,
       lastTx: extra?.lastTx || null,
       interacted: extra?.interacted || !!chain.imported,
