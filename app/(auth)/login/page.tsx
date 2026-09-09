@@ -2,15 +2,22 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LoginForm from "@/components/auth/LoginForm";
+import { safeNextPath } from "@/lib/auth/next-path";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const { next } = await searchParams;
+  const nextPath = safeNextPath(next);
 
   if (user) {
-    redirect("/dashboard");
+    redirect(nextPath);
   }
 
   return (
@@ -30,7 +37,7 @@ export default async function LoginPage() {
           </p>
         </div>
 
-        <LoginForm />
+        <LoginForm nextPath={nextPath} />
       </div>
     </div>
   );

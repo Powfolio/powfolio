@@ -10,8 +10,17 @@ function isAuthPath(path: string) {
     path === "/signup" ||
     path.startsWith("/dashboard") ||
     path.startsWith("/dash") ||
-    path.startsWith("/auth")
+    path.startsWith("/auth") ||
+    path.startsWith("/ops")
   );
+}
+
+function safeNext(raw: string | null) {
+  if (!raw) return "/dashboard";
+  const path = raw.trim();
+  if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\")) return "/dashboard";
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(path)) return "/dashboard";
+  return path.slice(0, 200) || "/dashboard";
 }
 
 async function getUserFast(
@@ -33,15 +42,12 @@ async function getUserFast(
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Old shortcut people still type / bookmark.
   if (path === "/dash" || path.startsWith("/dash/")) {
     const url = request.nextUrl.clone();
     url.pathname = path.replace(/^\/dash/, "/dashboard") || "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  // Public pages never talk to Supabase in Edge middleware.
-  // A paused or slow project used to hang every request until Vercel 504.
   if (!isAuthPath(path)) {
     return NextResponse.next();
   }
@@ -85,8 +91,11 @@ export async function middleware(request: NextRequest) {
   const user = await getUserFast(supabase);
 
   if (user && (path === "/login" || path === "/signup")) {
+    const dest = safeNext(request.nextUrl.searchParams.get("next"));
     const next = request.nextUrl.clone();
-    next.pathname = "/dashboard";
+    const [pathname, qs] = dest.split("?");
+    next.pathname = pathname || "/dashboard";
+    next.search = qs ? `?${qs}` : "";
     return NextResponse.redirect(next);
   }
 
@@ -100,5 +109,14 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/signup", "/dashboard/:path*", "/dash", "/dash/:path*", "/auth/:path*"],
+  matcher: [
+    "/login",
+    "/signup",
+    "/dashboard/:path*",
+    "/dash",
+    "/dash/:path*",
+    "/auth/:path*",
+    "/ops",
+    "/ops/:path*",
+  ],
 };
