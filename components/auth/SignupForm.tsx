@@ -5,7 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { markNewSignup } from "@/components/onboarding/OnboardingTour";
 
-export default function SignupForm() {
+export default function SignupForm({ nextPath = "/dashboard" }: { nextPath?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -14,17 +14,35 @@ export default function SignupForm() {
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const loginHref = nextPath && nextPath !== "/dashboard" ? `/login?next=${encodeURIComponent(nextPath)}` : "/login";
+
+  async function guardSignup() {
+    const res = await fetch("/api/auth/signup-guard", { method: "POST" });
+    const json = await res.json().catch(() => ({}));
+    if (res.status === 429) {
+      setError(json.error || "Too many signups from this network. Try again later.");
+      return false;
+    }
+    return true;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    const allowed = await guardSignup();
+    if (!allowed) {
+      setLoading(false);
+      return;
+    }
 
     const supabase = createClient();
     const { data, error: signError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath || "/dashboard")}`,
       },
     });
 
@@ -38,9 +56,7 @@ export default function SignupForm() {
         msg.includes("exists") ||
         signError.status === 422
       ) {
-        setError(
-          "This email is already connected to an active account. Log in instead."
-        );
+        setError("This email is already connected to an active account. Log in instead.");
       } else {
         setError(signError.message);
       }
@@ -49,9 +65,7 @@ export default function SignupForm() {
 
     const identities = data?.user?.identities;
     if (data?.user && Array.isArray(identities) && identities.length === 0) {
-      setError(
-        "This email is already connected to an active account. Log in instead."
-      );
+      setError("This email is already connected to an active account. Log in instead.");
       return;
     }
 
@@ -62,20 +76,23 @@ export default function SignupForm() {
   async function signInWithProvider(provider: "google" | "twitter") {
     setError(null);
     setOauthLoading(provider);
+    const allowed = await guardSignup();
+    if (!allowed) {
+      setOauthLoading(null);
+      return;
+    }
     markNewSignup();
     const supabase = createClient();
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath || "/dashboard")}`,
       },
     });
     if (oauthError) {
       const msg = oauthError.message.toLowerCase();
       if (msg.includes("already") || msg.includes("registered") || msg.includes("exists")) {
-        setError(
-          "This Google or X account is already connected to an active Pow3Folio account. Log in instead."
-        );
+        setError("This Google or X account is already connected to an active Pow3Folio account. Log in instead.");
       } else {
         setError(oauthError.message);
       }
@@ -95,7 +112,7 @@ export default function SignupForm() {
           <strong className="text-foreground">{email}</strong>. Click it to activate your
           account.
         </p>
-        <Link href="/login" className="btn-secondary mt-6 inline-flex">
+        <Link href={loginHref} className="btn-secondary mt-6 inline-flex">
           Back to login
         </Link>
       </div>
@@ -108,8 +125,8 @@ export default function SignupForm() {
         <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
           <p>{error}</p>
           {(error.includes("already connected") || error.includes("Log in")) && (
-            <Link href="/login" className="mt-2 inline-block font-medium text-primary hover:underline">
-              Go to login →
+            <Link href={loginHref} className="mt-2 inline-block font-medium text-primary hover:underline">
+              Go to login
             </Link>
           )}
         </div>
@@ -182,18 +199,7 @@ export default function SignupForm() {
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-foreground-subtle hover:bg-surface-hover hover:text-foreground"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
-              {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                  <line x1="1" y1="1" x2="23" y2="23" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
+              {showPassword ? "Hide" : "Show"}
             </button>
           </div>
         </div>
@@ -205,7 +211,7 @@ export default function SignupForm() {
 
       <p className="text-center text-sm text-foreground-muted">
         Already have an account?{" "}
-        <Link href="/login" className="text-primary hover:underline">
+        <Link href={loginHref} className="text-primary hover:underline">
           Log in
         </Link>
       </p>
