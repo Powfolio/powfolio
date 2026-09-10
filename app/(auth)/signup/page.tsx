@@ -3,15 +3,22 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignupForm from "@/components/auth/SignupForm";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import { safeNextPath } from "@/lib/auth/next-path";
 
-export default async function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const { next } = await searchParams;
+  const nextPath = safeNextPath(next);
 
   if (user) {
-    redirect("/dashboard");
+    redirect(nextPath);
   }
 
   return (
@@ -36,11 +43,11 @@ export default async function SignupPage() {
             Create your Web3 proof of work portfolio.
           </p>
           <div className="mt-8 card">
-            <SignupForm />
+            <SignupForm nextPath={nextPath} />
           </div>
           <p className="mt-6 text-center text-sm text-foreground-muted">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link href={nextPath !== "/dashboard" ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"} className="text-primary hover:underline">
               Log in
             </Link>
           </p>

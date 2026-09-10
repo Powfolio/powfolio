@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { connectEthereumWallet } from "@/lib/wallet";
+import { checkWalletAvailable } from "@/lib/wallets/client-check";
 import type { ExtraWallet } from "@/types/database";
 
 export default function ExtraWallets({
@@ -23,10 +24,13 @@ export default function ExtraWallets({
     const supabase = createClient();
     const { error: err } = await supabase.from("profiles").update({ extra_wallets: next }).eq("id", profileId);
     if (err) {
+      const taken = err.code === "23505" || (err.message || "").toLowerCase().includes("wallet");
       setError(
-        err.message.includes("column") || err.code === "42703"
-          ? "Run supabase/extra_wallets.sql in Supabase first."
-          : err.message
+        taken
+          ? "This wallet is already linked to another Pow3Folio account."
+          : err.message.includes("column") || err.code === "42703"
+            ? "Run supabase/extra_wallets.sql in Supabase first."
+            : err.message
       );
       return false;
     }
@@ -40,8 +44,14 @@ export default function ExtraWallets({
     setError(null);
     try {
       const address = await connectEthereumWallet();
-      if (wallets.some((w) => w.address.toLowerCase() === address)) {
+      if (wallets.some((w) => w.address.toLowerCase() === address.toLowerCase())) {
         setError("That wallet is already added.");
+        setBusy(false);
+        return;
+      }
+      const check = await checkWalletAvailable(address);
+      if (!check.ok) {
+        setError(check.error);
         setBusy(false);
         return;
       }
