@@ -1,0 +1,138 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { REPORT_REASONS } from "@/lib/reports/constants";
+
+export default function ReportProfileButton({
+  targetId,
+  targetUsername,
+  signedIn,
+  autoOpen = false,
+}: {
+  targetId: string;
+  targetUsername: string;
+  signedIn: boolean;
+  autoOpen?: boolean;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [reasons, setReasons] = useState<string[]>([]);
+  const [note, setNote] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [thanks, setThanks] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function start() {
+    if (!signedIn) {
+      router.push(`/login?next=${encodeURIComponent(`/${targetUsername}?report=1`)}`);
+      return;
+    }
+    setError(null);
+    const res = await fetch(`/api/reports/eligibility?target=${targetId}`);
+    const json = await res.json();
+    if (!json.ok) {
+      setOpen(true);
+      setError(json.reason || json.error || "You cannot submit a report right now.");
+      return;
+    }
+    setOpen(true);
+  }
+
+  useEffect(() => {
+    if (autoOpen) start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpen]);
+
+  function toggleReason(id: string) {
+    setReasons((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const body = new FormData();
+    body.set("targetId", targetId);
+    body.set("reasons", reasons.join(","));
+    body.set("note", note);
+    files.forEach((f) => body.append("files", f));
+    const res = await fetch("/api/reports/submit", { method: "POST", body });
+    const json = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) {
+      setError(json.error || "Could not send the report");
+      return;
+    }
+    setThanks(true);
+  }
+
+  return (
+    <div className="mt-8 border-t border-border pt-6 text-center">
+      <button type="button" className="text-xs text-foreground-subtle hover:text-danger" onClick={start}>
+        Report {targetUsername}
+      </button>
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-3"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-border bg-background p-4 text-left shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold">
+                {thanks ? "Report received" : `Report @${targetUsername}`}
+              </h2>
+              <button type="button" className="btn-ghost text-xs" onClick={() => setOpen(false)} aria-label="Close">
+                Close
+              </button>
+            </div>
+            {thanks ? (
+              <p className="text-sm text-foreground-muted">
+                Thank you, your report has been received. The reported person will not see who sent this.
+              </p>
+            ) : (
+              <form onSubmit={submit} className="space-y-3">
+                {error && <p className="text-xs text-danger">{error}</p>}
+                <div className="grid gap-1.5">
+                  {REPORT_REASONS.map((r) => (
+                    <label key={r.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={reasons.includes(r.id)}
+                        onChange={() => toggleReason(r.id)}
+                      />
+                      {r.label}
+                    </label>
+                  ))}
+                </div>
+                <textarea
+                  className="input text-sm min-h-24"
+                  required
+                  minLength={8}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Short written note. Required."
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => setFiles(Array.from(e.target.files || []).slice(0, 3))}
+                  className="text-xs"
+                />
+                <p className="text-[11px] text-foreground-subtle">Optional. Up to 3 images, 5MB each.</p>
+                <button className="btn-primary w-full text-sm" disabled={busy}>
+                  {busy ? "Sending…" : "Submit report"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
