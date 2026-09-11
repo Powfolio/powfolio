@@ -29,13 +29,13 @@ export default function AuditLog() {
     <div className="space-y-5 animate-fade-in">
       <div>
         <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-primary">Trust trail</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Audit log</h1>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Audit log</h1>
         <p className="mt-1 text-sm text-foreground-muted">
           Append-only. Every admin action writes a row that cannot be edited later.
         </p>
       </div>
       {error && (
-        <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div>
+        <div className="rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div>
       )}
       <div className="overflow-hidden rounded-2xl border border-border">
         <table className="w-full text-sm">
