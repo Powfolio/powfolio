@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -12,11 +12,21 @@ type Factor = {
 };
 
 const APPS = [
-  { id: "google", name: "Google Authenticator", hint: "iOS and Android" },
-  { id: "authy", name: "Authy", hint: "Multi-device backup" },
-  { id: "1password", name: "1Password", hint: "If you already use it" },
-  { id: "microsoft", name: "Microsoft Authenticator", hint: "Work and personal" },
+  { id: "google", name: "Google Authenticator", hint: "Free on iOS and Android" },
+  { id: "authy", name: "Authy", hint: "Backs up across devices" },
+  { id: "1password", name: "1Password", hint: "If you already store logins there" },
+  { id: "microsoft", name: "Microsoft Authenticator", hint: "Work and personal accounts" },
 ];
+
+function collectFactors(data: { all?: Factor[]; totp?: Factor[] } | null): Factor[] {
+  const all = data?.all || [];
+  const totp = data?.totp || [];
+  const byId = new Map<string, Factor>();
+  for (const f of [...all, ...totp]) {
+    if (f?.id) byId.set(f.id, f);
+  }
+  return [...byId.values()].filter((f) => (f.factor_type || "totp") === "totp");
+}
 
 export default function MfaSetup({ enrolled }: { enrolled: boolean }) {
   const router = useRouter();
@@ -24,66 +34,99 @@ export default function MfaSetup({ enrolled }: { enrolled: boolean }) {
   const [factorId, setFactorId] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
-  const [uri, setUri] = useState<string | null>(null);
   const [app, setApp] = useState("google");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
+  const [existingName, setExistingName] = useState("Pow3Folio ops");
+  const bootstrapped = useRef(false);
 
   const groupedSecret = useMemo(() => {
     if (!secret) return "";
     return secret.replace(/\s+/g, "").replace(/(.{4})/g, "$1 ").trim();
   }, [secret]);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  const selectedApp = APPS.find((a) => a.id === app) || APPS[0];
+
+  const clearStuck = useCallback(async (action: "clear_unverified" | "reset_all") => {
+    await fetch("/api/admin/mfa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+  }, []);
+
+  const startEnroll = useCallback(async () => {
+    const supabase = createClient();
+    const friendlyName = "Pow3Folio ops";
+    const first = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName });
+    if (!first.error && first.data) return first.data;
+
+    const retryName = `Pow3Folio ops ${Date.now().toString().slice(-6)}`;
+    const second = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: retryName });
+    if (second.error) throw new Error(second.error.message);
+    return second.data;
+  }, []);
+
+  const bootstrap = useCallback(
+    async (forceNew: boolean) => {
+      setBusy(true);
+      setError(null);
       const supabase = createClient();
-      const { data, error: listErr } = await supabase.auth.mfa.listFactors();
-      if (cancelled) return;
-      if (listErr) {
-        setError(listErr.message);
-        setMode(enrolled ? "verify" : "enroll");
-        return;
-      }
+      try {
+        const listed = await supabase.auth.mfa.listFactors();
+        if (listed.error) throw new Error(listed.error.message);
+        const factors = collectFactors(listed.data);
+        const verified = factors.filter((f) => f.status === "verified");
+        const unverified = factors.filter((f) => f.status !== "verified");
 
-      const all = ((data as { all?: Factor[] } | null)?.all || []) as Factor[];
-      const totpAll = all.filter((f) => (f.factor_type || "totp") === "totp");
-      const verified = (data?.totp || totpAll.filter((f) => f.status === "verified")) as Factor[];
-      const unverified = totpAll.filter((f) => f.status === "unverified");
+        if (verified[0]?.friendly_name) setExistingName(verified[0].friendly_name);
 
-      if (verified.length) {
-        setFactorId(verified[0].id);
-        setMode("verify");
-        return;
-      }
+        if (verified.length && !forceNew) {
+          setFactorId(verified[0].id);
+          setQr(null);
+          setSecret(null);
+          setMode("verify");
+          setBusy(false);
+          return;
+        }
 
-      for (const factor of unverified) {
-        await supabase.auth.mfa.unenroll({ factorId: factor.id });
-      }
+        await clearStuck(forceNew ? "reset_all" : "clear_unverified");
+        for (const factor of forceNew ? [...verified, ...unverified] : unverified) {
+          await supabase.auth.mfa.unenroll({ factorId: factor.id }).catch(() => undefined);
+        }
 
-      const { data: enrolledFactor, error: startErr } = await supabase.auth.mfa.enroll({
-        factorType: "totp",
-        friendlyName: "Pow3Folio ops",
-      });
-      if (cancelled) return;
-      if (startErr) {
-        setError(startErr.message);
-        setMode("verify");
-        return;
+        const enrolledFactor = await startEnroll();
+        setFactorId(enrolledFactor.id);
+        setQr(enrolledFactor.totp.qr_code);
+        setSecret(enrolledFactor.totp.secret);
+        setCode("");
+        setShowSecret(false);
+        setMode("enroll");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Could not start authenticator setup";
+        if (message.toLowerCase().includes("already exists")) {
+          setError(
+            "An authenticator named \u201cPow3Folio ops\u201d is already on this account. Enter the current 6-digit code, or tap \u201cI don\u2019t have that app\u201d to issue a new QR and setup key."
+          );
+          setMode("verify");
+        } else {
+          setError(message);
+          setMode(enrolled ? "verify" : "enroll");
+        }
       }
-      setFactorId(enrolledFactor.id);
-      setQr(enrolledFactor.totp.qr_code);
-      setSecret(enrolledFactor.totp.secret);
-      setUri(enrolledFactor.totp.uri);
-      setMode("enroll");
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [enrolled]);
+      setBusy(false);
+    },
+    [clearStuck, enrolled, startEnroll]
+  );
+
+  useEffect(() => {
+    if (bootstrapped.current) return;
+    bootstrapped.current = true;
+    void bootstrap(false);
+  }, [bootstrap]);
 
   async function copySecret() {
     if (!secret) return;
@@ -105,10 +148,10 @@ export default function MfaSetup({ enrolled }: { enrolled: boolean }) {
       let id = factorId;
       if (!id) {
         const { data: factors } = await supabase.auth.mfa.listFactors();
-        id = factors?.totp.find((f) => f.status === "verified")?.id || null;
+        id = collectFactors(factors).find((f) => f.status === "verified" || f.status === "unverified")?.id || null;
       }
       if (!id) {
-        setError("No authenticator is attached to this admin account yet.");
+        setError("No authenticator is attached yet. Start setup again so a QR code and key appear.");
         setBusy(false);
         return;
       }
@@ -136,153 +179,130 @@ export default function MfaSetup({ enrolled }: { enrolled: boolean }) {
     setBusy(false);
   }
 
-  async function resetSetup() {
-    setBusy(true);
-    setError(null);
-    const supabase = createClient();
-    try {
-      const { data } = await supabase.auth.mfa.listFactors();
-      const all = ((data as { all?: Factor[] } | null)?.all || []) as Factor[];
-      for (const factor of all.filter((f) => (f.factor_type || "totp") === "totp" && f.status === "unverified")) {
-        await supabase.auth.mfa.unenroll({ factorId: factor.id });
-      }
-      const { data: enrolledFactor, error: startErr } = await supabase.auth.mfa.enroll({
-        factorType: "totp",
-        friendlyName: "Pow3Folio ops " + Date.now(),
-      });
-      if (startErr) {
-        setError(
-          startErr.message.toLowerCase().includes("already exists")
-            ? "This account already has an authenticator. Open that app and enter the 6-digit code. A verified factor can only be replaced after you verify once."
-            : startErr.message
-        );
-        setMode("verify");
-        setBusy(false);
-        return;
-      }
-      setFactorId(enrolledFactor.id);
-      setQr(enrolledFactor.totp.qr_code);
-      setSecret(enrolledFactor.totp.secret);
-      setUri(enrolledFactor.totp.uri);
-      setCode("");
-      setMode("enroll");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not restart setup");
-    }
-    setBusy(false);
-  }
-
   return (
-    <div className="mx-auto max-w-lg space-y-5 animate-fade-in">
-      <div>
+    <div className="mx-auto max-w-xl animate-fade-in">
+      <div className="mb-6">
         <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-primary">Ops security</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Admin two-factor</h1>
-        <p className="mt-1 text-sm text-foreground-muted">
-          Only Super Admin sessions need this. Builder accounts stay on normal login.
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Connect an authenticator</h1>
+        <p className="mt-2 text-sm leading-6 text-foreground-muted">
+          Super Admin needs a time-based code from an app on your phone. Regular builder accounts are not asked for this.
         </p>
       </div>
 
-      {mode === "loading" && <div className="card text-sm text-foreground-muted">Checking authenticator status…</div>}
+      {mode === "loading" && (
+        <div className="rounded-2xl border border-border bg-surface p-6 text-sm text-foreground-muted">
+          Checking authenticator status\u2026
+        </div>
+      )}
 
       {mode === "enroll" && (
-        <div className="card space-y-4">
-          <div>
-            <h2 className="text-sm font-medium">1. Pick an authenticator app</h2>
-            <p className="mt-1 text-xs text-foreground-subtle">Install one of these, then scan the QR or type the setup key.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {APPS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setApp(item.id)}
-                className={`rounded-xl border px-3 py-2.5 text-left transition-colors ${
-                  app === item.id
-                    ? "border-primary/50 bg-primary/10"
-                    : "border-border bg-surface-elevated hover:border-border-strong"
-                }`}
-              >
-                <div className="text-sm font-medium">{item.name}</div>
-                <div className="text-[11px] text-foreground-subtle">{item.hint}</div>
-              </button>
-            ))}
-          </div>
+        <div className="space-y-4">
+          <section className="rounded-2xl border border-border bg-surface p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-foreground-subtle">Step 1</p>
+                <h2 className="mt-1 text-base font-semibold">Choose an authenticator app</h2>
+              </div>
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">Required once</span>
+            </div>
+            <p className="mt-1 text-xs text-foreground-subtle">Install one if you do not already have it, then come back here.</p>
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {APPS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setApp(item.id)}
+                  className={`rounded-xl border px-3 py-3 text-left transition-colors ${
+                    app === item.id
+                      ? "border-primary bg-primary/10 shadow-[0_0_0_1px_rgba(16,185,129,0.35)]"
+                      : "border-border bg-surface-elevated hover:border-border-strong"
+                  }`}
+                >
+                  <div className="text-sm font-medium">{item.name}</div>
+                  <div className="mt-0.5 text-[11px] text-foreground-subtle">{item.hint}</div>
+                </button>
+              ))}
+            </div>
+          </section>
 
-          <div>
-            <h2 className="text-sm font-medium">2. Scan this QR code</h2>
+          <section className="rounded-2xl border border-border bg-surface p-5">
+            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-foreground-subtle">Step 2</p>
+            <h2 className="mt-1 text-base font-semibold">Scan the QR or type the setup key</h2>
             <p className="mt-1 text-xs text-foreground-subtle">
-              In {APPS.find((a) => a.id === app)?.name}, choose Add account, then Scan QR code.
+              In {selectedApp.name}: Add account \u2192 Scan QR code. If the camera cannot scan, use the setup key instead.
             </p>
-          </div>
-          {qr ? (
-            <div className="mx-auto w-fit rounded-2xl border border-border bg-white p-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qr} alt="Authenticator QR code" className="h-48 w-48" />
-            </div>
-          ) : (
-            <p className="text-sm text-foreground-muted">Preparing QR code…</p>
-          )}
 
-          {secret && (
-            <div className="rounded-xl border border-border bg-surface-elevated p-3">
-              <div className="flex items-center justify-between gap-2">
-                <h2 className="text-sm font-medium">Or type the setup key</h2>
-                <button type="button" className="btn-ghost text-[11px]" onClick={() => setShowSecret((v) => !v)}>
-                  {showSecret ? "Hide" : "Show"}
-                </button>
+            <div className="mt-4 grid gap-4 sm:grid-cols-[auto_1fr] sm:items-start">
+              <div className="mx-auto w-fit rounded-2xl bg-white p-3 shadow-sm">
+                {qr ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={qr} alt="Pow3Folio ops authenticator QR code" className="h-44 w-44" />
+                ) : (
+                  <div className="flex h-44 w-44 items-center justify-center text-xs text-zinc-500">Preparing QR\u2026</div>
+                )}
               </div>
-              <p className="mt-1 text-[11px] text-foreground-subtle">
-                Add account → Enter a setup key → account name Pow3Folio ops → time-based.
-              </p>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <code className="min-w-0 flex-1 break-all rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs">
-                  {showSecret ? groupedSecret : "•••• •••• •••• ••••"}
+
+              <div className="rounded-xl border border-border bg-surface-elevated p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-medium">Setup key</h3>
+                  <button type="button" className="btn-ghost px-2 py-1 text-[11px]" onClick={() => setShowSecret((v) => !v)}>
+                    {showSecret ? "Hide key" : "Show key"}
+                  </button>
+                </div>
+                <p className="mt-1 text-[11px] leading-5 text-foreground-subtle">
+                  Add account \u2192 Enter a setup key \u2192 account name <span className="text-foreground">Pow3Folio ops</span> \u2192 type Time-based.
+                </p>
+                <code className="mt-3 block break-all rounded-lg border border-border bg-background px-3 py-2.5 font-mono text-xs tracking-wide">
+                  {secret ? (showSecret ? groupedSecret : "\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022") : "Generating key\u2026"}
                 </code>
-                <button type="button" className="btn-secondary text-xs" onClick={copySecret}>
-                  {copied ? "Copied" : "Copy key"}
+                <button type="button" className="btn-secondary mt-3 w-full text-xs" onClick={copySecret} disabled={!secret}>
+                  {copied ? "Setup key copied" : "Copy setup key"}
                 </button>
               </div>
-              {uri && <p className="mt-2 break-all text-[11px] text-foreground-subtle">URI: {uri}</p>}
             </div>
-          )}
+          </section>
         </div>
       )}
 
       {mode === "verify" && !qr && (
-        <div className="card space-y-3">
-          <h2 className="text-sm font-medium">Authenticator already connected</h2>
-          <p className="text-sm text-foreground-muted">
-            Open the app that already has <span className="font-medium text-foreground">Pow3Folio ops</span> and enter the current 6-digit code.
+        <section className="mb-4 rounded-2xl border border-border bg-surface p-5">
+          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-foreground-subtle">Already connected</p>
+          <h2 className="mt-1 text-base font-semibold">Open the app that already has this account</h2>
+          <p className="mt-2 text-sm leading-6 text-foreground-muted">
+            Look for <span className="font-medium text-foreground">{existingName}</span> in your authenticator and type the current 6-digit code below.
           </p>
-          <button type="button" className="btn-ghost px-0 text-xs" onClick={resetSetup} disabled={busy}>
-            Set up a new authenticator instead
-          </button>
-        </div>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <button type="button" className="btn-secondary text-xs" disabled={busy} onClick={() => void bootstrap(true)}>
+              I don\u2019t have that app \u2014 show a new QR and key
+            </button>
+          </div>
+        </section>
       )}
 
       {mode !== "loading" && (
-        <form onSubmit={verify} className="card space-y-3">
-          <div>
-            <label htmlFor="ops-otp" className="label">
-              Enter the 6-digit code
-            </label>
-            <input
-              id="ops-otp"
-              className="input text-center text-lg tracking-[0.45em]"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="000000"
-              maxLength={8}
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
-              required
-            />
-          </div>
+        <form onSubmit={verify} className="mt-4 rounded-2xl border border-border bg-surface p-5">
+          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-foreground-subtle">
+            {mode === "enroll" ? "Step 3" : "Confirm"}
+          </p>
+          <label htmlFor="ops-otp" className="mt-1 block text-base font-semibold">
+            Enter the 6-digit code
+          </label>
+          <input
+            id="ops-otp"
+            className="input mt-3 text-center text-2xl tracking-[0.55em]"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="000000"
+            maxLength={8}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
+            required
+          />
           {error && (
-            <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div>
+            <div className="mt-3 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div>
           )}
-          <button className="btn-primary w-full" disabled={busy || code.trim().length < 6}>
-            {busy ? "Checking…" : "Verify and enter Ops"}
+          <button className="btn-primary mt-4 w-full" disabled={busy || code.trim().length < 6}>
+            {busy ? "Checking\u2026" : "Verify and enter Ops"}
           </button>
         </form>
       )}
