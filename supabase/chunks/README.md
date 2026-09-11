@@ -14,7 +14,7 @@ Run these in order in the Supabase SQL editor. Each file is self-contained and u
 
 Then in the Supabase dashboard:
 
-- Authentication -> Hooks -> Custom Access Token -> `public.custom_access_token_hook`
+- Follow `supabase/HOOK_SETUP.md` for the Custom Access Token hook
 - Authentication -> Multi-Factor -> enable TOTP
 - Add `SUPABASE_SERVICE_ROLE_KEY` and `ADMIN_BOOTSTRAP_EMAILS` on Vercel (server only)
 
