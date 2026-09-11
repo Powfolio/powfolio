@@ -83,33 +83,34 @@ export default function AccountDetail({ id }: { id: string }) {
   }
 
   if (error && !data) return <p className="text-sm text-danger">{error}</p>;
-  if (!data) return <p className="text-sm text-foreground-muted">Loading account...</p>;
+  if (!data) return <p className="text-sm text-foreground-muted">Loading account\u2026</p>;
   const p = data.profile;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Link href="/ops" className="text-xs text-foreground-subtle hover:text-foreground">
-            Back to accounts
+            \u2190 Back to accounts
           </Link>
-          <h1 className="mt-2 text-lg font-semibold">@{p.username}</h1>
+          <p className="mt-3 text-[11px] font-medium uppercase tracking-[0.18em] text-primary">Account file</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight">@{p.username}</h1>
           <p className="text-sm text-foreground-muted">{p.displayName || "No display name"}</p>
         </div>
         <StatusPill status={p.status} />
       </div>
 
-      <section className="grid gap-3 sm:grid-cols-2">
-        <Info label="Email" value={data.email || "-"} />
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Info label="Email" value={data.email || "\u2014"} />
         <Info label="Email confirmed" value={data.emailConfirmed ? "Yes" : "No"} />
         <Info label="Signed up" value={new Date(p.createdAt).toLocaleString()} />
         <Info label="Public profile" value={p.isPublic ? "Yes" : "No"} />
-        <Info label="Wallet" value={p.wallet || "-"} mono />
+        <Info label="Wallet" value={p.wallet || "\u2014"} mono />
         <Info label="Providers" value={data.providers.join(", ") || "email"} />
       </section>
 
       {p.bio && (
-        <section>
+        <section className="rounded-2xl border border-border bg-surface p-4">
           <h2 className="text-sm font-medium mb-1">Bio</h2>
           <p className="text-sm text-foreground-muted">{p.bio}</p>
         </section>
@@ -117,8 +118,11 @@ export default function AccountDetail({ id }: { id: string }) {
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      <section className="rounded-xl border border-border p-4 space-y-3">
-        <h2 className="text-sm font-medium">Actions</h2>
+      <section className="rounded-2xl border border-border bg-surface p-5 space-y-3">
+        <div>
+          <h2 className="text-base font-semibold">Moderation actions</h2>
+          <p className="mt-1 text-xs text-foreground-subtle">Every click writes an audit row. Add a reason first.</p>
+        </div>
         <textarea
           className="input text-sm min-h-20"
           placeholder="Reason (stored in the audit log)"
@@ -127,19 +131,19 @@ export default function AccountDetail({ id }: { id: string }) {
         />
         <div className="flex flex-wrap gap-2">
           <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("review")}>
-            {busy === "review" ? "..." : "Mark under review"}
+            {busy === "review" ? "\u2026" : "Mark under review"}
           </button>
           <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("warn")}>
-            {busy === "warn" ? "..." : "Log warning"}
+            {busy === "warn" ? "\u2026" : "Log warning"}
           </button>
           <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("suspend")}>
-            {busy === "suspend" ? "..." : "Suspend"}
+            {busy === "suspend" ? "\u2026" : "Suspend"}
           </button>
           <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("unsuspend")}>
-            {busy === "unsuspend" ? "..." : "Un-suspend"}
+            {busy === "unsuspend" ? "\u2026" : "Un-suspend"}
           </button>
           <button className="btn-ghost text-xs text-danger" disabled={!!busy} onClick={() => act("delete")}>
-            {busy === "delete" ? "..." : "Delete account"}
+            {busy === "delete" ? "\u2026" : "Delete account"}
           </button>
         </div>
       </section>
@@ -149,7 +153,7 @@ export default function AccountDetail({ id }: { id: string }) {
         {data.reports.length === 0 && <p className="text-sm text-foreground-subtle">None</p>}
         <div className="space-y-2">
           {data.reports.map((r) => (
-            <div key={r.id} className="rounded-lg border border-border p-3 text-sm">
+            <div key={r.id} className="rounded-xl border border-border bg-surface p-3 text-sm">
               <div className="flex items-center justify-between gap-2 text-xs text-foreground-subtle">
                 <span>{(r.reasons || []).join(", ")}</span>
                 <StatusPill status={r.status} />
@@ -166,9 +170,9 @@ export default function AccountDetail({ id }: { id: string }) {
         {data.audit.length === 0 && <p className="text-sm text-foreground-subtle">None yet</p>}
         <ul className="space-y-1 text-xs text-foreground-muted">
           {data.audit.map((a) => (
-            <li key={a.id}>
-              {new Date(a.created_at).toLocaleString()} · {a.actor_email || "admin"} · {a.action}
-              {a.reason ? ` · ${a.reason}` : ""}
+            <li key={a.id} className="rounded-lg border border-border/70 px-3 py-2">
+              {new Date(a.created_at).toLocaleString()} \u00b7 {a.actor_email || "admin"} \u00b7 {a.action}
+              {a.reason ? ` \u00b7 ${a.reason}` : ""}
             </li>
           ))}
         </ul>
@@ -179,9 +183,9 @@ export default function AccountDetail({ id }: { id: string }) {
 
 function Info({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="rounded-lg border border-border px-3 py-2">
+    <div className="rounded-xl border border-border bg-surface px-3 py-2.5">
       <div className="text-[11px] text-foreground-subtle">{label}</div>
-      <div className={`text-sm break-all ${mono ? "font-mono text-xs" : ""}`}>{value}</div>
+      <div className={`mt-1 text-sm break-all ${mono ? "font-mono text-xs" : ""}`}>{value}</div>
     </div>
   );
 }
