@@ -46,7 +46,7 @@ export default function ReportProfileButton({
   }, [autoOpen]);
 
   function toggleReason(id: string) {
-    setReasons((cur) => (cur.includes(id) ? cur.filter((x) => x !== x && x !== id) : [...cur, id]));
+    setReasons((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   }
 
   async function submit(e: React.FormEvent) {
