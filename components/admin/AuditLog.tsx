@@ -11,6 +11,19 @@ type Row = {
   created_at: string;
 };
 
+const ACTION_LABEL: Record<string, string> = {
+  report_reviewed: "Reviewed report",
+  report_actioned: "Actioned report",
+  report_dismissed: "Dismissed report",
+  suspend_account: "Suspended account",
+  unsuspend_account: "Unsuspended account",
+  delete_account: "Soft-deleted account",
+  warn_account: "Logged warning",
+  mark_review: "Marked under review",
+  view_account: "Opened account",
+  promote_admin: "Promoted admin",
+};
+
 export default function AuditLog() {
   const [rows, setRows] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -34,37 +47,35 @@ export default function AuditLog() {
           Append-only. Every admin action writes a row that cannot be edited later.
         </p>
       </div>
-      {error && (
-        <div className="rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div>
-      )}
-      <div className="overflow-hidden rounded-2xl border border-border">
+      {error && <div className="text-sm text-danger">{error}</div>}
+      <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-surface-elevated text-left text-xs text-foreground-subtle">
+          <thead className="text-left text-xs text-foreground-subtle">
             <tr>
-              <th className="px-4 py-3 font-medium">When</th>
-              <th className="px-4 py-3 font-medium">Admin</th>
-              <th className="px-4 py-3 font-medium">Action</th>
-              <th className="px-4 py-3 font-medium">Target</th>
-              <th className="px-4 py-3 font-medium">Reason</th>
+              <th className="py-3 pr-4 font-medium">When</th>
+              <th className="py-3 pr-4 font-medium">Admin</th>
+              <th className="py-3 pr-4 font-medium">Action</th>
+              <th className="py-3 pr-4 font-medium">Target</th>
+              <th className="py-3 font-medium">Reason</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-foreground-muted">
+                <td colSpan={5} className="py-10 text-center text-foreground-muted">
                   No admin actions yet.
                 </td>
               </tr>
             )}
             {rows.map((r) => (
-              <tr key={r.id} className="border-t border-border/70">
-                <td className="px-4 py-3 whitespace-nowrap text-xs text-foreground-muted">
+              <tr key={r.id} className="border-t border-border/50">
+                <td className="py-3 pr-4 whitespace-nowrap text-xs text-foreground-muted">
                   {new Date(r.created_at).toLocaleString()}
                 </td>
-                <td className="px-4 py-3 break-all text-xs">{r.actor_email || "—"}</td>
-                <td className="px-4 py-3 font-medium">{r.action}</td>
-                <td className="px-4 py-3">{r.target_username ? `@${r.target_username}` : "—"}</td>
-                <td className="px-4 py-3 text-xs text-foreground-muted">{r.reason || "—"}</td>
+                <td className="py-3 pr-4 break-all text-xs">{r.actor_email || "-"}</td>
+                <td className="py-3 pr-4 font-medium">{ACTION_LABEL[r.action] || r.action.replaceAll("_", " ")}</td>
+                <td className="py-3 pr-4">{r.target_username ? `@${r.target_username}` : "-"}</td>
+                <td className="py-3 text-xs text-foreground-muted">{r.reason || "-"}</td>
               </tr>
             ))}
           </tbody>

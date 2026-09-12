@@ -69,8 +69,12 @@ export default function ReportProfileButton({
   }
 
   return (
-    <div className="mt-8 border-t border-border pt-6 text-center">
-      <button type="button" className="btn-secondary text-xs" onClick={start}>
+    <div className="mt-16 pb-8 text-center">
+      <button
+        type="button"
+        className="text-[11px] text-foreground-subtle underline-offset-4 hover:text-foreground-muted hover:underline"
+        onClick={start}
+      >
         Report @{targetUsername}
       </button>
       {authOpen && (
@@ -101,9 +105,7 @@ export default function ReportProfileButton({
               </button>
             </div>
             {thanks ? (
-              <p className="text-sm text-foreground-muted">
-                Thank you, your report has been received. The reported person will not see who sent this.
-              </p>
+              <p className="text-sm text-foreground-muted">Thank you, your report has been received.</p>
             ) : (
               <form onSubmit={submit} className="space-y-3">
                 {error && <p className="text-xs text-danger">{error}</p>}
