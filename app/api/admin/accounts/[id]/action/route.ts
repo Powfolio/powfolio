@@ -63,6 +63,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
           account_status: "suspended",
           suspension_reason: reason || "Suspicious or malicious activity",
           suspended_at: now,
+          is_public: true,
         })
         .eq("id", id);
       await admin
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         .update({ status: "actioned", resolved_by: gate.session.user.id, resolved_at: now })
         .eq("reported_id", id)
         .in("status", ["pending", "reviewed"]);
+
       const { data: authUser } = await admin.auth.admin.getUserById(id);
       const to = authUser.user?.email;
       if (to) {
@@ -111,6 +113,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
     const nextStatus =
       action === "suspend" ? "suspended" : action === "unsuspend" ? "active" : action === "review" ? "under_review" : profile.account_status || "active";
+
     return NextResponse.json({ ok: true, status: nextStatus });
   } catch (e) {
     console.error("admin action", e);
