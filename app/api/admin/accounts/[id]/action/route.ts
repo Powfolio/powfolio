@@ -80,7 +80,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     } else if (action === "unsuspend") {
       await admin
         .from("profiles")
-        .update({ account_status: "active", suspension_reason: null, suspended_at: null })
+        .update({
+          account_status: "active",
+          suspension_reason: null,
+          suspended_at: null,
+          is_public: true,
+        })
         .eq("id", id);
     } else if (action === "review") {
       await admin.from("profiles").update({ account_status: "under_review" }).eq("id", id);
