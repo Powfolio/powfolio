@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminMfa } from "@/lib/admin/auth";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { writeAudit } from "@/lib/admin/audit";
+import { sendTransactionalEmail, suspensionEmail } from "@/lib/admin/mail";
+import { softDeleteAccount } from "@/lib/accounts/soft-delete";
 
 export const runtime = "nodejs";
 
@@ -25,42 +27,63 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   try {
     const admin = createServiceClient();
-    const { data: profile } = await admin.from("profiles").select("id, username, account_status").eq("id", id).maybeSingle();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id, username, original_username, account_status, is_public")
+      .eq("id", id)
+      .maybeSingle();
     if (!profile) return NextResponse.json({ error: "Account not found" }, { status: 404 });
 
+    const publicName = (profile.original_username || profile.username) as string;
+
     if (action === "delete") {
-      await admin.from("profile_reports").update({ status: "actioned", resolved_by: gate.session.user.id, resolved_at: new Date().toISOString() }).eq("reported_id", id).in("status", ["pending", "reviewed"]);
-      await writeAudit({
-        actorId: gate.session.user.id,
-        actorEmail: gate.session.email,
-        action: "delete_account",
-        targetUserId: id,
-        targetUsername: profile.username,
-        reason: reason || null,
-      });
-      await admin.from("profiles").delete().eq("id", id);
-      const { error } = await admin.auth.admin.deleteUser(id);
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      return NextResponse.json({ ok: true, status: "deleted" });
-    }
-
-    const nextStatus =
-      action === "suspend" ? "suspended" : action === "unsuspend" ? "active" : action === "review" ? "under_review" : profile.account_status || "active";
-
-    if (action === "suspend") {
-      await admin.from("profiles").update({ account_status: "suspended", is_public: false }).eq("id", id);
-    } else if (action === "unsuspend") {
-      await admin.from("profiles").update({ account_status: "active" }).eq("id", id);
-    } else if (action === "review") {
-      await admin.from("profiles").update({ account_status: "under_review" }).eq("id", id);
-    }
-
-    if (action === "suspend") {
+      const deleted = await softDeleteAccount({ userId: id, reason: reason || "Admin delete" });
       await admin
         .from("profile_reports")
         .update({ status: "actioned", resolved_by: gate.session.user.id, resolved_at: new Date().toISOString() })
         .eq("reported_id", id)
         .in("status", ["pending", "reviewed"]);
+      await writeAudit({
+        actorId: gate.session.user.id,
+        actorEmail: gate.session.email,
+        action: "delete_account",
+        targetUserId: id,
+        targetUsername: deleted.original,
+        reason: reason || null,
+        meta: { adminUsername: deleted.username },
+      });
+      return NextResponse.json({ ok: true, status: "deleted" });
+    }
+
+    const now = new Date().toISOString();
+    if (action === "suspend") {
+      await admin
+        .from("profiles")
+        .update({
+          account_status: "suspended",
+          suspension_reason: reason || "Suspicious or malicious activity",
+          suspended_at: now,
+        })
+        .eq("id", id);
+      await admin
+        .from("profile_reports")
+        .update({ status: "actioned", resolved_by: gate.session.user.id, resolved_at: now })
+        .eq("reported_id", id)
+        .in("status", ["pending", "reviewed"]);
+      const { data: authUser } = await admin.auth.admin.getUserById(id);
+      const to = authUser.user?.email;
+      if (to) {
+        const origin = process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin || "https://pow3folio.vercel.app";
+        const mail = suspensionEmail({ username: publicName, origin });
+        await sendTransactionalEmail({ to, ...mail });
+      }
+    } else if (action === "unsuspend") {
+      await admin
+        .from("profiles")
+        .update({ account_status: "active", suspension_reason: null, suspended_at: null })
+        .eq("id", id);
+    } else if (action === "review") {
+      await admin.from("profiles").update({ account_status: "under_review" }).eq("id", id);
     }
 
     const auditAction =
@@ -77,13 +100,15 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       actorEmail: gate.session.email,
       action: auditAction,
       targetUserId: id,
-      targetUsername: profile.username,
+      targetUsername: publicName,
       reason: reason || null,
     });
 
-    return NextResponse.json({ ok: true, status: action === "warn" ? profile.account_status : nextStatus });
+    const nextStatus =
+      action === "suspend" ? "suspended" : action === "unsuspend" ? "active" : action === "review" ? "under_review" : profile.account_status || "active";
+    return NextResponse.json({ ok: true, status: nextStatus });
   } catch (e) {
     console.error("admin action", e);
-    return NextResponse.json({ error: "Action failed" }, { status: 500 });
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Action failed" }, { status: 500 });
   }
 }
