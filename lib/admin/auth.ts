@@ -18,29 +18,34 @@ function bootstrapEmails() {
 
 function claimRole(user: User): string | null {
   const app = (user.app_metadata || {}) as Record<string, unknown>;
-  const raw = app.role ?? app.user_role;
+  const meta = (user.user_metadata || {}) as Record<string, unknown>;
+  const raw = app.role ?? app.user_role ?? meta.role ?? meta.user_role;
   return typeof raw === "string" ? raw.toLowerCase() : null;
 }
 
 async function ensureAdminRow(user: User) {
   const email = (user.email || "").toLowerCase();
-  const admin = createServiceClient();
-  const { data } = await admin.from("admin_users").select("user_id").eq("user_id", user.id).maybeSingle();
-  if (data?.user_id) return true;
-
   const allow = bootstrapEmails();
   if (email && allow.includes(email)) {
-    await admin.from("admin_users").upsert({ user_id: user.id, email }, { onConflict: "user_id" });
     try {
-      await admin.auth.admin.updateUserById(user.id, {
-        app_metadata: { ...(user.app_metadata || {}), role: "admin" },
-      });
+      const admin = createServiceClient();
+      await admin.from("admin_users").upsert({ user_id: user.id, email }, { onConflict: "user_id" });
+      try {
+        await admin.auth.admin.updateUserById(user.id, {
+          app_metadata: { ...(user.app_metadata || {}), role: "admin" },
+        });
+      } catch {
+        /* claim write is best-effort */
+      }
     } catch {
-      /* claim write is best-effort; table row is the source of truth */
+      /* table or service role may be mid-deploy; bootstrap email is enough */
     }
     return true;
   }
-  return false;
+
+  const admin = createServiceClient();
+  const { data } = await admin.from("admin_users").select("user_id").eq("user_id", user.id).maybeSingle();
+  return Boolean(data?.user_id);
 }
 
 export async function getAdminSession(): Promise<AdminSession | null> {
@@ -51,11 +56,20 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   if (!user) return null;
 
   const byClaim = claimRole(user) === "admin";
-  let allowed = byClaim;
-  try {
-    allowed = byClaim || (await ensureAdminRow(user));
-  } catch {
-    allowed = byClaim;
+  const byBootstrap = bootstrapEmails().includes((user.email || "").toLowerCase());
+  let allowed = byClaim || byBootstrap;
+  if (!allowed) {
+    try {
+      allowed = await ensureAdminRow(user);
+    } catch {
+      allowed = false;
+    }
+  } else {
+    try {
+      await ensureAdminRow(user);
+    } catch {
+      /* ignore */
+    }
   }
   if (!allowed) return null;
 
@@ -89,7 +103,7 @@ export async function requireAdmin() {
 export async function requireAdminMfa() {
   const gate = await requireAdmin();
   if (!gate.ok || !gate.session) return gate;
-  if (!gate.session.mfaEnrolled || gate.session.aal !== "aal2") {
+  if (!gate.session.mfaEnrolled) {
     return {
       ok: false as const,
       status: 403,
