@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { REPORT_REASONS } from "@/lib/reports/constants";
+import AuthModal from "@/components/auth/AuthModal";
 
 export default function ReportProfileButton({
   targetId,
@@ -15,7 +15,7 @@ export default function ReportProfileButton({
   signedIn: boolean;
   autoOpen?: boolean;
 }) {
-  const router = useRouter();
+  const [authOpen, setAuthOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [reasons, setReasons] = useState<string[]>([]);
   const [note, setNote] = useState("");
@@ -26,7 +26,7 @@ export default function ReportProfileButton({
 
   async function start() {
     if (!signedIn) {
-      router.push(`/login?next=${encodeURIComponent(`/${targetUsername}?report=1`)}`);
+      setAuthOpen(true);
       return;
     }
     setError(null);
@@ -46,7 +46,7 @@ export default function ReportProfileButton({
   }, [autoOpen]);
 
   function toggleReason(id: string) {
-    setReasons((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+    setReasons((cur) => (cur.includes(id) ? cur.filter((x) => x !== x && x !== id) : [...cur, id]));
   }
 
   async function submit(e: React.FormEvent) {
@@ -70,9 +70,19 @@ export default function ReportProfileButton({
 
   return (
     <div className="mt-8 border-t border-border pt-6 text-center">
-      <button type="button" className="text-xs text-foreground-subtle hover:text-danger" onClick={start}>
-        Report {targetUsername}
+      <button type="button" className="btn-secondary text-xs" onClick={start}>
+        Report @{targetUsername}
       </button>
+      {authOpen && (
+        <AuthModal
+          nextPath={`/${targetUsername}?report=1`}
+          onClose={() => setAuthOpen(false)}
+          onSignedIn={() => {
+            setAuthOpen(false);
+            window.location.href = `/${targetUsername}?report=1`;
+          }}
+        />
+      )}
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-3"
@@ -126,7 +136,7 @@ export default function ReportProfileButton({
                 />
                 <p className="text-[11px] text-foreground-subtle">Optional. Up to 3 images, 5MB each.</p>
                 <button className="btn-primary w-full text-sm" disabled={busy}>
-                  {busy ? "Sending…" : "Submit report"}
+                  {busy ? "Sending..." : "Submit report"}
                 </button>
               </form>
             )}

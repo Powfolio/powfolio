@@ -19,15 +19,24 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     const admin = createServiceClient();
     const { data: appeal } = await admin.from("account_appeals").select("*").eq("id", id).maybeSingle();
     if (!appeal) return NextResponse.json({ error: "Appeal not found" }, { status: 404 });
-    await admin.from("account_appeals").update({
-      status,
-      admin_note: note || appeal.admin_note,
-      reviewed_by: gate.session.user.id,
-      reviewed_at: new Date().toISOString(),
-    }).eq("id", id);
+
+    await admin
+      .from("account_appeals")
+      .update({
+        status,
+        admin_note: note || appeal.admin_note,
+        reviewed_by: gate.session.user.id,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
     if (status === "approved" && appeal.user_id) {
-      await admin.from("profiles").update({ account_status: "active", suspension_reason: null, suspended_at: null }).eq("id", appeal.user_id);
+      await admin
+        .from("profiles")
+        .update({ account_status: "active", suspension_reason: null, suspended_at: null, is_public: true })
+        .eq("id", appeal.user_id);
     }
+
     await writeAudit({
       actorId: gate.session.user.id,
       actorEmail: gate.session.email,
@@ -37,6 +46,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       reason: note || `appeal_${status}`,
       meta: { appealId: id, appealStatus: status },
     });
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("appeal action", e);
