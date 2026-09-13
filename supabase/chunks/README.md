@@ -1,6 +1,6 @@
 # Trust and safety SQL chunks
 
-Run these in order in the Supabase SQL editor. Each file is self-contained and uses no dollar-quoting.
+Run these in order in the Supabase SQL editor. Each file is self-contained and uses no dollar-quoting, so paste cannot turn `do $$ begin` into `do [ begin`.
 
 1. `01_profile_status.sql`
 2. `02_tables.sql`
@@ -12,10 +12,13 @@ Run these in order in the Supabase SQL editor. Each file is self-contained and u
 8. `08_report_evidence_bucket.sql`
 9. `09_promote_admin.sql` after you replace the placeholder email
 10. `10_appeals_softdelete_activity.sql`
+11. `11_public_suspended_select.sql`
+12. `12_profile_lifecycle.sql`  (snapshots, history, deleted archive, legal hold)
 
 Then in the Supabase dashboard:
 
 - Follow `supabase/HOOK_SETUP.md` for the Custom Access Token hook
 - Authentication -> Multi-Factor -> enable TOTP
 - Add `SUPABASE_SERVICE_ROLE_KEY` and `ADMIN_BOOTSTRAP_EMAILS` on Vercel (server only)
-- Optional: `RESEND_API_KEY` so suspension emails actually send
+
+Do not paste SQL from chat if your client strips `$`. Open the files on GitHub instead.

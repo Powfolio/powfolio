@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/wallet-scan",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/profile-lifecycle",
+      "schedule": "*/15 * * * *"
     }
   ]
 }
