@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { StatusPill, Avatar } from "@/components/admin/AccountsTable";
+import ProfileLifecycle from "@/components/admin/ProfileLifecycle";
 
 type Detail = {
   profile: {
@@ -23,25 +24,16 @@ type Detail = {
     suspensionReason: string | null;
     suspendedAt: string | null;
     deletedAt: string | null;
+    purgeAt?: string | null;
+    legalHold?: boolean;
+    legalHoldReason?: string | null;
+    deletionState?: string | null;
   };
   email: string | null;
   emailConfirmed: boolean;
   providers: string[];
-  reports: Array<{
-    id: string;
-    reasons: string[];
-    note: string;
-    status: string;
-    created_at: string;
-    attachments: string[];
-  }>;
-  audit: Array<{
-    id: string;
-    actor_email: string | null;
-    action: string;
-    reason: string | null;
-    created_at: string;
-  }>;
+  reports: Array<{ id: string; reasons: string[]; note: string; status: string; created_at: string; attachments: string[] }>;
+  audit: Array<{ id: string; actor_email: string | null; action: string; reason: string | null; created_at: string }>;
   activity: Array<{ id: string; action: string; detail: string | null; created_at: string }>;
 };
 
@@ -67,7 +59,8 @@ export default function AccountDetail({ id }: { id: string }) {
   }, [id]);
 
   async function act(action: string) {
-    if (action === "delete" && !window.confirm("Soft-delete this account for 180 days and free the public username?")) return;
+    if (action === "delete" && !window.confirm("Create a final snapshot, hide the public profile, and keep a 180-day admin archive?")) return;
+    if (action === "restore" && !window.confirm("Restore this account to active and return the public username if it is free?")) return;
     setBusy(action);
     const res = await fetch(`/api/admin/accounts/${id}/action`, {
       method: "POST",
@@ -96,26 +89,16 @@ export default function AccountDetail({ id }: { id: string }) {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Link href="/ops" className="text-xs text-foreground-subtle hover:text-foreground">
-        Back to accounts
-      </Link>
+      <Link href="/ops" className="text-xs text-foreground-subtle hover:text-foreground">Back to accounts</Link>
       <div className="flex items-start gap-4">
         <Avatar url={p.avatarUrl} name={p.displayName || publicName} />
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-primary">Account file</p>
-          <a
-            href={`/${publicName}`}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-1 block text-3xl font-semibold tracking-tight hover:text-primary"
-          >
-            @{publicName}
-          </a>
+          <a href={`/${publicName}`} target="_blank" rel="noreferrer" className="mt-1 block text-3xl font-semibold tracking-tight hover:text-primary">@{publicName}</a>
           <p className="text-sm text-foreground-muted">{p.displayName || "No display name"}</p>
         </div>
         <StatusPill status={p.status} />
       </div>
-
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Info label="Email" value={data.email || "-"} />
         <Info label="Email confirmed" value={data.emailConfirmed ? "Yes" : "No"} />
@@ -124,37 +107,30 @@ export default function AccountDetail({ id }: { id: string }) {
         <Info label="Wallet" value={p.wallet || "-"} mono />
         <Info label="Providers" value={data.providers.join(", ") || "email"} />
       </section>
-
       {p.bio && <p className="text-sm text-foreground-muted">{p.bio}</p>}
       {error && <p className="text-sm text-danger">{error}</p>}
-
       <section className="space-y-3">
         <h2 className="text-base font-semibold">Moderation actions</h2>
-        <textarea
-          className="input min-h-20 text-sm"
-          placeholder="Reason (stored in the audit log and shown on a suspended public page)"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        />
+        <textarea className="input min-h-20 text-sm" placeholder="Reason (stored in the audit log and shown on a suspended public page)" value={reason} onChange={(e) => setReason(e.target.value)} />
         <div className="flex flex-wrap gap-2">
-          <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("review")}>
-            {busy === "review" ? "..." : "Mark under review"}
-          </button>
-          <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("warn")}>
-            {busy === "warn" ? "..." : "Log warning"}
-          </button>
-          <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("suspend")}>
-            {busy === "suspend" ? "..." : "Suspend"}
-          </button>
-          <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("unsuspend")}>
-            {busy === "unsuspend" ? "..." : "Un-suspend"}
-          </button>
-          <button className="btn-ghost text-xs text-danger" disabled={!!busy} onClick={() => act("delete")}>
-            {busy === "delete" ? "..." : "Soft delete"}
-          </button>
+          <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("review")}>{busy === "review" ? "..." : "Mark under review"}</button>
+          <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("warn")}>{busy === "warn" ? "..." : "Log warning"}</button>
+          <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("suspend")}>{busy === "suspend" ? "..." : "Suspend"}</button>
+          <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("unsuspend")}>{busy === "unsuspend" ? "..." : "Un-suspend"}</button>
+          <button className="btn-ghost text-xs text-danger" disabled={!!busy} onClick={() => act("delete")}>{busy === "delete" ? "..." : "Archive / delete"}</button>
+          {p.status === "deleted" && (
+            <button className="btn-secondary text-xs" disabled={!!busy} onClick={() => act("restore")}>{busy === "restore" ? "..." : "Restore account"}</button>
+          )}
         </div>
       </section>
-
+      <ProfileLifecycle
+        userId={id}
+        deleted={p.status === "deleted"}
+        purgeAt={p.purgeAt || null}
+        legalHold={Boolean(p.legalHold)}
+        legalHoldReason={p.legalHoldReason || null}
+        deletionState={p.deletionState || null}
+      />
       <section>
         <h2 className="mb-2 text-sm font-medium">Reports against this account</h2>
         {data.reports.length === 0 && <p className="text-sm text-foreground-subtle">None</p>}
@@ -170,16 +146,12 @@ export default function AccountDetail({ id }: { id: string }) {
           ))}
         </div>
       </section>
-
       <section>
         <h2 className="mb-2 text-sm font-medium">Last 100 account actions</h2>
         {(data.activity || []).length === 0 && <p className="text-sm text-foreground-subtle">None yet</p>}
         <ul className="space-y-1 text-xs text-foreground-muted">
           {(data.activity || []).map((a) => (
-            <li key={a.id}>
-              {new Date(a.created_at).toLocaleString()} - {a.action}
-              {a.detail ? ` - ${a.detail}` : ""}
-            </li>
+            <li key={a.id}>{new Date(a.created_at).toLocaleString()} - {a.action}{a.detail ? ` - ${a.detail}` : ""}</li>
           ))}
         </ul>
       </section>
