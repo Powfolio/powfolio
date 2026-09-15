@@ -3,11 +3,11 @@ import { requireAdminMfa } from "@/lib/admin/auth";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { writeAudit } from "@/lib/admin/audit";
 import { sendTransactionalEmail, suspensionEmail } from "@/lib/admin/mail";
-import { softDeleteAccount } from "@/lib/accounts/soft-delete";
+import { restoreDeletedAccount, softDeleteAccount } from "@/lib/accounts/soft-delete";
 
 export const runtime = "nodejs";
 
-const ACTIONS = new Set(["suspend", "unsuspend", "review", "warn", "delete"]);
+const ACTIONS = new Set(["suspend", "unsuspend", "review", "warn", "delete", "restore"]);
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminMfa();
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     const publicName = (profile.original_username || profile.username) as string;
 
     if (action === "delete") {
-      const deleted = await softDeleteAccount({ userId: id, reason: reason || "Admin delete" });
+      const deleted = await softDeleteAccount({ userId: id, reason: reason || "Admin delete", actorId: gate.session.user.id });
       await admin
         .from("profile_reports")
         .update({ status: "actioned", resolved_by: gate.session.user.id, resolved_at: new Date().toISOString() })
@@ -53,6 +53,19 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         meta: { adminUsername: deleted.username },
       });
       return NextResponse.json({ ok: true, status: "deleted" });
+    }
+
+    if (action === "restore") {
+      const restored = await restoreDeletedAccount({ userId: id, actorId: gate.session.user.id });
+      await writeAudit({
+        actorId: gate.session.user.id,
+        actorEmail: gate.session.email,
+        action: "restore_profile",
+        targetUserId: id,
+        targetUsername: restored.username,
+        reason: reason || null,
+      });
+      return NextResponse.json({ ok: true, status: "active" });
     }
 
     const now = new Date().toISOString();
