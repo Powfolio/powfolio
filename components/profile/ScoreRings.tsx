@@ -104,7 +104,7 @@ export default function ScoreRings({ username, initialProfile, initialBuilder }:
         <Ring value={profile} label="Profile" accent="#a855f7" />
       </div>
       <div className="relative">
-        <Ring value={builder} label="Builder" accent="#10b981" />
+        <Ring value={builder} label="Builder" accent="#B8863B" />
       </div>
     </div>
   );

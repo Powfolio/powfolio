@@ -44,8 +44,8 @@ const config: Config = {
         mono: ["var(--font-geist-mono)", "monospace"],
       },
       boxShadow: {
-        glow: "0 0 20px -5px rgba(16, 185, 129, 0.25)",
-        "glow-sm": "0 0 12px -3px rgba(16, 185, 129, 0.2)",
+        glow: "0 0 20px -5px rgba(184, 134, 59, 0.25)",
+        "glow-sm": "0 0 12px -3px rgba(184, 134, 59, 0.2)",
       },
       backgroundImage: {
         "grid-pattern":

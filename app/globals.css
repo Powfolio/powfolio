@@ -11,12 +11,12 @@
     --surface-hover: 228 228 231;
     --border: 228 228 231;
     --border-strong: 212 212 216;
-    --primary: 16 185 129;
-    --primary-hover: 5 150 105;
-    --primary-muted: 209 250 229;
-    --primary-foreground: 236 253 245;
-    --accent: 8 145 178;
-    --accent-muted: 207 250 254;
+    --primary: 184 134 59;
+    --primary-hover: 156 111 44;
+    --primary-muted: 245 232 211;
+    --primary-foreground: 13 13 12;
+    --accent: 74 122 120;
+    --accent-muted: 222 234 233;
     --foreground: 24 24 27;
     --foreground-muted: 82 82 91;
     --foreground-subtle: 113 113 122;
@@ -33,12 +33,12 @@
     --surface-hover: 63 63 70;
     --border: 39 39 42;
     --border-strong: 63 63 70;
-    --primary: 16 185 129;
-    --primary-hover: 5 150 105;
-    --primary-muted: 6 78 59;
-    --primary-foreground: 236 253 245;
-    --accent: 34 211 238;
-    --accent-muted: 8 51 68;
+    --primary: 184 134 59;
+    --primary-hover: 201 154 79;
+    --primary-muted: 58 42 20;
+    --primary-foreground: 13 13 12;
+    --accent: 74 122 120;
+    --accent-muted: 26 45 44;
     --foreground: 250 250 250;
     --foreground-muted: 161 161 170;
     --foreground-subtle: 113 113 122;
@@ -203,7 +203,7 @@
     inset: -1px;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(120deg, transparent 20%, rgba(16, 185, 129, 0.55) 45%, rgba(34, 211, 238, 0.45) 55%, transparent 80%);
+    background: linear-gradient(120deg, transparent 20%, rgba(184, 134, 59, 0.55) 45%, rgba(74, 122, 120, 0.45) 55%, transparent 80%);
     background-size: 200% 200%;
     animation: shine-move 3.5s linear infinite;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -216,7 +216,7 @@
   .stat-pop { animation: stat-pop 0.65s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
   .hero-gradient-text {
-    background: linear-gradient(135deg, rgb(16 185 129) 0%, rgb(34 211 238) 45%, rgb(16 185 129) 100%);
+    background: linear-gradient(135deg, rgb(184 134 59) 0%, rgb(217 173 110) 45%, rgb(184 134 59) 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;
@@ -260,7 +260,7 @@
 @keyframes shine-move { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
 @keyframes stat-pop { from { opacity: 0; transform: translateY(14px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-@keyframes cta-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 50% { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); } }
+@keyframes cta-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(184, 134, 59, 0.4); } 50% { box-shadow: 0 0 0 12px rgba(184, 134, 59, 0); } }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes logo-nudge { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-8deg); } 60% { transform: rotate(6deg); } }
 
