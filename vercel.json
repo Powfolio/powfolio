@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/profile-lifecycle",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 5 * * *"
     }
   ]
 }
