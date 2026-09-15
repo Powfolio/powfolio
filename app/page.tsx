@@ -62,15 +62,15 @@ export default async function HomePage() {
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute top-[28%] -right-24 h-80 w-80 rounded-full bg-sky-500/20 blur-3xl float-y"
+        className="pointer-events-none absolute top-[28%] -right-24 h-80 w-80 rounded-full bg-accent/20 blur-3xl float-y"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute bottom-[6%] -left-20 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl float-y-slow"
+        className="pointer-events-none absolute bottom-[6%] -left-20 h-72 w-72 rounded-full bg-primary/15 blur-3xl float-y-slow"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute top-[55%] left-[12%] h-40 w-40 rounded-full bg-emerald-400/10 blur-2xl float-y"
+        className="pointer-events-none absolute top-[55%] left-[12%] h-40 w-40 rounded-full bg-accent/10 blur-2xl float-y"
         aria-hidden
       />
 
