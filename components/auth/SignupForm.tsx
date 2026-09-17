@@ -9,12 +9,19 @@ export default function SignupForm({ nextPath = "/dashboard" }: { nextPath?: str
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const loginHref = nextPath && nextPath !== "/dashboard" ? `/login?next=${encodeURIComponent(nextPath)}` : "/login";
+
+  function requireTerms() {
+    if (accepted) return true;
+    setError("Accept the Terms and Privacy Policy to create an account.");
+    return false;
+  }
 
   async function guardSignup() {
     const res = await fetch("/api/auth/signup-guard", { method: "POST" });
@@ -29,6 +36,7 @@ export default function SignupForm({ nextPath = "/dashboard" }: { nextPath?: str
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!requireTerms()) return;
     setLoading(true);
 
     const allowed = await guardSignup();
@@ -75,6 +83,7 @@ export default function SignupForm({ nextPath = "/dashboard" }: { nextPath?: str
 
   async function signInWithProvider(provider: "google" | "twitter") {
     setError(null);
+    if (!requireTerms()) return;
     setOauthLoading(provider);
     const allowed = await guardSignup();
     if (!allowed) {
@@ -106,7 +115,7 @@ export default function SignupForm({ nextPath = "/dashboard" }: { nextPath?: str
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
           ✓
         </div>
-        <h1 className="text-xl font-semibold">Check your email</h1>
+        <h2 className="text-xl font-semibold">Check your email</h2>
         <p className="mt-2 text-sm text-foreground-muted">
           We sent a confirmation link to{" "}
           <strong className="text-foreground">{email}</strong>. Click it to activate your
@@ -133,21 +142,11 @@ export default function SignupForm({ nextPath = "/dashboard" }: { nextPath?: str
       )}
 
       <div className="grid gap-2">
-        <button
-          type="button"
-          disabled={!!oauthLoading}
-          onClick={() => signInWithProvider("google")}
-          className="btn-secondary w-full justify-center text-sm"
-        >
-          {oauthLoading === "google" ? "Redirecting…" : "Continue with Google"}
+        <button type="button" disabled={!!oauthLoading} onClick={() => signInWithProvider("google")} className="btn-secondary w-full justify-center text-sm">
+          {oauthLoading === "google" ? "Redirecting..." : "Continue with Google"}
         </button>
-        <button
-          type="button"
-          disabled={!!oauthLoading}
-          onClick={() => signInWithProvider("twitter")}
-          className="btn-secondary w-full justify-center text-sm"
-        >
-          {oauthLoading === "twitter" ? "Redirecting…" : "Continue with X"}
+        <button type="button" disabled={!!oauthLoading} onClick={() => signInWithProvider("twitter")} className="btn-secondary w-full justify-center text-sm">
+          {oauthLoading === "twitter" ? "Redirecting..." : "Continue with X"}
         </button>
       </div>
 
@@ -162,58 +161,32 @@ export default function SignupForm({ nextPath = "/dashboard" }: { nextPath?: str
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="label">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="input"
-            placeholder="you@example.com"
-            autoComplete="email"
-          />
+          <label htmlFor="email" className="label">Email</label>
+          <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="input" placeholder="you@example.com" autoComplete="email" />
         </div>
-
         <div>
-          <label htmlFor="password" className="label">
-            Password
-          </label>
+          <label htmlFor="password" className="label">Password</label>
           <div className="relative">
-            <input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input pr-11"
-              placeholder="At least 6 characters"
-              autoComplete="new-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-foreground-subtle hover:bg-surface-hover hover:text-foreground"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
+            <input id="password" type={showPassword ? "text" : "password"} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="input pr-11" placeholder="At least 6 characters" autoComplete="new-password" />
+            <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-foreground-subtle hover:bg-surface-hover hover:text-foreground" aria-label={showPassword ? "Hide password" : "Show password"}>
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
         </div>
-
-        <button type="submit" disabled={loading} className="btn-primary w-full">
+        <label className="flex items-start gap-2 text-xs leading-5 text-foreground-muted">
+          <input type="checkbox" className="mt-0.5" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} required />
+          <span>
+            I agree to the <Link href="/terms" className="text-primary hover:underline">Terms</Link> and <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+          </span>
+        </label>
+        <button type="submit" disabled={loading || !accepted} className="btn-primary w-full">
           {loading ? "Creating account..." : "Create account"}
         </button>
       </form>
 
       <p className="text-center text-sm text-foreground-muted">
         Already have an account?{" "}
-        <Link href={loginHref} className="text-primary hover:underline">
-          Log in
-        </Link>
+        <Link href={loginHref} className="text-primary hover:underline">Log in</Link>
       </p>
     </div>
   );
