@@ -1,11 +1,13 @@
 import type { OnchainChain } from "@/lib/onchain";
 import { applyActivity } from "@/lib/onchain-fast";
+import type { DefiProtocol } from "@/lib/defi";
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 
-type TxLike = {
+export type TxLike = {
   method?: string | null;
   to?: { hash?: string } | null;
+  from?: { hash?: string } | null;
   created_contract?: { hash?: string } | null;
   transaction_types?: string[] | null;
   value?: string;
@@ -23,12 +25,32 @@ function humanMethod(method: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export function classifyTx(tx: TxLike): string {
+export function isContractDeployment(tx: TxLike): boolean {
+  const types = (tx.transaction_types || []).map((t) => t.toLowerCase());
+  if (tx.created_contract?.hash) return true;
+  if (types.includes("contract_creation") || types.includes("contract_created")) return true;
+  const to = (tx.to?.hash || "").toLowerCase();
+  if (!to || to === ZERO) return true;
+  return false;
+}
+
+export function protocolForAddress(address: string | null | undefined, protocols: DefiProtocol[] = []) {
+  const hash = (address || "").toLowerCase();
+  if (!hash) return null;
+  return protocols.find((p) => p.address === hash) || null;
+}
+
+export function classifyTx(tx: TxLike, protocols: DefiProtocol[] = []): string {
   const types = (tx.transaction_types || []).map((t) => t.toLowerCase());
   const method = (tx.method || "").trim();
   const m = method.toLowerCase();
-  if (tx.created_contract || types.includes("contract_creation") || !tx.to?.hash) return "Contract deployment";
-  if (/(swap|exactinput|exactoutput|exact_input|exact_output)/i.test(m)) return "Swap";
+  if (isContractDeployment(tx)) return "Contract deployment";
+
+  const proto = protocolForAddress(tx.to?.hash, protocols);
+  const isSwap = /(swap|exactinput|exactoutput|exact_input|exact_output|multihop|uniswap)/i.test(m);
+
+  if (isSwap) return "Swap";
+  if (proto) return `${proto.name} interaction`;
   if (/mint/i.test(m) || types.includes("token_minting")) return "Mint";
   if (/approve/i.test(m)) return "Approval";
   if (/transfer/i.test(m) || types.includes("coin_transfer") || types.includes("token_transfer")) return "Transfer";
@@ -87,6 +109,8 @@ export function mergeActivity(
     for (const [kind, n] of Object.entries(kindMap)) {
       bag.activityKinds[day][kind] = Math.max(bag.activityKinds[day][kind] || 0, n);
     }
+    const kindTotal = Object.values(bag.activityKinds[day]).reduce((sum, v) => sum + v, 0);
+    bag.activityCounts[day] = Math.max(bag.activityCounts[day] || 0, kindTotal);
   }
   for (const [day, labels] of Object.entries(next.methods)) {
     const cur = chain.activityMethods[day] || [];

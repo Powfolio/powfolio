@@ -2,6 +2,31 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+function formatKindLine(kinds: Record<string, number> | undefined) {
+  if (!kinds) return "";
+  const rank = (label: string) => {
+    const l = label.toLowerCase();
+    if (l.includes("swap")) return 1;
+    if (l.includes("contract deploy")) return 2;
+    if (l.includes("transfer") && !l.includes("nft")) return 3;
+    if (l.includes("interaction")) return 4;
+    return 5;
+  };
+  const pluralize = (label: string, n: number) => {
+    if (n === 1) return label.toLowerCase();
+    if (/interaction$/i.test(label)) return `${label.toLowerCase()}s`;
+    if (/deployment$/i.test(label)) return "contract deployments";
+    if (/swap$/i.test(label)) return "swaps";
+    if (/transfer$/i.test(label)) return /nft/i.test(label) ? "NFT transfers" : "transfers";
+    if (/s$/i.test(label)) return label.toLowerCase();
+    return `${label.toLowerCase()}s`;
+  };
+  return Object.entries(kinds)
+    .sort((a, b) => rank(a[0]) - rank(b[0]) || b[1] - a[1])
+    .map(([label, n]) => `${n} ${pluralize(label, n)}`)
+    .join(", ");
+}
+
 function monthsBack(count: number) {
   const now = new Date();
   const out: { key: string; label: string; short: string; year: number; month: number }[] = [];
@@ -30,17 +55,6 @@ function tone(n: number, empty: boolean) {
   return "bg-emerald-400 border-emerald-200/50 text-zinc-950 shadow-[0_0_14px_rgba(16,185,129,0.45)]";
 }
 
-function kindLine(kinds: Record<string, number> | undefined) {
-  if (!kinds) return "";
-  const parts = Object.entries(kinds)
-    .sort((a, b) => b[1] - a[1])
-    .map(([label, n]) => {
-      const plural = n === 1 || /s$/i.test(label) ? label : `${label}s`;
-      return `${n} ${plural.toLowerCase()}`;
-    });
-  return parts.join(", ");
-}
-
 export default function ActivityHeatmap({
   days,
   methods = {},
@@ -58,21 +72,24 @@ export default function ActivityHeatmap({
 }) {
   const counts = useMemo(() => {
     const map = new Map<string, number>();
-    const hasCounts = countMap && Object.keys(countMap).length > 0;
-    if (hasCounts) {
-      for (const [key, n] of Object.entries(countMap)) {
-        const day = key.slice(0, 10);
-        map.set(day, Math.max(map.get(day) || 0, n));
-      }
-      return map;
+    for (const [key, kindMap] of Object.entries(kinds || {})) {
+      const day = key.slice(0, 10);
+      const total = Object.values(kindMap).reduce((sum, n) => sum + n, 0);
+      if (total > 0) map.set(day, Math.max(map.get(day) || 0, total));
     }
-    for (const day of days) {
-      const key = day.slice(0, 10);
-      if (!key) continue;
-      if (!map.has(key)) map.set(key, 1);
+    for (const [key, n] of Object.entries(countMap || {})) {
+      const day = key.slice(0, 10);
+      map.set(day, Math.max(map.get(day) || 0, n));
+    }
+    if (map.size === 0) {
+      for (const day of days) {
+        const key = day.slice(0, 10);
+        if (!key) continue;
+        map.set(key, Math.max(map.get(key) || 0, 1));
+      }
     }
     return map;
-  }, [days, countMap]);
+  }, [days, countMap, kinds]);
   const slides = useMemo(() => monthsBack(36), []);
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
@@ -89,7 +106,7 @@ export default function ActivityHeatmap({
 
   useEffect(() => {
     setOpen(null);
-  }, [days, countMap, chainName]);
+  }, [days, countMap, kinds, chainName]);
 
   const monthActive = useMemo(() => {
     let n = 0;
@@ -111,6 +128,7 @@ export default function ActivityHeatmap({
         kinds: kinds[open] || {},
       }
     : null;
+  const breakdown = selected ? formatKindLine(selected.kinds) : "";
 
   return (
     <div className="card space-y-4 overflow-hidden p-4 sm:p-5">
@@ -120,9 +138,9 @@ export default function ActivityHeatmap({
           <p className="mt-1 text-sm font-medium text-foreground">{slide.label}</p>
           <p className="mt-0.5 text-[11px] text-foreground-subtle">
             {loading
-              ? "Reading daily interactions…"
+              ? "Reading daily interactions..."
               : `${monthActive.days} active day${monthActive.days === 1 ? "" : "s"}${
-                  monthActive.hits ? ` · ${monthActive.hits} interaction${monthActive.hits === 1 ? "" : "s"}` : ""
+                  monthActive.hits ? ` · ${monthActive.hits} txn${monthActive.hits === 1 ? "" : "s"}` : ""
                 }`}
           </p>
         </div>
@@ -182,7 +200,7 @@ export default function ActivityHeatmap({
                 className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-semibold leading-none outline-none sm:h-8 sm:w-8 sm:text-[11px] ${tone(n, false)} ${
                   on ? "cursor-pointer hover:scale-110" : "cursor-default"
                 } ${isOpen ? "ring-2 ring-emerald-300 ring-offset-2 ring-offset-zinc-950" : ""}`}
-                aria-label={`Day ${dayNum}, ${n} interaction${n === 1 ? "" : "s"}`}
+                aria-label={`Day ${dayNum}, ${n} txn${n === 1 ? "" : "s"}`}
                 aria-pressed={isOpen}
                 title={`${dayNum} · ${n}`}
               >
@@ -202,7 +220,7 @@ export default function ActivityHeatmap({
           <span className="h-2.5 w-2.5 rounded-full border bg-emerald-400 border-emerald-200/50" />
           <span>More</span>
         </div>
-        <p>Tap a day for detail</p>
+        <p>Tap a day for the breakdown</p>
       </div>
 
       {selected && (
@@ -215,13 +233,11 @@ export default function ActivityHeatmap({
               return `${weekday}, ${d.getDate()} ${month} ${d.getFullYear()}`;
             })()}
           </p>
-          <p className="mt-1 text-xs text-foreground-muted">
-            {selected.count === 0
-              ? "No onchain activity this day."
-              : `${selected.count} interaction${selected.count === 1 ? "" : "s"} on ${chainName || "this chain"}.`}
+          <p className="mt-1 text-sm font-medium text-foreground">
+            {selected.count === 0 ? "No onchain activity this day." : `${selected.count} txn${selected.count === 1 ? "" : "s"}`}
           </p>
-          {kindLine(selected.kinds) ? (
-            <p className="mt-1 text-xs text-foreground-muted">{kindLine(selected.kinds)}</p>
+          {breakdown ? (
+            <p className="mt-1 text-xs leading-relaxed text-foreground-muted">{breakdown}</p>
           ) : selected.methods.length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-1">
               {selected.methods.slice(0, 8).map((m) => (
@@ -230,6 +246,8 @@ export default function ActivityHeatmap({
                 </span>
               ))}
             </div>
+          ) : selected.count > 0 ? (
+            <p className="mt-1 text-xs text-foreground-muted">on {chainName || "this chain"}</p>
           ) : null}
         </div>
       )}
