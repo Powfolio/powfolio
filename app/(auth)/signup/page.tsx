@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignupForm from "@/components/auth/SignupForm";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { safeNextPath } from "@/lib/auth/next-path";
+
+export const metadata: Metadata = {
+  title: "Create account",
+  description: "Create a free Pow3Folio profile and publish your Web3 proof of work.",
+  alternates: { canonical: "/signup" },
+};
 
 export default async function SignupPage({
   searchParams,
@@ -36,13 +43,13 @@ export default async function SignupPage({
           <ThemeToggle />
         </div>
       </header>
-      <main className="container-app flex flex-1 flex-col items-center justify-center py-12">
+      <main id="main" className="container-app flex flex-1 flex-col items-center justify-center py-12">
         <div className="w-full max-w-md">
           <h1 className="text-2xl font-bold tracking-tight">Create account</h1>
           <p className="mt-1 text-sm text-foreground-muted">
             Create your Web3 proof of work portfolio.
           </p>
-          <div className="mt-8 card">
+          <div className="mt-8">
             <SignupForm nextPath={nextPath} />
           </div>
           <p className="mt-6 text-center text-sm text-foreground-muted">
