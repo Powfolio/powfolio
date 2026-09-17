@@ -17,11 +17,11 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What is Profile Score?",
-    a: "Profile Score (0 to 100) measures how complete and polished your profile is — your identity details, how much you've filled in About, whether your skills have real descriptions, your work and education history, your connections, and whether your proof sections actually have content in them. It's about how well you've set things up, not how impressive the work itself is.",
+    a: "Profile Score (0 to 100) measures how complete and polished your profile is; your identity details, how much you've filled in About, whether your skills have real descriptions, your work and education history, your connections, and whether your proof sections actually have content in them. It's about how well you've set things up, not how impressive the work itself is.",
   },
   {
     q: "What is Builder Score?",
-    a: "Builder Score (0 to 100) is different — it measures actual evidence of your craft: technical writing, trading logs and platforms, community roles, onchain and airdrop activity, and linked work history. The more real, verified proof you add, the higher it climbs. Profile Score asks \"did you fill this out well.\" Builder Score asks \"can you back it up.\"",
+    a: "Builder Score (0 to 100) measures actual evidence of your craft: technical writing, trading logs and platforms, community roles, onchain and airdrop activity, and linked work history. The more real, verified proof you add, the higher it climbs. Profile Score asks \"did you fill this out well.\" Builder Score asks \"can you back it up.\"",
   },
   {
     q: "How do I make a tab public or private?",
@@ -29,7 +29,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How do skill pillars work?",
-    a: "Each skill pillar is a name plus a short brief, up to 250 characters. On your public About tab, they show up as compact chips — tap one to read the full description, tap outside to close it again.",
+    a: "Each skill pillar is a name plus a short brief, up to 250 characters. On your public About tab, they show up as compact chips, tap one to read the full description, tap outside to close it again.",
   },
   {
     q: "Can people download my CV from my public page?",
@@ -41,7 +41,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Where is my public link?",
-    a: "Once you've set a username and made your profile public, it's yours at pow3folio.vercel.app/your_username. That's the one link you can drop anywhere — your bio, your DMs, wherever.",
+    a: "Once you've set a username and made your profile public, it's yours at pow3folio.vercel.app/your_username. That's the one link you can drop anywhere; your bio, your DMs, wherever.",
   },
   {
     q: "What is Pow3Bot?",
@@ -49,7 +49,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Can I hide my email?",
-    a: "Yes. Your primary and secondary emails are private by default — they only become visible if you turn on the public toggle for them in your Profile settings.",
+    a: "You can hide any of your email addresses, but at least one email address must remain visible on your public profile.",
   },
 ];
 
