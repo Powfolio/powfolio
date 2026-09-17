@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignupForm from "@/components/auth/SignupForm";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import SiteFooter from "@/components/legal/SiteFooter";
 import { safeNextPath } from "@/lib/auth/next-path";
 
 export const metadata: Metadata = {
@@ -52,14 +53,9 @@ export default async function SignupPage({
           <div className="mt-8">
             <SignupForm nextPath={nextPath} />
           </div>
-          <p className="mt-6 text-center text-sm text-foreground-muted">
-            Already have an account?{" "}
-            <Link href={nextPath !== "/dashboard" ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"} className="text-primary hover:underline">
-              Log in
-            </Link>
-          </p>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }
