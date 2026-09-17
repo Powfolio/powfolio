@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import FeatureScroller from "@/components/landing/FeatureScroller";
+import SiteFooter from "@/components/legal/SiteFooter";
+import JsonLd from "@/components/legal/JsonLd";
 
 const STEPS = [
   {
@@ -52,6 +54,7 @@ export default async function HomePage() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden">
+      <JsonLd />
       <div
         className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-[0.07] dark:opacity-[0.12]"
         style={{ backgroundSize: "40px 40px" }}
@@ -117,7 +120,7 @@ export default async function HomePage() {
         </div>
       </header>
 
-      <main className="relative z-10">
+      <main id="main" className="relative z-10">
         <section className="container-app pt-16 pb-12 sm:pt-28 sm:pb-16">
           <div className="mx-auto max-w-3xl text-center">
             <div className="landing-reveal landing-delay-1 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-[11px] font-medium text-foreground-muted backdrop-blur-sm shadow-sm">
@@ -141,17 +144,11 @@ export default async function HomePage() {
 
             <div className="landing-reveal landing-delay-4 mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
               {user ? (
-                <Link
-                  href="/dashboard"
-                  className="btn-primary px-8 py-3.5 text-sm shadow-lg shadow-primary/30 cta-pulse"
-                >
+                <Link href="/dashboard" className="btn-primary px-8 py-3.5 text-sm shadow-lg shadow-primary/30 cta-pulse">
                   Open dashboard
                 </Link>
               ) : (
-                <Link
-                  href="/signup"
-                  className="btn-primary px-8 py-3.5 text-sm shadow-lg shadow-primary/30 cta-pulse"
-                >
+                <Link href="/signup" className="btn-primary px-8 py-3.5 text-sm shadow-lg shadow-primary/30 cta-pulse">
                   Create free profile →
                 </Link>
               )}
@@ -247,10 +244,7 @@ export default async function HomePage() {
                 <h3 className="mt-4 font-semibold text-sm">{s.title}</h3>
                 <p className="mt-2 text-xs text-foreground-muted leading-relaxed">{s.desc}</p>
                 {i < STEPS.length - 1 && (
-                  <span
-                    className="hidden lg:block absolute top-9 -right-2.5 text-primary/40 text-xl"
-                    aria-hidden
-                  >
+                  <span className="hidden lg:block absolute top-9 -right-2.5 text-primary/40 text-xl" aria-hidden>
                     →
                   </span>
                 )}
@@ -286,27 +280,7 @@ export default async function HomePage() {
         </section>
       </main>
 
-      <footer className="relative z-10 border-t border-border/40 py-8">
-        <div className="container-app flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-foreground-subtle">
-          <div className="flex items-center gap-2">
-            <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/15 text-primary">
-              <span className="text-[9px] font-bold">P3</span>
-            </div>
-            <span>© {new Date().getFullYear()} Pow3Folio</span>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/faq" className="hover:text-foreground transition-colors">
-              FAQ
-            </Link>
-            <Link href="/signup" className="hover:text-foreground transition-colors">
-              Get started
-            </Link>
-            <Link href="/login" className="hover:text-foreground transition-colors">
-              Log in
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
