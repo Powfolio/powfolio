@@ -1,91 +1,103 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import SiteFooter from "@/components/legal/SiteFooter";
+import BackToTop from "@/components/ui/BackToTop";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "FAQ",
-  description: "Answers about Pow3Folio profiles, proof of work, and scores.",
+  description: "What Pow3Folio is, how Profile Score and Builder Score work, and how public profiles stay under your control.",
+  alternates: { canonical: "/faq" },
 };
 
 const FAQS: { q: string; a: string }[] = [
   {
     q: "What is Pow3Folio?",
-    a: "A public proof of work portfolio for Web3 builders: traders, researchers, community leads, airdrop hunters and developers. One clean URL shows trades, writing, community, airdrops, credentials and onchain presence.",
+    a: "Pow3Folio is a public proof-of-work profile built for Web3 builders, traders, researchers, community leads, airdrop hunters, and developers. Instead of screenshots scattered across X, Discord, and Notion, everything lives at one clean link: your trades, writing, community work, airdrops, credentials, and onchain activity.",
   },
   {
     q: "What is Profile Score?",
-    a: "A 0 to 100 score for completeness, richness and professionalism of your profile fields: identity, About depth, skills with descriptions, work/education, connections and whether proof sections have content.",
+    a: "Profile Score (0 to 100) measures how complete and polished your profile is — your identity details, how much you've filled in About, whether your skills have real descriptions, your work and education history, your connections, and whether your proof sections actually have content in them. It's about how well you've set things up, not how impressive the work itself is.",
   },
   {
     q: "What is Builder Score?",
-    a: "A separate 0 to 100 score for evidence density in your craft: technical writing, trading logs and platforms, community roles, onchain/airdrops, and linked work history. More verified proof raises this score.",
+    a: "Builder Score (0 to 100) is different — it measures actual evidence of your craft: technical writing, trading logs and platforms, community roles, onchain and airdrop activity, and linked work history. The more real, verified proof you add, the higher it climbs. Profile Score asks \"did you fill this out well.\" Builder Score asks \"can you back it up.\"",
   },
   {
     q: "How do I make a tab public or private?",
-    a: "In the dashboard, use section visibility toggles. About stays available; Writing, Trading, Community, Airdrops and Onchain can be turned off so they do not appear on your public URL.",
+    a: "You're in control of what shows up on your public profile. In your dashboard, use the section visibility toggles to turn Writing, Trading, Community, Airdrops, and Onchain on or off. About always stays visible, since it's the core of your profile.",
   },
   {
     q: "How do skill pillars work?",
-    a: "Each skill is a name plus a short brief (max 250 characters). On the public About tab they appear as compact chips. Tap a chip to open the description. Click outside to close.",
+    a: "Each skill pillar is a name plus a short brief, up to 250 characters. On your public About tab, they show up as compact chips — tap one to read the full description, tap outside to close it again.",
   },
   {
     q: "Can people download my CV from my public page?",
-    a: "No. Download CV lives on your dashboard only. It builds a professional PDF from the information you already added. Later you will be able to export skill-specific versions.",
+    a: "No, that stays private to you. The Download CV option lives in your dashboard, and it turns the information you've already added into a clean, professional PDF. Skill-specific export versions are on the way.",
   },
   {
     q: "What is work experience limited to?",
-    a: "Up to 5 entries. Each can include company or project, role, full-time or part-time, dates, description and an external link.",
+    a: "Up to 5 entries. Each one can include a company or project, your role, whether it was full-time or part-time, dates, a short description, and a link if you've got one.",
   },
   {
     q: "Where is my public link?",
-    a: "https://pow3folio.vercel.app/your_username after you set a username and make the profile public.",
+    a: "Once you've set a username and made your profile public, it's yours at pow3folio.vercel.app/your_username. That's the one link you can drop anywhere — your bio, your DMs, wherever.",
   },
   {
     q: "What is Pow3Bot?",
-    a: "The in-product assistant for Pow3Folio only. It helps with setup, copy, scores and how-tos. It does not give investment advice or support for other apps.",
+    a: "Pow3Bot is your in-product assistant, built specifically for Pow3Folio. It helps with setup, wording, understanding your scores, and general how-tos. It won't give investment advice, and it doesn't know anything about other apps.",
   },
   {
     q: "Can I hide my email?",
-    a: "Yes. Primary and secondary emails only show when you enable the public toggles in Profile.",
-  },
-  {
-    q: "Does Pow3Bot train on my chats?",
-    a: "Chats go through our server to Gemini. On Google free tier, prompts may be used to improve their products. For production privacy, use a paid Gemini project with data opt-out when available.",
+    a: "Yes. Your primary and secondary emails are private by default — they only become visible if you turn on the public toggle for them in your Profile settings.",
   },
 ];
 
 export default function FaqPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="container-app flex h-14 items-center justify-between gap-2">
-          <Link href="/" className="flex items-center gap-2 min-w-0">
+          <Link href="/" className="flex min-w-0 items-center gap-2">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
               <span className="text-xs font-bold">P3</span>
             </div>
-            <span className="font-semibold truncate text-sm">
+            <span className="truncate text-sm font-semibold">
               Pow<span className="text-primary">3</span>Folio
             </span>
           </Link>
           <div className="flex items-center gap-2">
+            <Link href="/signup" className="btn-primary hidden text-xs sm:inline-flex">
+              Get started
+            </Link>
             <ThemeToggle />
           </div>
         </div>
       </header>
-      <main className="container-app max-w-2xl py-8 sm:py-10">
+      <main id="main" className="container-app max-w-2xl py-8 sm:py-10">
         <p className="text-[11px] font-medium uppercase tracking-wider text-foreground-subtle">Help</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight">FAQ</h1>
         <p className="mt-2 text-sm text-foreground-muted">
-          Product answers for builders. For live help, open Pow3Bot (AI button).
+          Product answers for builders. For live help, open Pow3Bot.
         </p>
-        <ul className="mt-8 space-y-4">
+        <ul className="mt-8 space-y-3">
           {FAQS.map((item) => (
-            <li key={item.q} className="card p-4">
-              <h2 className="text-sm font-semibold">{item.q}</h2>
-              <p className="mt-1.5 text-sm text-foreground-muted leading-relaxed">{item.a}</p>
+            <li key={item.q} className="card p-0">
+              <details className="group">
+                <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold marker:content-none">
+                  <span className="flex items-start justify-between gap-3">
+                    {item.q}
+                    <span className="text-foreground-subtle transition group-open:rotate-45">+</span>
+                  </span>
+                </summary>
+                <p className="border-t border-border px-4 py-3 text-sm leading-relaxed text-foreground-muted">{item.a}</p>
+              </details>
             </li>
           ))}
         </ul>
       </main>
+      <SiteFooter />
+      <BackToTop />
     </div>
   );
 }

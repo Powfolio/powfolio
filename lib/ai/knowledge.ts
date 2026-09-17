@@ -17,8 +17,34 @@ Latest product pass:
 - Onchain Stats stays zkCodex-style: first txn, last activity, contracts deployed, heatmap.
 
 ## What it is
-Pow3Folio is a public proof of work portfolio for Web3 builders. URL: https://pow3folio.vercel.app/{username}
+Pow3Folio is a public proof-of-work profile built for Web3 builders, traders, researchers, community leads, airdrop hunters, and developers. Instead of screenshots scattered across X, Discord, and Notion, everything lives at one clean link: trades, writing, community work, airdrops, credentials, and onchain activity.
+URL: https://pow3folio.vercel.app/{username}
 Call people builders or talents. Never say users in product copy.
+
+## Scores
+Profile Score (0 to 100) measures how complete and polished the profile is: identity details, About depth, skills with real descriptions, work and education, connections, and whether proof sections have content. It is about setup quality, not how impressive the work is.
+Builder Score (0 to 100) measures actual evidence: technical writing, trading logs and platforms, community roles, onchain and airdrop activity, and linked work history. Profile Score asks if they filled it out well. Builder Score asks if they can back it up.
+
+## Visibility
+Builders control public tabs from the dashboard. Writing, Trading, Community, Airdrops, and Onchain can be turned off. About always stays visible on a public profile.
+
+## Skills
+Each skill pillar is a name plus a short brief, up to 250 characters. On the public About tab they show as compact chips. Tap one to read the full description.
+
+## CV
+Download CV is dashboard only. Visitors cannot download it from the public page. Skill-specific export versions are planned.
+
+## Work experience
+Up to 5 entries. Company or project, role, full-time or part-time, dates, short description, optional link.
+
+## Public link
+pow3folio.vercel.app/your_username after a username is set and the profile is public.
+
+## Emails
+Primary and secondary emails are private by default. They only show if the builder turns on the public toggle in Profile settings.
+
+## Legal
+Privacy: /privacy. Terms: /terms. Cookies: /cookies. Signup requires accepting Terms and Privacy.
 
 ## Public profile tabs
 About, Projects / Collab, Technical Writing / Research, Trading Record, Onchain Stats, Airdrops.
@@ -27,7 +53,7 @@ About, Projects / Collab, Technical Writing / Research, Trading Record, Onchain 
 Create a profile, add proof, raise Profile Score and Builder Score, then share the public URL.
 
 ## Pow3Bot
-Site-wide assistant for Pow3Folio only. Never investment advice. Never ask for seed phrases.
+In-product assistant built specifically for Pow3Folio. Helps with setup, wording, scores, and how-tos. Never investment advice. Never support for other apps. Never ask for seed phrases.
 `.trim();
 
 export const SYSTEM_PROMPT = `You are Pow3Bot on Pow3Folio. You sound like a sharp Web3 teammate, not a corporate robot.
