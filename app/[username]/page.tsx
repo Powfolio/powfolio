@@ -25,7 +25,10 @@ import PublicProfileCta from "@/components/profile/PublicProfileCta";
 import ReportProfileButton from "@/components/report/ReportProfileButton";
 import SuspendedOverlay from "@/components/profile/SuspendedOverlay";
 import ScoreRings from "@/components/profile/ScoreRings";
+import SiteFooter from "@/components/legal/SiteFooter";
+import ProfileJsonLd from "@/components/legal/ProfileJsonLd";
 import { computeScores } from "@/lib/ai/scores";
+import { absoluteUrl as siteUrl, SITE_NAME } from "@/lib/site";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -101,14 +104,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await loadProfileRow(username);
 
   if (!data || data.account_status === "deleted" || data.deleted_at || (!data.is_public && data.account_status !== "suspended")) {
-    return { title: "Profile not found" };
+    return { title: "Profile not found", robots: { index: false, follow: false } };
   }
   if (data.account_status === "suspended") {
     return { title: `@${data.username} is suspended`, robots: { index: false, follow: false } };
   }
+
+  const title = data.display_name || `@${data.username}`;
+  const description =
+    (typeof data.bio === "string" && data.bio.trim()) ||
+    `${title} on ${SITE_NAME}. Public proof of work profile.`;
+  const urlPath = `/${data.username}`;
+  const images = data.avatar_url
+    ? [{ url: data.avatar_url, alt: title }]
+    : [{ url: "/icon.svg", alt: SITE_NAME }];
+
   return {
-    title: data.display_name || data.username,
-    description: data.bio || `${data.username} on Pow3Folio`,
+    title,
+    description,
+    alternates: { canonical: urlPath },
+    openGraph: {
+      type: "profile",
+      url: siteUrl(urlPath),
+      siteName: SITE_NAME,
+      title,
+      description,
+      images,
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
   };
 }
 
@@ -192,7 +219,7 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
     }
   }
 
-  const profileUrl = `https://pow3folio.vercel.app/${p.username}`;
+  const profileUrl = siteUrl(`/${p.username}`);
   const arkhamUrl = p.wallet_address
     ? `https://arkm.com/explorer/address/${p.wallet_address}`
     : null;
@@ -233,6 +260,15 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      {!suspended && (
+        <ProfileJsonLd
+          name={p.display_name || p.username}
+          username={p.username}
+          url={profileUrl}
+          description={p.bio}
+          image={p.avatar_url}
+        />
+      )}
       {suspended && (
         <SuspendedOverlay
           username={p.username}
@@ -257,7 +293,7 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
         </div>
       </header>
 
-      <main className="container-app max-w-5xl py-4 sm:py-5 px-3 sm:px-4">
+      <main id="main" className="container-app max-w-5xl py-4 sm:py-5 px-3 sm:px-4">
         <div className="relative animate-fade-in">
           <div className="h-28 sm:h-40 md:h-44 overflow-hidden rounded-xl border border-border bg-surface-elevated">
             {p.banner_url ? (
@@ -401,6 +437,7 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
         <PublicProfileCta isOwner={isOwner} />
       </main>
       </div>
+      <SiteFooter />
     </div>
   );
 }
