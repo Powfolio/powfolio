@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./ui-polish.css";
 import Pow3Bot from "@/components/ai/Pow3Bot";
+import SkipToContent from "@/components/ui/SkipToContent";
+import CookieConsent from "@/components/legal/CookieConsent";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,13 +18,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Pow3Folio | Web3 Proof of Work Portfolio",
-    template: "%s | Pow3Folio",
+    default: `${SITE_NAME} | Web3 Proof of Work Portfolio`,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    "The professional identity layer for crypto. Showcase your trading record, community work, writing and on chain proof in one clean link.",
-  keywords: ["web3", "portfolio", "proof of work", "crypto", "trader portfolio"],
+  description: SITE_DESCRIPTION,
+  keywords: ["web3", "portfolio", "proof of work", "crypto", "trader portfolio", "onchain resume"],
+  applicationName: SITE_NAME,
+  authors: [{ name: SITE_NAME }],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} | Web3 Proof of Work Portfolio`,
+    description: SITE_DESCRIPTION,
+    images: [{ url: "/icon.svg", width: 32, height: 32, alt: SITE_NAME }],
+  },
+  twitter: {
+    card: "summary",
+    title: `${SITE_NAME} | Web3 Proof of Work Portfolio`,
+    description: SITE_DESCRIPTION,
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
@@ -39,8 +59,10 @@ export default function RootLayout({
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans`}>
+        <SkipToContent />
         {children}
         <Pow3Bot />
+        <CookieConsent />
       </body>
     </html>
   );

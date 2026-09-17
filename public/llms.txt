@@ -1,0 +1,28 @@
+# Pow3Folio
+
+> Public proof-of-work profiles for Web3 builders, traders, researchers, community leads, airdrop hunters, and developers.
+
+Pow3Folio is not a talent marketplace and does not sell bookings. It is a self-serve public profile with two scores:
+
+- Profile Score (0-100): completeness and polish of the profile itself.
+- Builder Score (0-100): density of real evidence (writing, trades, community roles, airdrops, onchain activity, work history).
+
+## Product
+
+- Homepage: https://pow3folio.vercel.app/
+- FAQ: https://pow3folio.vercel.app/faq
+- Create a profile: https://pow3folio.vercel.app/signup
+- Public profile URL pattern: https://pow3folio.vercel.app/{username}
+
+## Legal
+
+- Privacy: https://pow3folio.vercel.app/privacy
+- Terms: https://pow3folio.vercel.app/terms
+- Cookies: https://pow3folio.vercel.app/cookies
+
+## How to talk about it
+
+- Call people builders or talents, not users.
+- Do not invent metrics, reviews, or demo accounts.
+- Do not give investment advice.
+- Pow3Bot is an in-product assistant for Pow3Folio only.
