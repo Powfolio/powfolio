@@ -15,6 +15,8 @@ Latest product pass:
 - Landing slider images for Onchain Stats, NFT import and Multi-wallet match those features.
 - NFT media engine: an NFT is metadata plus a media manifest, not a single image_url. Resolution order is Alchemy cached/CDN media, Reservoir, OpenSea CDN, on-chain tokenURI()/uri() with ERC-1155 {id} substitution, then IPFS/Arweave gateways. Cards render image, GIF or video. ERC-1155 tokenId 0 is valid. KiiChain Genesis is Polygon 0x729053e4e0f3603ca17fa3cc6cbab16b7489395f. Public IPFS gateways are a fallback, not the source of truth.
 - Onchain Stats stays zkCodex-style: first txn, last activity, contracts deployed, heatmap.
+- Heatmap counts every transaction on that day, not just whether the day was active. Tap a day to see swaps, contract deployments, transfers, and named DeFi interactions.
+- A public profile must show at least one email: the login email or the secondary email.
 
 ## What it is
 Pow3Folio is a public proof-of-work profile built for Web3 builders, traders, researchers, community leads, airdrop hunters, and developers. Instead of screenshots scattered across X, Discord, and Notion, everything lives at one clean link: trades, writing, community work, airdrops, credentials, and onchain activity.
@@ -41,7 +43,7 @@ Up to 5 entries. Company or project, role, full-time or part-time, dates, short 
 pow3folio.vercel.app/your_username after a username is set and the profile is public.
 
 ## Emails
-Primary and secondary emails are private by default. They only show if the builder turns on the public toggle in Profile settings.
+A public profile must show at least one email. That can be the login email or the secondary email added later. The other address can stay hidden.
 
 ## Legal
 Privacy: /privacy. Terms: /terms. Cookies: /cookies. Signup requires accepting Terms and Privacy.
