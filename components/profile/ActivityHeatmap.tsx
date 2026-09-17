@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 function formatKindLine(kinds: Record<string, number> | undefined) {
-  if (!kinds) return "";
+  if (!kinds) return [];
   const rank = (label: string) => {
     const l = label.toLowerCase();
     if (l.includes("swap")) return 1;
@@ -23,8 +23,7 @@ function formatKindLine(kinds: Record<string, number> | undefined) {
   };
   return Object.entries(kinds)
     .sort((a, b) => rank(a[0]) - rank(b[0]) || b[1] - a[1])
-    .map(([label, n]) => `${n} ${pluralize(label, n)}`)
-    .join(", ");
+    .map(([label, n]) => `${n} ${pluralize(label, n)}`);
 }
 
 function monthsBack(count: number) {
@@ -81,15 +80,8 @@ export default function ActivityHeatmap({
       const day = key.slice(0, 10);
       map.set(day, Math.max(map.get(day) || 0, n));
     }
-    if (map.size === 0) {
-      for (const day of days) {
-        const key = day.slice(0, 10);
-        if (!key) continue;
-        map.set(key, Math.max(map.get(key) || 0, 1));
-      }
-    }
     return map;
-  }, [days, countMap, kinds]);
+  }, [countMap, kinds]);
   const slides = useMemo(() => monthsBack(36), []);
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
@@ -128,7 +120,7 @@ export default function ActivityHeatmap({
         kinds: kinds[open] || {},
       }
     : null;
-  const breakdown = selected ? formatKindLine(selected.kinds) : "";
+  const breakdown = selected ? formatKindLine(selected.kinds) : [];
 
   return (
     <div className="card space-y-4 overflow-hidden p-4 sm:p-5">
@@ -236,8 +228,12 @@ export default function ActivityHeatmap({
           <p className="mt-1 text-sm font-medium text-foreground">
             {selected.count === 0 ? "No onchain activity this day." : `${selected.count} txn${selected.count === 1 ? "" : "s"}`}
           </p>
-          {breakdown ? (
-            <p className="mt-1 text-xs leading-relaxed text-foreground-muted">{breakdown}</p>
+          {breakdown.length > 0 ? (
+            <ul className="mt-2 space-y-0.5 text-xs leading-relaxed text-foreground-muted">
+              {breakdown.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
           ) : selected.methods.length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-1">
               {selected.methods.slice(0, 8).map((m) => (
