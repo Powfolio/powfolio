@@ -108,7 +108,7 @@ export default function DashboardHome({ userId, username, email, flags }: Props)
 
   return (
     <main className="container-app py-6 sm:py-10">
-      <OnboardingTour key={tourKey} />
+      <OnboardingTour key={tourKey} force={tourKey > 0} />
       {username ? (
         <div className="mb-6 rounded-xl border border-border bg-surface/80 p-4 sm:p-5">
           <p className="text-xs font-medium uppercase tracking-wider text-foreground-subtle">Public link</p>
@@ -126,7 +126,7 @@ export default function DashboardHome({ userId, username, email, flags }: Props)
             </Link>
             <button
               type="button"
-              className="btn-ghost text-xs"
+              className="text-xs text-foreground-muted hover:text-foreground hover:underline underline-offset-2"
               onClick={() => {
                 resetOnboarding();
                 setTourKey((k) => k + 1);

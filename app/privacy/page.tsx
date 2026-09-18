@@ -37,7 +37,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-base font-semibold text-foreground">What we do not collect</h2>
         <p className="mt-2">
-          We never ask for seed phrases, private keys, or exchange passwords. Emails stay private unless you turn on the public toggle. Download CV stays in your dashboard and is not offered on the public page.
+          We never ask for seed phrases, private keys, or exchange passwords. Your login email is public on the profile by default. After you add a second email you can hide either address, but at least one email stays visible. Download CV stays in your dashboard and is not offered on the public page.
         </p>
       </section>
       <section>
