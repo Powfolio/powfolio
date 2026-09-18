@@ -6,6 +6,7 @@ import {
   getJson,
   toNumber,
 } from "@/lib/onchain";
+import { blockscoutHostFor } from "@/lib/blockscout-host";
 import { nativePriceUsd } from "@/lib/chain-rpc";
 import { normalizeExtraChains } from "@/lib/chain-enrich";
 import { applyActivity, countNfts, sumNativeFlow } from "@/lib/onchain-fast";
@@ -43,11 +44,7 @@ type NftItem = {
 function hostFor(chain: OnchainChain, extra: CustomChainInput[]) {
   const merged = mergeChains(normalizeExtraChains(extra));
   const match = merged.find((c) => c.id === chain.id || c.name.toLowerCase() === chain.name.toLowerCase());
-  if (match?.host) return match.host.replace(/\/$/, "");
-  const fromExplorer = (chain.explorer || "").replace(/\/address\/?.*$/i, "").replace(/\/$/, "");
-  if (/blockscout/i.test(fromExplorer)) return fromExplorer;
-  if (/kii/i.test(chain.name) || chain.id === "kiichain") return "https://blockscout.kiichain.io";
-  return fromExplorer || "";
+  return blockscoutHostFor({ ...chain, host: match?.host }, extra);
 }
 
 export async function loadChainDeep(
