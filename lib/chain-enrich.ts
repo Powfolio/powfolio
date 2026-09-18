@@ -1,13 +1,13 @@
 import {
   type CustomChainInput,
   type ImportedTokenRef,
-  type OnchainChain,
   type OnchainFootprint,
   getPagedItems,
   getJson,
   isAddress,
   toNumber,
 } from "@/lib/onchain";
+import { blockscoutHostFor } from "@/lib/blockscout-host";
 import { kiiLcds, kiiRpcs, loadBankBalances, loadCosmosTxActivity, nativePriceUsd, rpcCall } from "@/lib/chain-rpc";
 import { applyActivity, countNfts, sumNativeFlow } from "@/lib/onchain-fast";
 import { classifyTx, mergeActivity, tallyActivity } from "@/lib/onchain-activity";
@@ -32,16 +32,7 @@ export function normalizeExtraChains(extra: CustomChainInput[]): CustomChainInpu
 }
 
 function explorerHost(chain: { id: string; name: string; explorer: string }, extra: CustomChainInput[]) {
-  const match = extra.find(
-    (c) =>
-      (c.id || "").toLowerCase() === chain.id ||
-      (c.name || "").toLowerCase() === chain.name.toLowerCase()
-  );
-  if (/kii/i.test(chain.name) || chain.id === "kiichain") return "https://blockscout.kiichain.io";
-  if (match?.host && /blockscout/i.test(match.host)) return match.host.replace(/\/$/, "");
-  const fromExplorer = (chain.explorer || "").replace(/\/address\/?.*$/i, "").replace(/\/$/, "");
-  if (/blockscout/i.test(fromExplorer)) return fromExplorer;
-  return fromExplorer || "";
+  return blockscoutHostFor(chain, extra);
 }
 
 export async function enrichFootprint(
@@ -62,7 +53,13 @@ export async function enrichFootprint(
         const rpcUrl = extraMatch?.rpc || (isKii ? kiiRpcs()[0] : undefined);
         let qty = Number(chain.balance) || 0;
 
-        const needVolume = chain.volumeUsd <= 0 || chain.feesUsd <= 0 || chain.txCount === 0 || !(chain.activityDays && chain.activityDays.length);
+        const needVolume =
+          chain.volumeUsd <= 0 ||
+          chain.feesUsd <= 0 ||
+          chain.txCount === 0 ||
+          !(chain.activityDays && chain.activityDays.length) ||
+          !chain.activityCounts ||
+          Object.keys(chain.activityCounts).length === 0;
         const needBalance = (qty <= 0 || chain.txCount === 0) && !!rpcUrl && isAddress(data.address);
 
         const [rate, balancePair, bank, activity, txs] = await Promise.all([
@@ -124,6 +121,7 @@ export async function enrichFootprint(
           if (activity.firstTx) chain.firstTx = chain.firstTx && chain.firstTx < activity.firstTx ? chain.firstTx : activity.firstTx;
           if (activity.lastTx) chain.lastTx = chain.lastTx && chain.lastTx > activity.lastTx ? chain.lastTx : activity.lastTx;
           applyActivity(chain, activity.days);
+          mergeActivity(chain, tallyActivity(activity.days.map((day) => ({ timestamp: day, kind: "Transaction" }))));
           if (rate && activity.volumeNative > 0 && chain.volumeUsd === 0) {
             chain.volumeUsd = activity.volumeNative * rate;
           }
