@@ -20,7 +20,7 @@ export default function BrandMark({
         alt=""
         width={28}
         height={28}
-        className="h-7 w-7 shrink-0 rounded-md"
+        className="h-7 w-7 shrink-0 object-contain"
       />
       {!markOnly && (
         <span className={`font-semibold truncate ${compact ? "text-sm sm:text-base" : ""}`}>
