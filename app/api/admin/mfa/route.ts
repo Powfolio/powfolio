@@ -38,7 +38,7 @@ export async function GET() {
       factors: factors.map((f) => ({
         id: f.id,
         status: f.status || "unverified",
-        friendlyName: f.friendly_name || "Pow3Folio ops",
+        friendlyName: f.friendly_name || "Powfolio ops",
       })),
     });
   } catch (e) {
