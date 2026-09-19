@@ -4,6 +4,7 @@ import ThemeToggle from "@/components/theme/ThemeToggle";
 import FeatureScroller from "@/components/landing/FeatureScroller";
 import SiteFooter from "@/components/legal/SiteFooter";
 import JsonLd from "@/components/legal/JsonLd";
+import BrandMark from "@/components/ui/BrandMark";
 
 const STEPS = [
   {
@@ -79,14 +80,7 @@ export default async function HomePage() {
 
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/70 backdrop-blur-xl">
         <div className="container-app flex h-14 items-center justify-between gap-2">
-          <Link href="/" className="flex items-center gap-2 min-w-0 group">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary transition group-hover:bg-primary/25 group-hover:shadow-glow-sm logo-spin-hover">
-              <span className="text-xs font-bold">P3</span>
-            </div>
-            <span className="text-sm sm:text-base font-semibold tracking-tight truncate">
-              Pow<span className="text-primary">3</span>Folio
-            </span>
-          </Link>
+          <BrandMark compact />
 
           <nav className="hidden md:flex items-center gap-0.5 text-sm">
             <a href="#features" className="btn-ghost text-xs">
@@ -263,7 +257,7 @@ export default async function HomePage() {
               Ready to share your proof?
             </h2>
             <p className="relative mt-3 text-sm sm:text-base text-foreground-muted">
-              Create your Pow3Folio in minutes. One link. Real scores. Real work on record.
+              Create your Powfolio in minutes. One link. Real scores. Real work on record.
             </p>
             <div className="relative mt-8 flex flex-col sm:flex-row gap-3 justify-center">
               {user ? (
