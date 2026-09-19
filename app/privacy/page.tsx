@@ -4,7 +4,7 @@ import LegalShell from "@/components/legal/LegalShell";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "How Pow3Folio collects, uses, and retains account, profile, wallet, and report data.",
+  description: "How Powfolio collects, uses, and retains account, profile, wallet, and report data.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -13,12 +13,12 @@ export default function PrivacyPage() {
     <LegalShell
       kicker="Legal"
       title="Privacy Policy"
-      intro="Last updated 17 September 2026. This describes what Pow3Folio collects and why. It is a product disclosure, not legal advice."
+      intro="Last updated 17 September 2026. This describes what Powfolio collects and why. It is a product disclosure, not legal advice."
     >
       <section>
         <h2 className="text-base font-semibold text-foreground">Who we are</h2>
         <p className="mt-2">
-          Pow3Folio is a public proof-of-work profile product. Contact: privacy@pow3folio.vercel.app (replace with your live contact once a custom domain is live).
+          Powfolio is a public proof-of-work profile product. Contact: privacy@pow3folio.vercel.app (replace with your live contact once a custom domain is live).
         </p>
       </section>
       <section>
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-base font-semibold text-foreground">International users</h2>
         <p className="mt-2">
-          Pow3Folio is built for an international audience, including Nigeria. We aim to collect only what the product needs and to honor access, correction, and deletion requests in line with NDPA and GDPR-style basics. Hosting currently runs on Vercel and Supabase.
+          Powfolio is built for an international audience, including Nigeria. We aim to collect only what the product needs and to honor access, correction, and deletion requests in line with NDPA and GDPR-style basics. Hosting currently runs on Vercel and Supabase.
         </p>
       </section>
       <section>

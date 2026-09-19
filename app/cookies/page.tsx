@@ -4,7 +4,7 @@ import LegalShell from "@/components/legal/LegalShell";
 
 export const metadata: Metadata = {
   title: "Cookie Policy",
-  description: "Cookies and local storage Pow3Folio uses to keep sessions and preferences.",
+  description: "Cookies and local storage Powfolio uses to keep sessions and preferences.",
   alternates: { canonical: "/cookies" },
 };
 
@@ -13,7 +13,7 @@ export default function CookiesPage() {
     <LegalShell
       kicker="Legal"
       title="Cookie Policy"
-      intro="Last updated 17 September 2026. Pow3Folio keeps cookies to a minimum."
+      intro="Last updated 17 September 2026. Powfolio keeps cookies to a minimum."
     >
       <section>
         <h2 className="text-base font-semibold text-foreground">Necessary</h2>

@@ -4,7 +4,7 @@ import LegalShell from "@/components/legal/LegalShell";
 
 export const metadata: Metadata = {
   title: "Terms of Use",
-  description: "Rules for using Pow3Folio, public profiles, scores, and reporting.",
+  description: "Rules for using Powfolio, public profiles, scores, and reporting.",
   alternates: { canonical: "/terms" },
 };
 
@@ -18,7 +18,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-base font-semibold text-foreground">The product</h2>
         <p className="mt-2">
-          Pow3Folio lets you publish a public proof-of-work profile. It is free during Genesis. It is not a talent marketplace, broker, or investment product. Scores are product metrics, not endorsements.
+          Powfolio lets you publish a public proof-of-work profile. It is free during Genesis. It is not a talent marketplace, broker, or investment product. Scores are product metrics, not endorsements.
         </p>
       </section>
       <section>
