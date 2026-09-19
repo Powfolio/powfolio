@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import BrandMark from "@/components/ui/BrandMark";
 
 export const metadata: Metadata = {
   title: "Page not found",
@@ -9,8 +10,8 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
-        <span className="text-sm font-bold">P3</span>
+      <div className="flex justify-center">
+        <BrandMark markOnly />
       </div>
       <h1 className="mt-6 text-3xl font-bold tracking-tight">This page is not here</h1>
       <p className="mt-3 max-w-md text-sm text-foreground-muted">

@@ -1,8 +1,8 @@
-# Pow3Folio
+# Powfolio
 
 > Public proof-of-work profiles for Web3 builders, traders, researchers, community leads, airdrop hunters, and developers.
 
-Pow3Folio is not a talent marketplace and does not sell bookings. It is a self-serve public profile with two scores:
+Powfolio is not a talent marketplace and does not sell bookings. It is a self-serve public profile with two scores:
 
 - Profile Score (0-100): completeness and polish of the profile itself.
 - Builder Score (0-100): density of real evidence (writing, trades, community roles, airdrops, onchain activity, work history).
@@ -25,4 +25,4 @@ Pow3Folio is not a talent marketplace and does not sell bookings. It is a self-s
 - Call people builders or talents, not users.
 - Do not invent metrics, reviews, or demo accounts.
 - Do not give investment advice.
-- Pow3Bot is an in-product assistant for Pow3Folio only.
+- Pow3Bot is an in-product assistant for Powfolio only.

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import BrandMark from "@/components/ui/BrandMark";
+import { SITE_NAME } from "@/lib/site";
 
 const LINKS = [
   { href: "/faq", label: "FAQ" },
@@ -14,10 +16,8 @@ export default function SiteFooter() {
     <footer className="relative z-10 border-t border-border/40 py-8">
       <div className="container-app flex flex-col items-center justify-between gap-3 text-xs text-foreground-subtle sm:flex-row">
         <div className="flex items-center gap-2">
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/15 text-primary">
-            <span className="text-[9px] font-bold">P3</span>
-          </div>
-          <span>© {new Date().getFullYear()} Pow3Folio</span>
+          <BrandMark markOnly />
+          <span>© {new Date().getFullYear()} {SITE_NAME}</span>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4">
           {LINKS.map((link) => (

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import BrandMark from "@/components/ui/BrandMark";
 
 const LINKS = [
   { href: "/ops", label: "Accounts" },
@@ -23,13 +24,7 @@ export default function OpsShell({ email, children }: { email: string; children:
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
-          <Link href="/ops" className="flex shrink-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-zinc-950">P3</span>
-            <span className="leading-tight">
-              <span className="block text-sm font-semibold">Pow3Folio Ops</span>
-              <span className="block text-[10px] uppercase tracking-[0.18em] text-foreground-subtle">Super admin</span>
-            </span>
-          </Link>
+          <BrandMark href="/ops" wordmark="Powfolio Ops" />
           <div className="flex items-center gap-2">
             <div className="hidden max-w-[16rem] truncate text-[11px] text-foreground-muted sm:block">{email}</div>
             <form action="/auth/signout" method="post">

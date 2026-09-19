@@ -1,4 +1,4 @@
-export const SITE_NAME = "Pow3Folio";
+export const SITE_NAME = "Powfolio";
 
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://pow3folio.vercel.app"

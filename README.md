@@ -1,8 +1,10 @@
-# Pow3Folio
+# Powfolio
 
 **Web3 Native Portfolio and Proof of Work Platform**
 
 One clean, shareable link for crypto professionals: traders, community managers, researchers, airdrop hunters and builders.
+
+Live URL: https://pow3folio.vercel.app
 
 ## Stack
 

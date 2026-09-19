@@ -1,7 +1,7 @@
-import Link from "next/link";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import SiteFooter from "@/components/legal/SiteFooter";
 import BackToTop from "@/components/ui/BackToTop";
+import BrandMark from "@/components/ui/BrandMark";
 
 export default function LegalShell({
   kicker,
@@ -18,14 +18,7 @@ export default function LegalShell({
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="container-app flex h-14 items-center justify-between gap-2">
-          <Link href="/" className="flex min-w-0 items-center gap-2">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
-              <span className="text-xs font-bold">P3</span>
-            </div>
-            <span className="truncate text-sm font-semibold">
-              Pow<span className="text-primary">3</span>Folio
-            </span>
-          </Link>
+          <BrandMark compact />
           <ThemeToggle />
         </div>
       </header>
