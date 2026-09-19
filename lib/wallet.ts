@@ -7,7 +7,6 @@ export async function connectEthereumWallet(): Promise<string> {
     throw new Error("Wallet connect only works in the browser");
   }
 
-  // 1) Prefer injected browser wallet (MetaMask, Rabby, etc.)
   const eth = (
     window as unknown as {
       ethereum?: {
@@ -23,7 +22,6 @@ export async function connectEthereumWallet(): Promise<string> {
     return address.toLowerCase();
   }
 
-  // 2) Fallback: WalletConnect modal (mobile + any WC wallet)
   try {
     const { default: EthereumProvider } = await import(
       "@walletconnect/ethereum-provider"
@@ -37,10 +35,10 @@ export async function connectEthereumWallet(): Promise<string> {
       methods: ["eth_requestAccounts", "eth_accounts", "personal_sign"],
       events: ["chainChanged", "accountsChanged"],
       metadata: {
-        name: "Pow3Folio",
+        name: "Powfolio",
         description: "Proof of work portfolio for Web3 builders",
         url: "https://pow3folio.vercel.app",
-        icons: ["https://pow3folio.vercel.app/favicon.ico"],
+        icons: ["https://pow3folio.vercel.app/icon.svg"],
       },
     });
 

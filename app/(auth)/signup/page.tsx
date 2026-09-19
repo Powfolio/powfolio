@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignupForm from "@/components/auth/SignupForm";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import SiteFooter from "@/components/legal/SiteFooter";
+import BrandMark from "@/components/ui/BrandMark";
 import { safeNextPath } from "@/lib/auth/next-path";
 
 export const metadata: Metadata = {
   title: "Create account",
-  description: "Create a free Pow3Folio profile and publish your Web3 proof of work.",
+  description: "Create a free Powfolio profile and publish your Web3 proof of work.",
   alternates: { canonical: "/signup" },
 };
 
@@ -33,14 +33,7 @@ export default async function SignupPage({
     <div className="relative flex min-h-screen flex-col">
       <header className="border-b border-border/60">
         <div className="container-app flex h-14 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/15 text-primary">
-              <span className="text-xs font-bold">P3</span>
-            </div>
-            <span className="font-semibold">
-              Pow<span className="text-primary">3</span>Folio
-            </span>
-          </Link>
+          <BrandMark />
           <ThemeToggle />
         </div>
       </header>

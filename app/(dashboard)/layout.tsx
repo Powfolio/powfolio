@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Dashboard",
-  description: "Manage your Pow3Folio profile, proof sections, and visibility.",
+  description: "Manage your Powfolio profile, proof sections, and visibility.",
   robots: { index: false, follow: false },
 };
 

@@ -1,4 +1,4 @@
-const FROM = process.env.MAIL_FROM || "Pow3Folio <beth.t@example.com>";
+const FROM = process.env.MAIL_FROM || "Powfolio <beth.t@example.com>";
 
 export async function sendTransactionalEmail(opts: {
   to: string;
@@ -35,9 +35,9 @@ export async function sendTransactionalEmail(opts: {
 
 export function suspensionEmail(opts: { username: string; origin: string }) {
   const appeal = `${opts.origin.replace(/\/$/, "")}/${opts.username}?appeal=1`;
-  const subject = `Your Pow3Folio account "${opts.username}" has been suspended`;
+  const subject = `Your Powfolio account "${opts.username}" has been suspended`;
   const text = [
-    `Your Pow3Folio account "${opts.username}" has been suspended.`,
+    `Your Powfolio account "${opts.username}" has been suspended.`,
     "",
     "We found some suspicious or malicious activities or information in your account which has resulted in this suspension.",
     "",
@@ -45,6 +45,6 @@ export function suspensionEmail(opts: { username: string; origin: string }) {
     "",
     `Appeal: ${appeal}`,
   ].join("\n");
-  const html = `<p>Your Pow3Folio account <strong>${opts.username}</strong> has been suspended.</p><p>We found some suspicious or malicious activities or information in your account which has resulted in this suspension.</p><p>If you think this is a mistake, you have <strong>60 days</strong> from when the account was suspended to submit an appeal before your account is permanently deleted.</p><p><a href="${appeal}">Appeal</a></p>`;
+  const html = `<p>Your Powfolio account <strong>${opts.username}</strong> has been suspended.</p><p>We found some suspicious or malicious activities or information in your account which has resulted in this suspension.</p><p>If you think this is a mistake, you have <strong>60 days</strong> from when the account was suspended to submit an appeal before your account is permanently deleted.</p><p><a href="${appeal}">Appeal</a></p>`;
   return { subject, text, html };
 }
