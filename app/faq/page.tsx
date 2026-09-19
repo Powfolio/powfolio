@@ -3,17 +3,18 @@ import Link from "next/link";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import SiteFooter from "@/components/legal/SiteFooter";
 import BackToTop from "@/components/ui/BackToTop";
+import BrandMark from "@/components/ui/BrandMark";
 
 export const metadata: Metadata = {
   title: "FAQ",
-  description: "What Pow3Folio is, how Profile Score and Builder Score work, and how public profiles stay under your control.",
+  description: "What Powfolio is, how Profile Score and Builder Score work, and how public profiles stay under your control.",
   alternates: { canonical: "/faq" },
 };
 
 const FAQS: { q: string; a: string }[] = [
   {
-    q: "What is Pow3Folio?",
-    a: "Pow3Folio is a public proof-of-work profile built for Web3 builders, traders, researchers, community leads, airdrop hunters, and developers. Instead of screenshots scattered across X, Discord, and Notion, everything lives at one clean link: your trades, writing, community work, airdrops, credentials, and onchain activity.",
+    q: "What is Powfolio?",
+    a: "Powfolio is a public proof-of-work profile built for Web3 builders, traders, researchers, community leads, airdrop hunters, and developers. Instead of screenshots scattered across X, Discord, and Notion, everything lives at one clean link: your trades, writing, community work, airdrops, credentials, and onchain activity.",
   },
   {
     q: "What is Profile Score?",
@@ -45,7 +46,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What is Pow3Bot?",
-    a: "Pow3Bot is your in-product assistant, built specifically for Pow3Folio. It helps with setup, wording, understanding your scores, and general how-tos. It won't give investment advice, and it doesn't know anything about other apps.",
+    a: "Pow3Bot is your in-product assistant, built specifically for Powfolio. It helps with setup, wording, understanding your scores, and general how-tos. It won't give investment advice, and it doesn't know anything about other apps.",
   },
   {
     q: "Can I hide my email?",
@@ -58,14 +59,7 @@ export default function FaqPage() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="container-app flex h-14 items-center justify-between gap-2">
-          <Link href="/" className="flex min-w-0 items-center gap-2">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
-              <span className="text-xs font-bold">P3</span>
-            </div>
-            <span className="truncate text-sm font-semibold">
-              Pow<span className="text-primary">3</span>Folio
-            </span>
-          </Link>
+          <BrandMark compact />
           <div className="flex items-center gap-2">
             <Link href="/signup" className="btn-primary hidden text-xs sm:inline-flex">
               Get started
