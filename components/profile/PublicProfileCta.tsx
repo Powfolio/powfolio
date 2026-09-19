@@ -9,7 +9,7 @@ export default function PublicProfileCta({ isOwner }: Props) {
     <p className="mt-10 mb-4 text-center text-xs text-foreground-subtle leading-relaxed">
       Built with{" "}
       <Link href="/" className="text-foreground-muted hover:text-primary transition-colors">
-        Pow3Folio
+        Powfolio
       </Link>
       {" · "}
       {isOwner ? (

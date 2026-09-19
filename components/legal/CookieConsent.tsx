@@ -31,7 +31,7 @@ export default function CookieConsent() {
     <div className="fixed inset-x-0 bottom-0 z-[90] p-3 sm:p-4">
       <div className="mx-auto flex max-w-3xl flex-col gap-3 rounded-2xl border border-border bg-surface/95 p-4 shadow-lg backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-6 text-foreground-muted">
-          Pow3Folio uses necessary cookies to keep you signed in and protect the product. We do not run advertising cookies.{" "}
+          Powfolio uses necessary cookies to keep you signed in and protect the product. We do not run advertising cookies.{" "}
           <Link href="/cookies" className="text-primary hover:underline">
             Cookie policy
           </Link>
