@@ -31,10 +31,10 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "32x32" },
-      { url: "/icon.png", type: "image/png", sizes: "96x96" },
+      { url: "/icon", type: "image/png", sizes: "96x96" },
     ],
     shortcut: "/favicon.ico",
-    apple: [{ url: "/icon.png", type: "image/png", sizes: "96x96" }],
+    apple: [{ url: "/apple-icon", type: "image/png", sizes: "96x96" }],
   },
   openGraph: {
     type: "website",
