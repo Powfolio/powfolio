@@ -29,8 +29,8 @@ export const metadata: Metadata = {
   authors: [{ name: SITE_NAME }],
   alternates: { canonical: "/" },
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icon.svg" }],
+    icon: [{ url: "/icon", type: "image/png" }],
+    apple: [{ url: "/icon", type: "image/png" }],
   },
   openGraph: {
     type: "website",
