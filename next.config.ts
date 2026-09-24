@@ -44,6 +44,22 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/icon",
+        headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],
+      },
+      {
+        source: "/icon.png",
+        headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],
+      },
+      {
+        source: "/favicon.ico",
+        headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],
+      },
+      {
+        source: "/apple-icon",
+        headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],
+      },
     ];
   },
 };

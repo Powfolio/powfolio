@@ -17,6 +17,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const FAVICON = "/folio-mark.png?v=20260924";
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -29,12 +31,9 @@ export const metadata: Metadata = {
   authors: [{ name: SITE_NAME }],
   alternates: { canonical: "/" },
   icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "32x32" },
-      { url: "/icon", type: "image/png", sizes: "96x96" },
-    ],
-    shortcut: "/favicon.ico",
-    apple: [{ url: "/apple-icon", type: "image/png", sizes: "96x96" }],
+    icon: [{ url: FAVICON, type: "image/png", sizes: "32x32" }],
+    shortcut: FAVICON,
+    apple: [{ url: FAVICON, type: "image/png", sizes: "32x32" }],
   },
   openGraph: {
     type: "website",
@@ -59,6 +58,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
+        <link rel="icon" href={FAVICON} type="image/png" sizes="32x32" />
+        <link rel="shortcut icon" href={FAVICON} />
+        <link rel="apple-touch-icon" href={FAVICON} />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('pow3folio-theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){}})();
