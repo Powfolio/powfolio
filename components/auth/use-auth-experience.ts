@@ -30,7 +30,7 @@ async function attachPendingWallet(userId: string) {
   }
 }
 
-function oauthQuery(id: "google" | "github") {
+function oauthQuery(id: "google" | "github"): Record<string, string> {
   if (id === "google") {
     return { prompt: "consent select_account", access_type: "offline" };
   }
