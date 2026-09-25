@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Provider } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { connectEthereumWallet } from "@/lib/wallet";
+import { connectEthereumWallet, signWalletMessage } from "@/lib/wallet";
 import { startXAuth } from "@/lib/x-oauth";
 import { checkWalletAvailable } from "@/lib/wallets/client-check";
 import { markNewSignup } from "@/components/onboarding/OnboardingTour";
@@ -28,6 +28,13 @@ async function attachPendingWallet(userId: string) {
   } catch {
     /* ignore */
   }
+}
+
+function oauthQuery(id: "google" | "github") {
+  if (id === "google") {
+    return { prompt: "consent select_account", access_type: "offline" };
+  }
+  return { prompt: "consent" };
 }
 
 export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard") {
@@ -86,12 +93,32 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
     animTimers.current = [];
   }
 
+  function persistRemember(on: boolean, savedIdentifier?: string) {
+    try {
+      localStorage.setItem("pow3folio_remember", on ? "1" : "0");
+      if (on && savedIdentifier) localStorage.setItem("pow3folio_remember_id", savedIdentifier);
+      if (!on) localStorage.removeItem("pow3folio_remember_id");
+    } catch {
+      /* ignore */
+    }
+  }
+
   useEffect(() => {
     const stored = localStorage.getItem("color-theme") || localStorage.getItem("pow3folio-theme");
     const preferred = stored === "light" || stored === "dark" ? stored : window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
     setDark(preferred === "dark");
     document.documentElement.classList.toggle("dark", preferred === "dark");
     document.documentElement.classList.toggle("light", preferred !== "dark");
+    try {
+      const remember = localStorage.getItem("pow3folio_remember") !== "0";
+      setRememberMe(remember);
+      if (remember) {
+        const saved = localStorage.getItem("pow3folio_remember_id") || "";
+        if (saved) setIdentifier(saved);
+      }
+    } catch {
+      /* ignore */
+    }
     const t = window.setTimeout(() => hideLoader(), 500);
     return () => window.clearTimeout(t);
   }, []);
@@ -116,7 +143,7 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
   async function signInWithProvider(id: "google" | "x" | "github") {
     if (mode === "signup" && !accepted) return notice("Accept the Terms and Privacy Policy first");
     const label = id === "x" ? "X" : id === "github" ? "GitHub" : "Google";
-    showLoader(`Connecting ${label}...`, "Establishing secure connection");
+    showLoader(`Connecting ${label}...`, "Open the provider page and accept the connection");
     const supabase = createClient();
     const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath || "/dashboard")}`;
     if (id === "x") {
@@ -124,34 +151,85 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
       if (error) { hideLoader(); notice(error); }
       return;
     }
-    const { data, error } = await supabase.auth.signInWithOAuth({ provider: id as Provider, options: { redirectTo, skipBrowserRedirect: true } });
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: id as Provider,
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+        queryParams: oauthQuery(id),
+      },
+    });
     if (error) { hideLoader(); notice(error.message); return; }
     if (data?.url) { window.location.assign(data.url); return; }
     hideLoader();
     notice("No OAuth URL returned. This provider is not configured.");
   }
 
+  async function loginWithLinkedWallet(address: string) {
+    showLoader("Verify wallet...", "Sign the Powfolio message in your wallet");
+    const challengeRes = await fetch("/api/wallets/challenge");
+    const challenge = await challengeRes.json().catch(() => ({}));
+    if (!challengeRes.ok || !challenge.message) {
+      throw new Error(challenge.error || "Could not start wallet login.");
+    }
+    const signature = await signWalletMessage(address, challenge.message);
+    const res = await fetch("/api/auth/wallet-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address, signature, message: challenge.message }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || "Wallet login failed.");
+    }
+    const supabase = createClient();
+    const { error } = await supabase.auth.setSession({
+      access_token: json.session.access_token,
+      refresh_token: json.session.refresh_token,
+    });
+    if (error) throw error;
+    persistRemember(rememberMe);
+    hideLoader();
+    goNext();
+  }
+
   async function connectWallet() {
     showLoader("Connecting Web3 Wallet...", "Establishing secure connection");
     try {
       const address = await connectEthereumWallet();
-      const check = await checkWalletAvailable(address);
-      if (!check.ok) { hideLoader(); notice(check.error); return; }
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
+      const check = await checkWalletAvailable(address);
+
       if (user) {
+        if (!check.ok) {
+          hideLoader();
+          notice(check.error);
+          return;
+        }
         const { error: upErr } = await supabase.from("profiles").update({ wallet_address: address }).eq("id", user.id);
         hideLoader();
         if (upErr) {
-          notice(upErr.code === "23505" || upErr.message.toLowerCase().includes("wallet") ? "This wallet is already linked to another Pow3Folio account." : upErr.message);
+          notice(upErr.code === "23505" || upErr.message.toLowerCase().includes("wallet") ? "This wallet is already linked to another Powfolio account." : upErr.message);
           return;
         }
         goNext();
         return;
       }
+
+      if (!check.ok) {
+        if (mode === "signup") {
+          hideLoader();
+          notice("This wallet is already linked to a Powfolio account. Log in with the wallet to continue.");
+          return;
+        }
+        await loginWithLinkedWallet(address);
+        return;
+      }
+
       try { localStorage.setItem("pow3folio_pending_wallet", address); } catch { /* ignore */ }
       hideLoader();
-      notice(`Wallet ${address.slice(0, 6)}…${address.slice(-4)} saved. Sign in to link it.`);
+      notice(`Wallet ${address.slice(0, 6)}…${address.slice(-4)} saved. Sign in or create an account to link it.`);
     } catch (err) {
       hideLoader();
       notice(err instanceof Error ? err.message : "Wallet connection failed");
@@ -161,7 +239,7 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
   async function handleSignIn(e: FormEvent) {
     e.preventDefault();
     showLoader("Signing in...", "Welcome back to Powfolio");
-    try { localStorage.setItem("pow3folio_remember", rememberMe ? "1" : "0"); } catch { /* ignore */ }
+    persistRemember(rememberMe, identifier.trim());
     const res = await fetch("/api/auth/password-login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ identifier, password: loginPassword }) });
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.ok) { hideLoader(); notice(json.error || "Invalid login credentials."); return; }
