@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { createServiceClient, hasServiceRole } from "@/lib/supabase/admin";
-import { sendTransactionalEmail } from "@/lib/admin/mail";
+import { otpEmail, sendTransactionalEmail } from "@/lib/admin/mail";
 import { buildOtpCookie, generateOtpCode, otpCookieName } from "@/lib/auth/otp";
 
 export const runtime = "nodejs";
@@ -53,11 +53,12 @@ export async function POST(req: NextRequest) {
 
     const code = generateOtpCode();
     const cookie = buildOtpCookie(email, code);
+    const template = otpEmail({ code });
     const mailed = await sendTransactionalEmail({
       to: email,
-      subject: "Your Powfolio verification code",
-      text: `Your Powfolio email verification code is ${code}. It expires in 10 minutes. If you did not request this, ignore this email.`,
-      html: `<p>Your Powfolio email verification code is:</p><p style="font-size:28px;letter-spacing:8px;font-weight:700">${code}</p><p>This code expires in 10 minutes.</p>`,
+      subject: template.subject,
+      text: template.text,
+      html: template.html,
     });
 
     if (mailed.skipped) {
