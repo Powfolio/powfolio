@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import LoginForm from "@/components/auth/LoginForm";
-import SiteFooter from "@/components/legal/SiteFooter";
-import BrandMark from "@/components/ui/BrandMark";
+import AuthExperience from "@/components/auth/AuthExperience";
 import { safeNextPath } from "@/lib/auth/next-path";
 
 export const metadata: Metadata = {
@@ -29,24 +27,5 @@ export default async function LoginPage({
     redirect(nextPath);
   }
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <div className="flex flex-1 items-center justify-center px-4">
-        <main id="main" className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <div className="inline-flex justify-center">
-              <BrandMark />
-            </div>
-            <h1 className="sr-only">Log in</h1>
-            <p className="mt-3 text-sm text-foreground-muted">
-              Welcome back. Log in to manage your proof of work.
-            </p>
-          </div>
-
-          <LoginForm nextPath={nextPath} />
-        </main>
-      </div>
-      <SiteFooter />
-    </div>
-  );
+  return <AuthExperience initialMode="signin" nextPath={nextPath} />;
 }
