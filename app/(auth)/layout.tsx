@@ -1,5 +1,6 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "../auth-ui.css";
+import "../auth-ui-preloader.css";
 
 const inter = Inter({
   subsets: ["latin"],
