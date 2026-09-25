@@ -7,6 +7,7 @@ export async function checkWalletAvailable(address: string) {
   const json = await res.json().catch(() => ({}));
   return {
     ok: Boolean(json.ok),
+    linked: Boolean(json.linked),
     error: (json.error as string) || "This wallet is already linked to another Powfolio account.",
   };
 }

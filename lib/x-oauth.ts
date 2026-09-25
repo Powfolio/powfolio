@@ -4,6 +4,7 @@ import type { Provider, SupabaseClient } from "@supabase/supabase-js";
  * Supabase now prefers X OAuth 2.0 as provider "x".
  * Older projects still use legacy "twitter" (OAuth 1.0a).
  * Try both; always force navigation with data.url (mobile often skips auto-redirect).
+ * Always request the provider consent screen — never silent reuse.
  */
 export async function startXAuth(
   supabase: SupabaseClient,
@@ -15,26 +16,25 @@ export async function startXAuth(
   let lastError: string | null = null;
 
   for (const provider of providers) {
+    const options = {
+      redirectTo,
+      skipBrowserRedirect: true,
+      queryParams: { prompt: "consent" },
+    };
+
     const result =
       mode === "link"
         ? await supabase.auth.linkIdentity({
             provider,
-            options: {
-              redirectTo,
-              skipBrowserRedirect: true,
-            },
+            options,
           })
         : await supabase.auth.signInWithOAuth({
             provider,
-            options: {
-              redirectTo,
-              skipBrowserRedirect: true,
-            },
+            options,
           });
 
     if (result.error) {
       lastError = result.error.message;
-      // try next provider id
       continue;
     }
 
