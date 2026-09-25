@@ -38,14 +38,29 @@ const config: Config = {
         success: "rgb(var(--success) / <alpha-value>)",
         warning: "rgb(var(--warning) / <alpha-value>)",
         danger: "rgb(var(--danger) / <alpha-value>)",
+        bronze: {
+          50: "#FAF6F0",
+          100: "#F4E8D1",
+          200: "#E6CF9E",
+          300: "#D5B36B",
+          400: "#C59B27",
+          500: "#B8860B",
+          600: "#8C6A1D",
+          700: "#6E4F06",
+          800: "#4A3402",
+          900: "#271B00",
+        },
+        darkBg: "#08080A",
+        darkSurface: "#101014",
+        darkInput: "#131318",
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-geist-mono)", "monospace"],
       },
       boxShadow: {
-        glow: "0 0 20px -5px rgba(184, 134, 59, 0.25)",
-        "glow-sm": "0 0 12px -3px rgba(184, 134, 59, 0.2)",
+        glow: "0 0 20px -5px rgba(184, 134, 11, 0.25)",
+        "glow-sm": "0 0 12px -3px rgba(184, 134, 11, 0.2)",
       },
       backgroundImage: {
         "grid-pattern":
