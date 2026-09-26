@@ -1,10 +1,9 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 export type FeatureCard = {
   title: string;
-  tag: string;
   desc: string;
   image: string;
   imageAlt: string;
@@ -13,112 +12,143 @@ export type FeatureCard = {
 const DEFAULT: FeatureCard[] = [
   {
     title: "Trading Record",
-    tag: "PROOF",
-    desc: "Live trades, ROI, charts and update threads. A track record teams can actually review.",
+    desc: "Share live trades, ROI, update threads, win rate. A track record teams can actually review.",
     image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Trading candlestick charts on a dark screen",
   },
   {
     title: "Onchain Stats",
-    tag: "STATS",
-    desc: "Chain-by-chain value, fees, last activity, contracts deployed and a 3-year heatmap viewers can tap.",
+    desc: "Wallet value, fees, last activity, contracts. A chain footprint viewers can tap.",
     image: "https://images.unsplash.com/photo-1639322537228-f710d846310a?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Blockchain network nodes and onchain analytics",
   },
   {
-    title: "NFT import",
-    tag: "COLLECT",
-    desc: "Paste any marketplace URL. Ownership is checked onchain. Artwork is resolved through IPFS gateways.",
+    title: "Collectibles",
+    desc: "NFTs you actually hold. Paste a marketplace link and put the art on your page.",
     image: "https://images.unsplash.com/photo-1620321023374-9dca1e2d11e6?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Digital collectible NFT artwork",
   },
   {
     title: "Multi-wallet",
-    tag: "WALLETS",
-    desc: "Connect extra wallets, name them, and let viewers switch tabs on the public onchain section.",
+    desc: "Named extra wallets. Viewers switch between them on your public onchain section.",
     image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Multiple payment cards and wallets",
   },
   {
     title: "Technical Writing",
-    tag: "RESEARCH",
-    desc: "Threads, Mirror posts and deep research that show how you think before you ship.",
+    desc: "Threads, essays, research. How you think, published in one place.",
     image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Notebook and writing tools on a desk",
   },
   {
     title: "Community Roles",
-    tag: "SIGNAL",
-    desc: "Mods, campaign leads, DAO work. Contributions with context, not empty titles.",
+    desc: "Mods, campaigns, DAO work. Roles with context, not empty titles.",
     image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Team collaborating around a laptop",
   },
   {
     title: "Airdrops & Testnets",
-    tag: "ONCHAIN",
-    desc: "Campaigns farmed, chains touched, status in one place builders respect.",
+    desc: "Campaigns farmed and chains touched. One list builders respect.",
     image: "https://images.unsplash.com/photo-1642104704074-907c0698cbd9?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Network nodes visualization",
   },
   {
-    title: "Skills as pillars",
-    tag: "CRAFT",
-    desc: "Service pillars with short proof-backed descriptions. Not random single word tags.",
+    title: "Skill pillars",
+    desc: "Named skills with a short proof-backed brief. Not random tags.",
     image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Learning and skill building at a workspace",
   },
   {
     title: "Profile & Builder scores",
-    tag: "TRUST",
-    desc: "Strict public scores for completeness and evidence density. Hard to game, easy to read.",
+    desc: "Two public scores. Completeness and evidence density, easy to read.",
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Analytics dashboard with charts and metrics",
   },
   {
-    title: "Private CV / PDF",
-    tag: "RESUME",
-    desc: "One click from the dashboard. Your profile becomes a professional two-column resume you can send. Visitors cannot download it.",
+    title: "Private CV",
+    desc: "Your profile as a resume you send. Visitors cannot download it.",
     image: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Clean resume document on a desk",
   },
 ];
 
-export default function FeatureScroller({ items = DEFAULT }: { items?: FeatureCard[] }) {
-  const ref = useRef<HTMLDivElement>(null);
+function Arrow({ dir }: { dir: "left" | "right" }) {
+  const d = dir === "left" ? "M15 5 L7 12 L15 19" : "M9 5 L17 12 L9 19";
+  return (
+    <svg width="22" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d={d} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
-  function scrollBy(dir: number) {
-    const el = ref.current;
+export default function FeatureScroller({ items = DEFAULT }: { items?: FeatureCard[] }) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const pauseRef = useRef(0);
+
+  function nudge(dir: number) {
+    const el = trackRef.current;
     if (!el) return;
-    el.scrollBy({ left: dir * Math.min(320, el.clientWidth * 0.8), behavior: "smooth" });
+    pauseRef.current = Date.now() + 1400;
+    el.scrollBy({ left: dir * Math.min(340, el.clientWidth * 0.78), behavior: "smooth" });
   }
 
+  useEffect(() => {
+    const section = sectionRef.current;
+    const track = trackRef.current;
+    if (!section || !track) return;
+
+    function onScroll() {
+      if (!section || !track) return;
+      if (Date.now() < pauseRef.current) return;
+      const rect = section.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
+      const start = vh * 0.78;
+      const end = -rect.height * 0.35;
+      const raw = (start - rect.top) / Math.max(1, start - end);
+      const progress = Math.min(1, Math.max(0, raw));
+      const max = Math.max(0, track.scrollWidth - track.clientWidth);
+      const next = progress * max;
+      if (Math.abs(track.scrollLeft - next) > 0.5) track.scrollLeft = next;
+    }
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
   return (
-    <div className="relative">
-      <div className="mb-4 flex items-end justify-between gap-3 px-1">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-widest text-foreground-subtle">What Pow3Folio does</p>
-          <h2 className="mt-1 text-xl sm:text-2xl font-bold tracking-tight">Proof sections that move with you</h2>
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <button type="button" onClick={() => scrollBy(-1)} className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-foreground-muted hover:border-primary/40 hover:text-primary hover:shadow-glow-sm transition" aria-label="Scroll left">‹</button>
-          <button type="button" onClick={() => scrollBy(1)} className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-foreground-muted hover:border-primary/40 hover:text-primary hover:shadow-glow-sm transition" aria-label="Scroll right">›</button>
+    <section id="features" ref={sectionRef} className="pb-20 sm:pb-28">
+      <div className="container-app">
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <div className="max-w-xl">
+            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-foreground-subtle">What Powfolio does</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Proof sections that move with you</h2>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-foreground-muted">Each block on your public page is a piece of work someone can review. Scroll the page and the reel moves with you.</p>
+          </div>
+          <div className="mb-1 flex items-center gap-3 shrink-0">
+            <button type="button" onClick={() => nudge(-1)} className="text-foreground-muted transition hover:text-primary" aria-label="Previous section"><Arrow dir="left" /></button>
+            <button type="button" onClick={() => nudge(1)} className="text-foreground-muted transition hover:text-primary" aria-label="Next section"><Arrow dir="right" /></button>
+          </div>
         </div>
       </div>
-      <div ref={ref} className="flex gap-3.5 overflow-x-auto pb-2 snap-x snap-mandatory" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+      <div ref={trackRef} className="flex gap-4 overflow-x-auto px-[max(1rem,calc((100vw-72rem)/2+1rem))] pb-2 snap-x snap-mandatory" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
         {items.map((card) => (
-          <article key={card.title} className="group relative h-64 w-[min(85vw,19rem)] shrink-0 snap-start overflow-hidden rounded-2xl border border-border/70 bg-zinc-900 shadow-sm transition duration-500 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1.5">
+          <article key={card.title} className="group relative h-[22rem] w-[min(86vw,22rem)] shrink-0 snap-start overflow-hidden rounded-2xl">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={card.image} alt={card.imageAlt} className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-110" loading="lazy" decoding="async" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/20 transition duration-500 group-hover:from-black/80" />
-            <div className="relative flex h-full flex-col justify-end p-4">
-              <span className="mb-2 w-fit rounded-full border border-white/25 bg-black/45 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-white/95 backdrop-blur-sm transition group-hover:border-primary/50 group-hover:bg-primary/20">{card.tag}</span>
-              <h3 className="text-lg font-bold text-white drop-shadow-md">{card.title}</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-white/85">{card.desc}</p>
+            <img src={card.image} alt={card.imageAlt} className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105" loading="lazy" decoding="async" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+            <div className="relative flex h-full flex-col justify-end p-5">
+              <h3 className="text-2xl font-bold tracking-tight text-white">{card.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/80">{card.desc}</p>
             </div>
           </article>
         ))}
       </div>
-      <p className="mt-2.5 text-center text-[10px] text-foreground-subtle sm:hidden">Swipe sideways to explore</p>
-    </div>
+    </section>
   );
 }
