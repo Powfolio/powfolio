@@ -1,0 +1,53 @@
+.folder-loop {
+  color: rgb(184 134 59);
+}
+
+.folder-stroke {
+  stroke-dasharray: 280;
+  stroke-dashoffset: 280;
+  animation: folder-draw 3.4s ease-in-out infinite;
+}
+
+.folder-stroke-delayed {
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation-delay: 0.35s;
+}
+
+.folder-stroke-late {
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+  animation-delay: 0.7s;
+}
+
+@keyframes folder-draw {
+  0% {
+    stroke-dashoffset: 280;
+    opacity: 0.35;
+  }
+  18% {
+    opacity: 1;
+  }
+  55% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  78% {
+    stroke-dashoffset: 0;
+    opacity: 0.85;
+  }
+  100% {
+    stroke-dashoffset: -280;
+    opacity: 0.2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .folder-stroke,
+  .folder-stroke-delayed,
+  .folder-stroke-late {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
