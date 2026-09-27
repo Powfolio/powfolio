@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Props = {
@@ -15,6 +15,12 @@ export default function DeleteAccount({ email }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#delete-account") {
+      setOpen(true);
+    }
+  }, []);
+
   async function handleDelete(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -28,7 +34,7 @@ export default function DeleteAccount({ email }: Props) {
       return;
     }
     if (phrase.trim().toUpperCase() !== "DELETE") {
-      setError('Type DELETE in capitals to confirm.');
+      setError("Type DELETE in capitals to confirm.");
       return;
     }
 
@@ -57,10 +63,10 @@ export default function DeleteAccount({ email }: Props) {
   }
 
   return (
-    <div className="mt-10 border-t border-border pt-8">
+    <div id="delete-account" className="mt-10 border-t border-border pt-8">
       <h2 className="text-sm font-semibold text-danger">Danger zone</h2>
       <p className="mt-1 text-xs text-foreground-muted leading-relaxed">
-        Permanently delete your Pow3Folio account, public profile and all proof data. This cannot be undone.
+        Permanently delete your Powfolio account, public profile and all proof data. This cannot be undone.
       </p>
 
       {!open ? (
@@ -98,9 +104,7 @@ export default function DeleteAccount({ email }: Props) {
               required
             />
           </div>
-          {error && (
-            <p className="text-xs text-danger">{error}</p>
-          )}
+          {error && <p className="text-xs text-danger">{error}</p>}
           <div className="flex flex-wrap gap-2">
             <button
               type="submit"
