@@ -9,9 +9,7 @@ export default function ThemeToggle() {
   useEffect(() => {
     setMounted(true);
     const stored = localStorage.getItem("pow3folio-theme") as "dark" | "light" | null;
-    const preferred =
-      stored ||
-      (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    const preferred = stored === "light" || stored === "dark" ? stored : "dark";
     setTheme(preferred);
     document.documentElement.classList.toggle("dark", preferred === "dark");
   }, []);
