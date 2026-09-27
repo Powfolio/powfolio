@@ -3,200 +3,355 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  Sun,
+  Moon,
+  User,
+  Download,
+  ExternalLink,
+  Copy,
+  RotateCcw,
+  LogOut,
+  Trash2,
+  Link2,
+  Sparkles,
+  ShieldCheck,
+  CheckCircle2,
+  Circle,
+  UserRound,
+  FolderGit2,
+  FileText,
+  CandlestickChart,
+  Blocks,
+  Gift,
+  ChevronRight,
+  Eye,
+  SlidersHorizontal,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import OnboardingTour, { resetOnboarding } from "@/components/onboarding/OnboardingTour";
-import DashboardAutofill from "@/components/dashboard/DashboardAutofill";
-import { loadPendingAutofill, type AutofillSection } from "@/lib/autofill-store";
+import { savePendingAutofill, type AutofillPayload } from "@/lib/autofill-store";
+import { SITE_URL } from "@/lib/site";
 
 type SectionKey =
   | "show_writing"
   | "show_trading"
   | "show_community"
   | "show_airdrops"
-  | "show_nfts"
-  | "show_credentials";
+  | "show_nfts";
 
-type Props = {
-  userId: string;
-  username: string | null;
-  email: string | null;
-  flags: Record<SectionKey, boolean>;
+type ModuleDef = {
+  id: string;
+  title: string;
+  desc: string;
+  href: string;
+  icon: typeof UserRound;
+  flag?: SectionKey;
 };
 
-const CARDS: {
-  href: string;
-  title: string;
-  hint: string;
-  flag?: SectionKey;
-  autofill?: AutofillSection;
-}[] = [
+const MODULES: ModuleDef[] = [
   {
+    id: "profile",
+    title: "Profile & identity",
+    desc: "Your introduction, professional background, skills, social accounts and the information people need to understand who you are.",
     href: "/dashboard/profile",
-    title: "Profile",
-    hint: "Bio, skills, work, education, links",
-    autofill: "profile",
+    icon: UserRound,
   },
   {
+    id: "projects",
+    title: "Projects & contributions",
+    desc: "Show the projects you have contributed to, the roles you held, what you worked on and the impact or responsibilities behind each one.",
     href: "/dashboard/community",
-    title: "Projects / Collab",
-    hint: "Builds, partnerships, community roles",
+    icon: FolderGit2,
     flag: "show_community",
-    autofill: "community",
   },
   {
+    id: "writing",
+    title: "Writing & research",
+    desc: "Collect your articles, X threads, research, guides and other published work so visitors can see how you think and communicate.",
     href: "/dashboard/writing",
-    title: "Technical Writing",
-    hint: "Articles, threads, research",
+    icon: FileText,
     flag: "show_writing",
-    autofill: "writing",
   },
   {
+    id: "trading",
+    title: "Trading record",
+    desc: "Document selected trades with direction, outcome, ROI, charts, reasoning and updates. Give visitors context instead of just a list of wins and losses.",
     href: "/dashboard/trading",
-    title: "Trading Record",
-    hint: "Trades, platforms, updates",
+    icon: CandlestickChart,
     flag: "show_trading",
   },
   {
+    id: "onchain",
+    title: "Onchain & collectibles",
+    desc: "Connect your Web3 identity with wallet activity, verified collectibles, badges and other onchain evidence that supports your profile.",
     href: "/dashboard/collectibles",
-    title: "Onchain / NFTs",
-    hint: "Wallet showcase and NFTs",
+    icon: Blocks,
     flag: "show_nfts",
   },
   {
+    id: "airdrops",
+    title: "Airdrops & testnets",
+    desc: "Document testnets, airdrop campaigns and ecosystem participation, including your role, dates and claim status.",
     href: "/dashboard/airdrops",
-    title: "Airdrops",
-    hint: "Optional. Off by default on public profile",
+    icon: Gift,
     flag: "show_airdrops",
   },
 ];
 
-export default function DashboardHome({ userId, username, email, flags }: Props) {
+export type DashboardHomeProps = {
+  userId: string;
+  username: string | null;
+  profileScore: number;
+  checks: { basics: boolean; proof: boolean; social: boolean };
+  flags: Record<SectionKey, boolean>;
+};
+
+export default function DashboardHome({
+  userId,
+  username,
+  profileScore,
+  checks,
+  flags,
+}: DashboardHomeProps) {
   const router = useRouter();
   const [state, setState] = useState(flags);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastOn, setToastOn] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [tourKey, setTourKey] = useState(0);
-  const [pendingSections, setPendingSections] = useState<AutofillSection[]>([]);
+  const [importUrl, setImportUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+
+  const publicUrl = username ? `${SITE_URL.replace(/\/$/, "")}/${username}` : "";
 
   useEffect(() => {
-    const p = loadPendingAutofill();
-    setPendingSections(p?.pending ?? []);
-    function onPending(ev: Event) {
-      const detail = (ev as CustomEvent).detail;
-      setPendingSections(detail?.pending ?? []);
-    }
-    window.addEventListener("pow3-pending-autofill", onPending);
-    return () => window.removeEventListener("pow3-pending-autofill", onPending);
+    const stored = localStorage.getItem("pow3folio-theme");
+    const next = stored === "light" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.classList.toggle("dark", next === "dark");
   }, []);
 
-  async function toggle(flag: SectionKey) {
-    setBusy(flag);
+  function toast(msg: string) {
+    setToastMsg(msg);
+    setToastOn(true);
+    window.setTimeout(() => setToastOn(false), 2400);
+  }
+
+  function setThemeValue(next: "dark" | "light") {
+    setTheme(next);
+    localStorage.setItem("pow3folio-theme", next);
+    document.documentElement.classList.toggle("dark", next === "dark");
+  }
+
+  async function toggle(flag: SectionKey, title: string) {
     const next = !state[flag];
     const supabase = createClient();
     const { error } = await supabase.from("profiles").update({ [flag]: next }).eq("id", userId);
-    setBusy(null);
     if (error) {
-      alert(
-        error.message.includes("column")
-          ? "Run the profile section columns SQL in Supabase first."
-          : error.message
-      );
+      toast(error.message.includes("column") ? "Run the profile section columns SQL first." : error.message);
       return;
     }
     setState((s) => ({ ...s, [flag]: next }));
+    toast(next ? `${title} is now visible` : `${title} is hidden from your profile`);
     router.refresh();
   }
 
+  async function copyLink() {
+    if (!publicUrl) {
+      toast("Set a username in Profile first");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      toast("Profile link copied to clipboard!");
+    } catch {
+      toast("Could not copy link");
+    }
+    setMenuOpen(false);
+  }
+
+  async function signOut() {
+    setMenuOpen(false);
+    toast("Signing out of Powfolio...");
+    const form = document.createElement("form");
+    form.method = "post";
+    form.action = "/auth/signout";
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  async function handleImport() {
+    const url = importUrl.trim();
+    if (!url) {
+      toast("Paste a public link first");
+      return;
+    }
+    setImporting(true);
+    try {
+      const res = await fetch("/api/ai/autofill-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast(data.error || "Could not read link");
+        return;
+      }
+      if (!data.profile) {
+        toast("No data extracted from link");
+        return;
+      }
+      const stored = savePendingAutofill(data.profile as AutofillPayload, data.source || url);
+      if (!stored.pending.length) {
+        toast("Nothing useful extracted. Try another link.");
+        return;
+      }
+      toast("Import started: review results before publishing");
+    } catch {
+      toast("Network error");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  const visibleCount = MODULES.filter((m) => (m.flag ? state[m.flag] : true)).length;
+
   return (
-    <main className="container-app py-6 sm:py-10">
+    <div className="dash-app">
       <OnboardingTour key={tourKey} force={tourKey > 0} />
-      {username ? (
-        <div className="mb-6 rounded-xl border border-border bg-surface/80 p-4 sm:p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-foreground-subtle">Public link</p>
-          <p className="mt-1 text-sm text-foreground-muted break-all">
-            <Link href={`/${username}`} className="text-primary hover:underline font-medium" target="_blank">
-              pow3folio.vercel.app/{username}
+      <header className="d-topbar">
+        <div className="d-title">Powfolio Dashboard</div>
+        <div className="d-actions">
+          <button type="button" className="nav-icon-btn" title="Switch theme" aria-label="Switch theme" onClick={() => setThemeValue(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
+          <button type="button" className={`account-avatar-btn${menuOpen ? " active" : ""}`} aria-label="Open account menu" aria-expanded={menuOpen} title="Account & settings" onClick={() => setMenuOpen((v) => !v)}>
+            <User size={17} />
+          </button>
+        </div>
+      </header>
+      <div className={`menu-backdrop${menuOpen ? " show" : ""}`} onClick={() => setMenuOpen(false)} />
+      <div className={`account-menu${menuOpen ? " open" : ""}`}>
+        <div className="mobile-handle" />
+        <Link href="/dashboard/resume" className="menu-row" onClick={() => setMenuOpen(false)}>
+          <Download />
+          <span>Download Powfolio</span>
+        </Link>
+        <div className="menu-row-link">
+          {username ? (
+            <a href={publicUrl} target="_blank" rel="noreferrer" className="menu-link-text" onClick={() => setMenuOpen(false)}>
+              <ExternalLink />
+              <span>Profile Link</span>
+            </a>
+          ) : (
+            <Link href="/dashboard/profile" className="menu-link-text" onClick={() => setMenuOpen(false)}>
+              <ExternalLink />
+              <span>Set username</span>
             </Link>
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link href={`/${username}`} target="_blank" className="btn-secondary text-xs">
-              Open public profile
-            </Link>
-            <Link href="/dashboard/resume" className="btn-primary text-xs">
-              Download CV
-            </Link>
-            <button
-              type="button"
-              className="text-xs text-foreground-muted hover:text-foreground hover:underline underline-offset-2"
-              onClick={() => {
-                resetOnboarding();
-                setTourKey((k) => k + 1);
-              }}
-            >
-              Replay setup tour
-            </button>
+          )}
+          <button type="button" className="menu-copy-btn" aria-label="Copy public link" onClick={copyLink}>
+            <Copy size={15} />
+          </button>
+        </div>
+        <button type="button" className="menu-row" onClick={() => { resetOnboarding(); setTourKey((k) => k + 1); setMenuOpen(false); toast("Starting the Powfolio dashboard tour..."); }}>
+          <RotateCcw />
+          <span>Replay Tour</span>
+        </button>
+        <button type="button" className="menu-row" onClick={signOut}>
+          <LogOut />
+          <span>Sign out</span>
+        </button>
+        <div className="menu-divider" />
+        <Link href="/dashboard/profile#delete-account" className="menu-row danger" onClick={() => setMenuOpen(false)}>
+          <Trash2 />
+          <span>Delete account</span>
+        </Link>
+      </div>
+      <section className="d-content">
+        <div className="page-head">
+          <div>
+            <div className="eyebrow">Profile workspace</div>
+            <h1>Build your public profile.</h1>
+            <p className="sub">Control what people see, add proof of your work, and keep your Web3 identity in one place.</p>
           </div>
         </div>
-      ) : (
-        <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 p-4">
-          <p className="text-sm font-medium">Set a username to unlock your public URL</p>
-          <p className="mt-1 text-xs text-foreground-muted">Open Profile, choose a unique username, then Save.</p>
-          <Link href="/dashboard/profile" className="btn-primary mt-3 inline-flex text-xs">
-            Complete profile
-          </Link>
-        </div>
-      )}
-      <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-foreground-muted max-w-xl">
-          Manage proof of work. ON/OFF on each card shows or hides that tab on your public profile.
-        </p>
-        {email && <p className="mt-1 text-xs text-foreground-subtle sm:hidden">{email}</p>}
-      </div>
-      <DashboardAutofill />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        {CARDS.map((card) => {
-          const on = card.flag ? state[card.flag] : true;
-          const needsReview = !!card.autofill && pendingSections.includes(card.autofill);
-          return (
-            <div
-              key={card.href}
-              className={`card relative flex flex-col p-3.5 sm:p-4 transition-colors hover:border-primary/40 ${
-                needsReview
-                  ? "ring-2 ring-amber-400/80 border-amber-400/50 shadow-[0_0_0_1px_rgba(251,191,36,0.25)]"
-                  : ""
-              }`}
-            >
-              {needsReview && (
-                <span className="absolute top-2 left-2 rounded-full bg-amber-400/20 border border-amber-400/40 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
-                  Review autofill
-                </span>
-              )}
-              {card.flag && (
-                <button
-                  type="button"
-                  disabled={busy === card.flag}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggle(card.flag!);
-                  }}
-                  className={`absolute top-2.5 right-2.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                    on
-                      ? "bg-primary/15 text-primary border border-primary/30"
-                      : "bg-surface-elevated text-foreground-subtle border border-border"
-                  }`}
-                >
-                  {busy === card.flag ? "…" : on ? "ON" : "OFF"}
-                </button>
-              )}
-              <Link href={card.href} className={`flex flex-1 flex-col pr-12 ${needsReview ? "pt-5" : ""}`}>
-                <h3 className="font-medium text-sm sm:text-base">{card.title}</h3>
-                <p className="mt-1 text-[11px] sm:text-xs text-foreground-muted line-clamp-2">{card.hint}</p>
-                <p className="mt-auto pt-3 text-xs text-primary">Manage →</p>
-              </Link>
+        <div className="grid-top">
+          <section>
+            <div className="panel-title">Import your existing work</div>
+            <div className="panel-desc">Paste a public CV, Notion page, GitHub profile or personal portfolio. Powfolio will use it to prefill compatible sections.</div>
+            <div className="import-row">
+              <div className="input-wrap">
+                <Link2 />
+                <input className="d-input" value={importUrl} onChange={(e) => setImportUrl(e.target.value)} placeholder="Paste a public link..." disabled={importing} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleImport(); } }} />
+              </div>
+              <button type="button" className="d-btn" disabled={importing} onClick={() => void handleImport()}>
+                <Sparkles size={14} />
+                {importing ? "Working…" : "Autofill"}
+              </button>
             </div>
-          );
-        })}
-      </div>
-    </main>
+            <div className="hint"><b>Tip:</b> You stay in control: review imported information before it appears publicly.</div>
+          </section>
+          <section>
+            <div className="progress-top">
+              <div>
+                <div className="eyebrow">Profile strength</div>
+                <div className="percent">{profileScore}%</div>
+              </div>
+              <ShieldCheck size={19} color="#B8860B" />
+            </div>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${Math.max(0, Math.min(100, profileScore))}%` }} />
+            </div>
+            <div className="checklist">
+              <div className={`check${checks.basics ? " done" : ""}`}>{checks.basics ? <CheckCircle2 /> : <Circle />}Profile basics completed</div>
+              <div className={`check${checks.proof ? " done" : ""}`}>{checks.proof ? <CheckCircle2 /> : <Circle />}At least one proof of work section</div>
+              <div className={`check${checks.social ? " done" : ""}`}>{checks.social ? <CheckCircle2 /> : <Circle />}Add a social identity</div>
+            </div>
+          </section>
+        </div>
+        <div className="section-head">
+          <div>
+            <h2>Profile sections</h2>
+            <span>Choose what appears publicly</span>
+          </div>
+          <span>{visibleCount} of {MODULES.length} visible</span>
+        </div>
+        <section>
+          {MODULES.map((m) => {
+            const enabled = m.flag ? state[m.flag] : true;
+            const Icon = m.icon;
+            return (
+              <div key={m.id} className={`module${enabled ? "" : " off"}`}>
+                <div className="module-main">
+                  <div className="mod-icon"><Icon /></div>
+                  <div>
+                    <div className="module-title">{m.title}</div>
+                    <div className="module-desc">{m.desc}</div>
+                  </div>
+                </div>
+                <div className="meta">
+                  <Link href={m.href} className="edit" title="Manage section" aria-label={`Open ${m.title}`}><ChevronRight /></Link>
+                  <button type="button" className={`switch${enabled ? " on" : ""}`} aria-label={`Toggle ${m.title}`} onClick={() => { if (!m.flag) { toast("Profile & identity stays on your public page"); return; } void toggle(m.flag, m.title); }}><span /></button>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+        <div className="helper">
+          <section>
+            <div className="helper-title"><Eye />Visibility</div>
+            <p>Turning a section off removes it from your public profile. Your saved information stays in your dashboard.</p>
+          </section>
+          <section>
+            <div className="helper-title"><SlidersHorizontal />Keep it focused</div>
+            <p>Only publish the sections that strengthen your professional story. You can keep other information saved privately and turn it on whenever it is ready.</p>
+          </section>
+        </div>
+      </section>
+      <div className={`toast${toastOn ? " show" : ""}`}>{toastMsg}</div>
+    </div>
   );
 }
