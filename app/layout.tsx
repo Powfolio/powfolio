@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./ui-polish.css";
 import "./landing-motion.css";
+import "./accent.css";
 import Pow3Bot from "@/components/ai/Pow3Bot";
 import SkipToContent from "@/components/ui/SkipToContent";
 import CookieConsent from "@/components/legal/CookieConsent";
