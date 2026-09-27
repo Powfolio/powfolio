@@ -133,6 +133,14 @@ export default function DashboardHome({
     document.documentElement.classList.toggle("dark", next === "dark");
   }, []);
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   function toast(msg: string) {
     setToastMsg(msg);
     setToastOn(true);
@@ -210,6 +218,14 @@ export default function DashboardHome({
         return;
       }
       toast("Import started: review results before publishing");
+      const first = stored.pending[0];
+      const dest =
+        first === "writing"
+          ? "/dashboard/writing"
+          : first === "community"
+            ? "/dashboard/community"
+            : "/dashboard/profile";
+      router.push(dest);
     } catch {
       toast("Network error");
     } finally {
