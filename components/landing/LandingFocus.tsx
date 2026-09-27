@@ -5,12 +5,21 @@ import { useEffect } from "react";
 export default function LandingFocus({ target }: { target?: string }) {
   useEffect(() => {
     if (!target) return;
-    const el = document.getElementById(target);
-    if (!el) return;
-    const id = window.setTimeout(() => {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 40);
-    return () => window.clearTimeout(id);
+
+    function go() {
+      const el = document.getElementById(target as string);
+      if (!el) return false;
+      el.scrollIntoView({ behavior: "auto", block: "start" });
+      return true;
+    }
+
+    if (go()) return;
+    const first = window.setTimeout(go, 80);
+    const second = window.setTimeout(go, 360);
+    return () => {
+      window.clearTimeout(first);
+      window.clearTimeout(second);
+    };
   }, [target]);
   return null;
 }
