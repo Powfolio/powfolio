@@ -1,8 +1,17 @@
+import "@/app/dashboard-ui.css";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import DashboardHome from "@/components/dashboard/DashboardHome";
-import BrandMark from "@/components/ui/BrandMark";
+import { computeScores } from "@/lib/ai/scores";
+import type {
+  Profile,
+  Writing,
+  Trade,
+  CommunityItem,
+  Airdrop,
+  Collectible,
+  Credential,
+} from "@/types/database";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -14,54 +23,58 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(
-      "username, show_writing, show_trading, show_community, show_airdrops, show_nfts, show_credentials"
-    )
-    .eq("id", user.id)
-    .maybeSingle();
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+
+  const [
+    { data: writings },
+    { data: trades },
+    { data: community },
+    { data: airdrops },
+    { data: collectibles },
+    { data: credentials },
+  ] = await Promise.all([
+    supabase.from("writings").select("*").eq("user_id", user.id).eq("is_visible", true),
+    supabase.from("trades").select("*").eq("user_id", user.id).eq("is_visible", true),
+    supabase.from("community_items").select("*").eq("user_id", user.id).eq("is_visible", true),
+    supabase.from("airdrops").select("*").eq("user_id", user.id).eq("is_visible", true),
+    supabase.from("collectibles").select("*").eq("user_id", user.id).eq("is_visible", true),
+    supabase.from("credentials").select("*").eq("user_id", user.id).eq("is_visible", true),
+  ]);
+
+  const p = (profile as Profile | null) ?? null;
+  const scores = p
+    ? computeScores({
+        profile: p,
+        writings: (writings as Writing[]) ?? [],
+        trades: (trades as Trade[]) ?? [],
+        community: (community as CommunityItem[]) ?? [],
+        airdrops: (airdrops as Airdrop[]) ?? [],
+        nfts: (collectibles as Collectible[]) ?? [],
+        credentials: (credentials as Credential[]) ?? [],
+      })
+    : { profileScore: 0 };
 
   const flags = {
-    show_writing: profile?.show_writing !== false,
-    show_trading: profile?.show_trading !== false,
-    show_community: profile?.show_community !== false,
-    show_airdrops: profile?.show_airdrops === true,
-    show_nfts: profile?.show_nfts !== false,
-    show_credentials: profile?.show_credentials !== false,
+    show_writing: p?.show_writing !== false,
+    show_trading: p?.show_trading !== false,
+    show_community: p?.show_community !== false,
+    show_airdrops: p?.show_airdrops === true,
+    show_nfts: p?.show_nfts !== false,
+  };
+
+  const checks = {
+    basics: Boolean(p?.display_name && ((p.bio || "").trim().length >= 20 || p.avatar_url)),
+    proof: (writings?.length || 0) + (trades?.length || 0) + (community?.length || 0) > 0,
+    social: Boolean(p?.x_url || p?.github_url || p?.telegram_url || p?.website_url),
   };
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-border">
-        <div className="container-app flex h-14 items-center justify-between gap-2">
-          <BrandMark />
-          <div className="flex items-center gap-2 text-sm text-foreground-muted">
-            {profile?.username && (
-              <Link
-                href={`/${profile.username}`}
-                className="btn-ghost text-xs hidden sm:inline-flex"
-                target="_blank"
-              >
-                View profile
-              </Link>
-            )}
-            <span className="hidden md:inline truncate max-w-[10rem]">{user.email}</span>
-            <form action="/auth/signout" method="post">
-              <button type="submit" className="btn-ghost text-xs">
-                Sign out
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
-
-      <DashboardHome
-        userId={user.id}
-        username={profile?.username ?? null}
-        email={user.email ?? null}
-        flags={flags}
-      />
-    </div>
+    <DashboardHome
+      userId={user.id}
+      username={p?.username ?? null}
+      profileScore={scores.profileScore}
+      checks={checks}
+      flags={flags}
+    />
   );
 }
