@@ -35,7 +35,7 @@ export default function Pow3Bot({ context }: Props) {
     {
       role: "assistant",
       content:
-        "Hey. I'm Pow3Bot, here for Pow3Folio only. Ask about your profile, scores, proof sections, or paste rough text and I'll clean it up. If you're logged in, I can see your profile and be honest about the gaps.",
+        "Hey. I'm Pow3Bot, here for Powfolio only. Ask about your profile, scores, proof sections, or paste rough text and I'll clean it up. If you're logged in, I can see your profile and be honest about the gaps.",
     },
   ]);
   const bottomRef = useRef<HTMLDivElement>(null);
