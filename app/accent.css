@@ -1,0 +1,6 @@
+:root,
+.dark {
+  --primary: 184 134 11;
+  --primary-hover: 201 147 12;
+  --primary-foreground: 255 255 255;
+}
