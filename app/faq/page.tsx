@@ -31,17 +31,20 @@ export default async function FaqPage() {
     <div className="min-h-screen bg-background text-foreground">
       <LandingNav signedIn={Boolean(user)} active="faq" />
       <main id="main" className="container-app max-w-2xl py-10 sm:py-14">
-        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-foreground-subtle">Help</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">FAQ</h1>
-        <p className="mt-3 text-sm leading-relaxed text-foreground-muted">Product answers for builders. For live help, open Pow3Bot.</p>
-        <ul className="mt-10 space-y-8">
+        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-foreground-subtle">Help</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">FAQ</h1>
+        <p className="mt-3 text-sm leading-relaxed text-foreground-muted">Short answers. For a live walkthrough, open Pow3Bot.</p>
+        <div className="mt-8 divide-y divide-border/40 border-y border-border/40">
           {FAQS.map((item) => (
-            <li key={item.q}>
-              <h2 className="text-base font-semibold tracking-tight">{item.q}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-foreground-muted">{item.a}</p>
-            </li>
+            <details key={item.q} className="faq-item py-4">
+              <summary className="flex cursor-pointer items-start justify-between gap-4 text-[15px] font-medium tracking-tight">
+                <span>{item.q}</span>
+                <span className="faq-mark mt-0.5 text-lg leading-none" aria-hidden>+</span>
+              </summary>
+              <p className="mt-2.5 max-w-prose text-sm leading-relaxed text-foreground-muted">{item.a}</p>
+            </details>
           ))}
-        </ul>
+        </div>
       </main>
       <SiteFooter />
       <BackToTop />
