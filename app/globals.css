@@ -5,46 +5,48 @@
 @layer base {
   :root {
     color-scheme: light;
-    --background: 250 250 250;
-    --surface: 255 255 255;
-    --surface-elevated: 244 244 245;
-    --surface-hover: 228 228 231;
-    --border: 228 228 231;
-    --border-strong: 212 212 216;
+    --background: 253 252 250;
+    --surface: 246 244 240;
+    --surface-elevated: 238 235 229;
+    --surface-hover: 226 222 213;
+    --border: 226 222 213;
+    --border-strong: 196 190 178;
     --primary: 184 134 59;
-    --primary-hover: 156 111 44;
+    --primary-hover: 201 154 79;
+    --primary-pressed: 156 111 44;
     --primary-muted: 245 232 211;
     --primary-foreground: 13 13 12;
     --accent: 74 122 120;
     --accent-muted: 222 234 233;
-    --foreground: 24 24 27;
-    --foreground-muted: 82 82 91;
-    --foreground-subtle: 113 113 122;
-    --success: 22 163 74;
-    --warning: 217 119 6;
-    --danger: 220 38 38;
+    --foreground: 23 22 20;
+    --foreground-muted: 107 103 95;
+    --foreground-subtle: 140 135 125;
+    --success: 76 154 106;
+    --warning: 217 122 61;
+    --danger: 196 69 61;
   }
 
   .dark {
     color-scheme: dark;
-    --background: 9 9 11;
-    --surface: 24 24 27;
-    --surface-elevated: 39 39 42;
-    --surface-hover: 63 63 70;
-    --border: 39 39 42;
-    --border-strong: 63 63 70;
+    --background: 13 13 12;
+    --surface: 23 23 21;
+    --surface-elevated: 32 31 28;
+    --surface-hover: 44 43 39;
+    --border: 44 43 39;
+    --border-strong: 66 64 58;
     --primary: 184 134 59;
     --primary-hover: 201 154 79;
+    --primary-pressed: 156 111 44;
     --primary-muted: 58 42 20;
     --primary-foreground: 13 13 12;
     --accent: 74 122 120;
     --accent-muted: 26 45 44;
-    --foreground: 250 250 250;
-    --foreground-muted: 161 161 170;
-    --foreground-subtle: 113 113 122;
-    --success: 34 197 94;
-    --warning: 245 158 11;
-    --danger: 239 68 68;
+    --foreground: 242 240 236;
+    --foreground-muted: 156 152 144;
+    --foreground-subtle: 107 103 95;
+    --success: 76 154 106;
+    --warning: 217 122 61;
+    --danger: 196 69 61;
   }
 
   html {
@@ -74,11 +76,11 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-200 hover:bg-primary-hover hover:shadow-md hover:shadow-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-200 hover:bg-primary-hover hover:shadow-md hover:shadow-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] active:bg-primary-pressed;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-foreground transition-all duration-200 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-foreground transition-all duration-200 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 active:scale-[0.98];
   }
 
   .btn-ghost {
@@ -86,7 +88,7 @@
   }
 
   .input {
-    @apply w-full rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary;
+    @apply w-full rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/40;
   }
 
   .label {
@@ -243,8 +245,8 @@
 }
 
 @keyframes open-dot-blink {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55); }
-  50% { opacity: 0.35; box-shadow: 0 0 0 5px rgba(52, 211, 153, 0); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(76, 154, 106, 0.55); }
+  50% { opacity: 0.35; box-shadow: 0 0 0 5px rgba(76, 154, 106, 0); }
 }
 @keyframes location-dot-blink {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.55); }
