@@ -1,0 +1,91 @@
+/* Final visual lock. Imported last so drifted hexes cannot win. */
+
+:root,
+.dark {
+  --primary: 184 134 59;
+  --primary-hover: 201 154 79;
+  --primary-pressed: 156 111 44;
+  --primary-foreground: 13 13 12;
+}
+
+.ambient-glow-1 {
+  background: radial-gradient(circle, rgba(184,134,59,.08) 0%, rgba(156,111,44,.02) 45%, transparent 70%) !important;
+}
+.ambient-glow-2 {
+  background: radial-gradient(circle, rgba(184,134,59,.06) 0%, transparent 60%) !important;
+}
+
+.dark .auth-container {
+  background: #171715 !important;
+  box-shadow: 0 30px 90px -20px rgba(13,13,12,.9), 0 0 50px -15px rgba(184,134,59,.08) !important;
+  border-color: rgba(242,240,236,.06) !important;
+}
+
+.field-group input:focus {
+  border-color: #b8863b !important;
+  box-shadow: 0 0 0 3px rgba(184,134,59,.18) !important;
+}
+.field-group input:focus ~ .field-notch-label {
+  color: #b8863b !important;
+}
+.dark .field-notch-label {
+  background-color: #171715 !important;
+}
+
+.pw-mismatch {
+  border-color: #c4453d !important;
+  box-shadow: 0 0 0 3px rgba(196,69,61,.25) !important;
+}
+.pw-match,
+.email-verified-border {
+  border-color: #4c9a6a !important;
+  box-shadow: 0 0 0 3px rgba(76,154,106,.25) !important;
+}
+
+.otp-squircle {
+  border-color: rgba(184,134,59,.35) !important;
+}
+.otp-squircle:focus {
+  border-color: #c99a4f !important;
+  box-shadow: 0 0 15px rgba(201,154,79,.35) !important;
+}
+.glass-corner-tl,
+.glass-corner-br {
+  border-color: rgba(217,173,110,.55) !important;
+}
+
+@media (min-width: 768px) {
+  .overlay-content {
+    background:
+      radial-gradient(circle at 80% 20%, rgba(217,173,110,.28) 0%, transparent 50%),
+      linear-gradient(145deg, #0d0d0c 0%, #171715 42%, #9c6f2c 78%, #b8863b 100%) !important;
+  }
+}
+@media (max-width: 767px) {
+  .overlay-content {
+    background:
+      radial-gradient(circle at top right, rgba(217,173,110,.26) 0%, transparent 60%),
+      linear-gradient(145deg, #0d0d0c 0%, #171715 42%, #9c6f2c 78%, #b8863b 100%) !important;
+  }
+}
+
+/* Flatten old gold/amber CTA gradients to locked bronze + dark text */
+.pow-auth-page button[class*="from-bronze"],
+.pow-auth-page button[class*="from-amber"],
+.pow-auth-page button[class*="via-bronze"] {
+  background-image: none !important;
+  background-color: #b8863b !important;
+  color: #0d0d0c !important;
+  box-shadow: 0 8px 20px rgba(184,134,59,.16) !important;
+}
+.pow-auth-page button[class*="from-bronze"]:hover,
+.pow-auth-page button[class*="from-amber"]:hover {
+  background-color: #c99a4f !important;
+}
+
+.pow-auth-page {
+  background-color: #fdfcfa;
+}
+.dark .pow-auth-page {
+  background-color: #0d0d0c;
+}

@@ -1,6 +1,8 @@
+/* Locked Powfolio palette — must match globals.css. Do not drift to #B8860B or white-on-bronze. */
 :root,
 .dark {
-  --primary: 184 134 11;
-  --primary-hover: 201 147 12;
-  --primary-foreground: 255 255 255;
+  --primary: 184 134 59;
+  --primary-hover: 201 154 79;
+  --primary-pressed: 156 111 44;
+  --primary-foreground: 13 13 12;
 }
