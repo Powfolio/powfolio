@@ -1,0 +1,108 @@
+/* Soft, simple surfaces. Loaded last. */
+
+html { scroll-behavior: smooth; }
+
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Quieter bronze headline — no sliding gold shine */
+.hero-gradient-text {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: #c99a4f !important;
+  animation: none !important;
+}
+.dark .hero-gradient-text { color: #c99a4f !important; }
+
+.cta-pulse { animation: none !important; box-shadow: none !important; }
+
+/* Softer primary buttons */
+.btn-primary {
+  border-radius: 0.75rem;
+  box-shadow: none;
+  font-weight: 600;
+}
+.btn-primary:hover { box-shadow: none; }
+
+/* Cookie: compact, never covers the auth flip CTA */
+.cookie-banner {
+  z-index: 90;
+}
+@media (max-width: 767px) {
+  .cookie-banner {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+  body.cookie-open .overlay-wrapper {
+    bottom: 7.5rem !important;
+  }
+  body.cookie-open .pow-auth-page {
+    padding-bottom: 8rem;
+  }
+}
+
+/* Hide the AI chip while the cookie bar is up — two FABs fight */
+body.cookie-open button[aria-label="Open Pow3Bot"],
+body.cookie-open button[aria-label="Close Pow3Bot"] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+button[aria-label="Open Pow3Bot"],
+button[aria-label="Close Pow3Bot"] {
+  border-width: 1px !important;
+  box-shadow: 0 6px 18px rgba(13,13,12,.22) !important;
+}
+
+/* FAQ accordion */
+.faq-item summary {
+  list-style: none;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item[open] summary { color: rgb(var(--foreground)); }
+.faq-mark {
+  color: rgb(var(--foreground-subtle));
+  transition: transform .18s ease;
+}
+.faq-item[open] .faq-mark { transform: rotate(45deg); color: #b8863b; }
+
+/* Auth overlay type */
+.overlay-box h3 { letter-spacing: -0.03em; font-weight: 650; }
+.overlay-btn-soft {
+  border-radius: 999px;
+  border: 1px solid rgba(242,240,236,.28);
+  background: transparent;
+  color: #f2f0ec;
+  padding: 0.55rem 1.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.overlay-btn-soft:hover {
+  background: #f2f0ec;
+  color: #0d0d0c;
+}
+
+/* Switcher links under auth forms */
+.auth-switch {
+  margin-top: 0.85rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6b675f;
+}
+.dark .auth-switch { color: #9c9890; }
+.auth-switch button {
+  color: #9c6f2c;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.auth-switch button:hover { text-decoration: underline; }
+
+@media (min-width: 768px) {
+  .auth-switch { display: none; }
+}

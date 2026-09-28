@@ -5,6 +5,7 @@ import "./ui-polish.css";
 import "./landing-motion.css";
 import "./accent.css";
 import "./palette-lock.css";
+import "./ux-refine.css";
 import Pow3Bot from "@/components/ai/Pow3Bot";
 import SkipToContent from "@/components/ui/SkipToContent";
 import CookieConsent from "@/components/legal/CookieConsent";

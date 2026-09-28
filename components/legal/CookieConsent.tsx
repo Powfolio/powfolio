@@ -16,6 +16,11 @@ export default function CookieConsent() {
     }
   }, []);
 
+  useEffect(() => {
+    document.body.classList.toggle("cookie-open", open);
+    return () => document.body.classList.remove("cookie-open");
+  }, [open]);
+
   function accept() {
     try {
       localStorage.setItem(KEY, "necessary");
@@ -28,15 +33,15 @@ export default function CookieConsent() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[90] p-3 sm:p-4">
-      <div className="mx-auto flex max-w-3xl flex-col gap-3 rounded-2xl border border-border bg-surface/95 p-4 shadow-lg backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm leading-6 text-foreground-muted">
-          Powfolio uses necessary cookies to keep you signed in and protect the product. We do not run advertising cookies.{" "}
+    <div className="cookie-banner fixed inset-x-0 bottom-0 z-[90] p-3 sm:p-4">
+      <div className="mx-auto flex max-w-xl flex-col gap-3 rounded-2xl border border-border bg-surface/95 p-3.5 shadow-lg backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-[13px] leading-5 text-foreground-muted">
+          Necessary cookies only — sign-in and security. No ads.{" "}
           <Link href="/cookies" className="text-primary hover:underline">
-            Cookie policy
+            Policy
           </Link>
         </p>
-        <button type="button" className="btn-primary shrink-0 text-xs" onClick={accept}>
+        <button type="button" className="btn-primary h-9 shrink-0 px-4 text-xs" onClick={accept}>
           Got it
         </button>
       </div>
