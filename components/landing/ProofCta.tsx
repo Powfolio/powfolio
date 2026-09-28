@@ -41,11 +41,11 @@ export default function ProofCta({ signedIn }: { signedIn: boolean }) {
         </p>
         <div className="mt-8">
           {signedIn ? (
-            <Link href="/dashboard" className="text-sm font-semibold text-primary hover:underline">
+            <Link href="/dashboard" className="btn-primary px-5 py-2.5 text-sm">
               Open dashboard
             </Link>
           ) : (
-            <Link href="/signup" className="text-sm font-semibold text-primary hover:underline">
+            <Link href="/signup" className="btn-primary px-5 py-2.5 text-sm">
               Get started free
             </Link>
           )}
