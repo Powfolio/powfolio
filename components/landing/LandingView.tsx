@@ -37,8 +37,8 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
     <div className="relative min-h-screen overflow-x-hidden">
       <JsonLd />
       <LandingFocus target={focus} />
-      <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-[0.06] dark:opacity-[0.1]" style={{ backgroundSize: "40px 40px" }} aria-hidden />
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[36rem] w-[52rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl glow-orb" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-[0.05] dark:opacity-[0.08]" style={{ backgroundSize: "40px 40px" }} aria-hidden />
+      <div className="pointer-events-none absolute -top-48 left-1/2 h-[26rem] w-[34rem] -translate-x-1/2 rounded-full bg-primary/[0.07] blur-3xl" aria-hidden />
       <LandingNav signedIn={signedIn} active={focus} />
       <main id="main" className="relative z-10">
         <section className="container-app pb-14 pt-16 sm:pb-20 sm:pt-24">
@@ -46,13 +46,13 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
             <p className="landing-reveal landing-delay-1 text-[11px] font-medium uppercase tracking-[0.22em] text-foreground-subtle">Live scores · real proof · one public link</p>
             <h1 className="landing-reveal landing-delay-2 mt-5 text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-[3.6rem]">Your Web3 work. <span className="hero-gradient-text">Verified. Visible.</span></h1>
             <p className="landing-reveal landing-delay-3 mx-auto mt-6 max-w-2xl text-base leading-relaxed text-foreground-muted sm:text-[1.05rem]">Stop scattering trades, threads, and roles across ten apps. One public Powfolio with scores that reflect evidence. Built for people who ship, not just claim.</p>
-            <div className="landing-reveal landing-delay-4 mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <div className="landing-reveal landing-delay-4 mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
               {signedIn ? (
-                <a href="/dashboard" className="text-sm font-semibold text-primary hover:underline">Open dashboard</a>
+                <a href="/dashboard" className="btn-primary px-5 py-2.5 text-sm">Open dashboard</a>
               ) : (
-                <a href="/signup" className="text-sm font-semibold text-primary hover:underline">Create free profile</a>
+                <a href="/signup" className="btn-primary px-5 py-2.5 text-sm">Create free profile</a>
               )}
-              <a href="/faq" className="text-sm text-foreground-muted hover:text-foreground">Read the FAQ</a>
+              <a href="/faq" className="btn-ghost px-4 py-2 text-sm">Read the FAQ</a>
             </div>
             <dl className="landing-reveal landing-delay-5 mx-auto mt-14 grid max-w-lg grid-cols-2 gap-y-6 sm:grid-cols-4">
               {STATS.map((s) => (

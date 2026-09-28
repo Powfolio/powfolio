@@ -1,4 +1,5 @@
-/* Final visual lock. Imported last so drifted hexes cannot win. */
+/* Final visual lock. Imported last so drifted hexes cannot win.
+   Neutrals carry the page. Bronze is accent only: CTAs, focus, switches, progress. */
 
 :root,
 .dark {
@@ -6,18 +7,25 @@
   --primary-hover: 201 154 79;
   --primary-pressed: 156 111 44;
   --primary-foreground: 13 13 12;
+  --success: 76 154 106;
+  --danger: 196 69 61;
 }
 
 .ambient-glow-1 {
-  background: radial-gradient(circle, rgba(184,134,59,.08) 0%, rgba(156,111,44,.02) 45%, transparent 70%) !important;
+  background: radial-gradient(circle, rgba(184,134,59,.05) 0%, transparent 62%) !important;
 }
 .ambient-glow-2 {
-  background: radial-gradient(circle, rgba(184,134,59,.06) 0%, transparent 60%) !important;
+  background: radial-gradient(circle, rgba(184,134,59,.04) 0%, transparent 64%) !important;
 }
 
+.auth-container {
+  background: #ffffff !important;
+  box-shadow: 0 25px 70px -18px rgba(13,13,12,.10) !important;
+  border-color: #e2ded5 !important;
+}
 .dark .auth-container {
   background: #171715 !important;
-  box-shadow: 0 30px 90px -20px rgba(13,13,12,.9), 0 0 50px -15px rgba(184,134,59,.08) !important;
+  box-shadow: 0 30px 90px -20px rgba(13,13,12,.9), 0 0 40px -18px rgba(184,134,59,.06) !important;
   border-color: rgba(242,240,236,.06) !important;
 }
 
@@ -51,27 +59,29 @@
 }
 .glass-corner-tl,
 .glass-corner-br {
-  border-color: rgba(217,173,110,.55) !important;
+  border-color: rgba(184,134,59,.45) !important;
 }
 
+/* Auth side panel: warm charcoal, not a gold wall */
 @media (min-width: 768px) {
   .overlay-content {
     background:
-      radial-gradient(circle at 80% 20%, rgba(217,173,110,.28) 0%, transparent 50%),
-      linear-gradient(145deg, #0d0d0c 0%, #171715 42%, #9c6f2c 78%, #b8863b 100%) !important;
+      radial-gradient(circle at 82% 14%, rgba(184,134,59,.14) 0%, transparent 46%),
+      linear-gradient(165deg, #0d0d0c 0%, #171715 58%, #201f1c 100%) !important;
   }
 }
 @media (max-width: 767px) {
   .overlay-content {
     background:
-      radial-gradient(circle at top right, rgba(217,173,110,.26) 0%, transparent 60%),
-      linear-gradient(145deg, #0d0d0c 0%, #171715 42%, #9c6f2c 78%, #b8863b 100%) !important;
+      radial-gradient(circle at top right, rgba(184,134,59,.12) 0%, transparent 58%),
+      linear-gradient(165deg, #0d0d0c 0%, #171715 58%, #201f1c 100%) !important;
   }
 }
 
 .pow-auth-page button[class*="from-bronze"],
 .pow-auth-page button[class*="from-amber"],
-.pow-auth-page button[class*="via-bronze"] {
+.pow-auth-page button[class*="via-bronze"],
+.pow-auth-page button[class*="to-amber"] {
   background-image: none !important;
   background-color: #b8863b !important;
   color: #0d0d0c !important;
@@ -92,4 +102,8 @@
 .dash-app .progress-top svg {
   color: #b8863b !important;
   stroke: #b8863b !important;
+}
+
+input[type="checkbox"] {
+  accent-color: #b8863b;
 }
