@@ -5,6 +5,7 @@ import StairsLoader from "@/components/auth/StairsLoader";
 import AuthOtpModal from "@/components/auth/AuthOtpModal";
 import { EyeButton, SocialRow, ThemeToggle } from "@/components/auth/auth-icons";
 import { useAuthExperience, type AuthMode } from "@/components/auth/use-auth-experience";
+import BrandMark from "@/components/ui/BrandMark";
 
 const primaryBtn =
   "w-full rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed active:scale-[0.99]";
@@ -23,7 +24,8 @@ export default function AuthExperience({
       <StairsLoader open={a.loader.open} title={a.loader.title} subtitle={a.loader.subtitle} />
       <div className="ambient-glow-1" />
       <div className="ambient-glow-2" />
-      <header className="z-10 flex w-full max-w-5xl items-center justify-end py-2">
+      <header className="z-10 flex w-full max-w-5xl items-center justify-between py-2">
+        <BrandMark compact href="/" />
         <ThemeToggle dark={a.dark} onClick={a.toggleTheme} />
       </header>
       <main className="z-10 my-auto flex w-full items-center justify-center py-2">
