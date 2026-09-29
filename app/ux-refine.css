@@ -40,6 +40,10 @@ body {
   body.cookie-open .pow-auth-page {
     padding-bottom: 8rem;
   }
+  /* Flip overlay is a desktop pattern. On phones it collides with the form. */
+  .pow-auth-page .overlay-wrapper {
+    display: none !important;
+  }
 }
 
 /* Hide the AI chip while the cookie bar is up — two FABs fight */
@@ -105,4 +109,46 @@ button[aria-label="Close Pow3Bot"] {
 
 @media (min-width: 768px) {
   .auth-switch { display: none; }
+}
+
+/* Dashboard: whole section row is the edit target */
+.dash-app .d-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.dash-app .d-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #b8863b;
+  color: #0d0d0c;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.dash-app .module-main {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.dash-app .module-copy {
+  min-width: 0;
+  flex: 1;
+}
+.dash-app .module-main .edit {
+  margin-left: auto;
+}
+.dash-app .module-main:hover .module-title,
+.dash-app .module-main:hover .edit {
+  color: var(--d-accent);
+}
+.dash-app .switch {
+  position: relative;
+  z-index: 2;
 }
