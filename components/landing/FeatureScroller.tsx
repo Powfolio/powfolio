@@ -83,41 +83,73 @@ function Arrow({ dir }: { dir: "left" | "right" }) {
 
 export default function FeatureScroller({ items = DEFAULT }: { items?: FeatureCard[] }) {
   const sectionRef = useRef<HTMLElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const pauseRef = useRef(0);
+  const offsetRef = useRef(0);
+  const targetRef = useRef(0);
+  const lastYRef = useRef(0);
+  const rafRef = useRef(0);
+  const pauseUntil = useRef(0);
+
+  function maxOffset() {
+    const viewport = viewportRef.current;
+    const track = trackRef.current;
+    if (!viewport || !track) return 0;
+    return Math.max(0, track.scrollWidth - viewport.clientWidth);
+  }
+
+  function apply(x: number) {
+    const track = trackRef.current;
+    if (!track) return;
+    const clamped = Math.min(maxOffset(), Math.max(0, x));
+    offsetRef.current = clamped;
+    track.style.transform = "translate3d(" + -clamped + "px,0,0)";
+  }
 
   function nudge(dir: number) {
-    const el = trackRef.current;
-    if (!el) return;
-    pauseRef.current = Date.now() + 1400;
-    el.scrollBy({ left: dir * Math.min(340, el.clientWidth * 0.78), behavior: "smooth" });
+    pauseUntil.current = Date.now() + 1600;
+    const viewport = viewportRef.current;
+    const step = Math.min(340, (viewport?.clientWidth || 320) * 0.78);
+    targetRef.current = Math.min(maxOffset(), Math.max(0, targetRef.current + dir * step));
   }
 
   useEffect(() => {
-    const section = sectionRef.current;
-    const track = trackRef.current;
-    if (!section || !track) return;
+    lastYRef.current = window.scrollY;
 
-    function onScroll() {
-      if (!section || !track) return;
-      if (Date.now() < pauseRef.current) return;
-      const rect = section.getBoundingClientRect();
-      const vh = window.innerHeight || 1;
-      const start = vh * 0.78;
-      const end = -rect.height * 0.35;
-      const raw = (start - rect.top) / Math.max(1, start - end);
-      const progress = Math.min(1, Math.max(0, raw));
-      const max = Math.max(0, track.scrollWidth - track.clientWidth);
-      const next = progress * max;
-      if (Math.abs(track.scrollLeft - next) > 0.5) track.scrollLeft = next;
+    function tick() {
+      const current = offsetRef.current;
+      const target = targetRef.current;
+      const next = current + (target - current) * 0.16;
+      if (Math.abs(next - target) < 0.35) apply(target);
+      else apply(next);
+      rafRef.current = requestAnimationFrame(tick);
     }
 
-    onScroll();
+    rafRef.current = requestAnimationFrame(tick);
+
+    function onScroll() {
+      const y = window.scrollY;
+      const dy = y - lastYRef.current;
+      lastYRef.current = y;
+      if (Date.now() < pauseUntil.current) return;
+      const section = sectionRef.current;
+      if (!section) return;
+      const rect = section.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
+      if (rect.bottom < 64 || rect.top > vh - 64) return;
+      targetRef.current = Math.min(maxOffset(), Math.max(0, targetRef.current + dy * 0.9));
+    }
+
+    function onResize() {
+      targetRef.current = Math.min(maxOffset(), targetRef.current);
+    }
+
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
     return () => {
+      cancelAnimationFrame(rafRef.current);
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 
@@ -136,18 +168,20 @@ export default function FeatureScroller({ items = DEFAULT }: { items?: FeatureCa
           </div>
         </div>
       </div>
-      <div ref={trackRef} className="flex gap-4 overflow-x-auto px-[max(1rem,calc((100vw-72rem)/2+1rem))] pb-2 snap-x snap-mandatory" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-        {items.map((card) => (
-          <article key={card.title} className="group relative h-[22rem] w-[min(86vw,22rem)] shrink-0 snap-start overflow-hidden rounded-2xl">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={card.image} alt={card.imageAlt} className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105" loading="lazy" decoding="async" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
-            <div className="relative flex h-full flex-col justify-end p-5">
-              <h3 className="text-2xl font-bold tracking-tight text-white">{card.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/80">{card.desc}</p>
-            </div>
-          </article>
-        ))}
+      <div ref={viewportRef} className="overflow-hidden px-[max(1rem,calc((100vw-72rem)/2+1rem))]">
+        <div ref={trackRef} className="flex gap-4 will-change-transform" style={{ transform: "translate3d(0,0,0)" }}>
+          {items.map((card) => (
+            <article key={card.title} className="group relative h-[22rem] w-[min(86vw,22rem)] shrink-0 overflow-hidden rounded-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={card.image} alt={card.imageAlt} className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105" loading="lazy" decoding="async" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+              <div className="relative flex h-full flex-col justify-end p-5">
+                <h3 className="text-2xl font-bold tracking-tight text-white">{card.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/80">{card.desc}</p>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
