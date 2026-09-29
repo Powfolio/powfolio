@@ -239,7 +239,10 @@ export default function DashboardHome({
     <div className="dash-app">
       <OnboardingTour key={tourKey} force={tourKey > 0} />
       <header className="d-topbar">
-        <div className="d-title">Powfolio Dashboard</div>
+        <Link href="/" className="d-brand" aria-label="Powfolio home">
+          <span className="d-mark">P</span>
+          <span className="d-title">Powfolio</span>
+        </Link>
         <div className="d-actions">
           <button type="button" className="nav-icon-btn" title="Switch theme" aria-label="Switch theme" onClick={() => setThemeValue(theme === "dark" ? "light" : "dark")}>
             {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
@@ -341,17 +344,15 @@ export default function DashboardHome({
             const Icon = m.icon;
             return (
               <div key={m.id} className={`module${enabled ? "" : " off"}`}>
-                <div className="module-main">
+                <Link href={m.href} className="module-main" aria-label={`Open ${m.title}`}>
                   <div className="mod-icon"><Icon /></div>
-                  <div>
+                  <div className="module-copy">
                     <div className="module-title">{m.title}</div>
                     <div className="module-desc">{m.desc}</div>
                   </div>
-                </div>
-                <div className="meta">
-                  <Link href={m.href} className="edit" title="Manage section" aria-label={`Open ${m.title}`}><ChevronRight /></Link>
-                  <button type="button" className={`switch${enabled ? " on" : ""}`} aria-label={`Toggle ${m.title}`} onClick={() => { if (!m.flag) { toast("Profile & identity stays on your public page"); return; } void toggle(m.flag, m.title); }}><span /></button>
-                </div>
+                  <span className="edit" aria-hidden="true"><ChevronRight /></span>
+                </Link>
+                <button type="button" className={`switch${enabled ? " on" : ""}`} aria-label={`Toggle ${m.title}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (!m.flag) { toast("Profile & identity stays on your public page"); return; } void toggle(m.flag, m.title); }}><span /></button>
               </div>
             );
           })}
