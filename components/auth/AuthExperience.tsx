@@ -62,7 +62,9 @@ export default function AuthExperience({
                   </div>
                   <button type="button" onClick={a.handleForgot} className="text-xs text-[#9C6F2C] hover:underline">Forgot password?</button>
                 </div>
-                <button type="submit" className={primaryBtn + " text-sm"}>Sign In</button>
+                <button type="submit" className={primaryBtn + " text-sm"}>
+                  Sign In
+                </button>
               </form>
               <p className="auth-switch">
                 New here? <button type="button" onClick={() => a.setMode("signup")}>Create an account</button>
@@ -106,7 +108,9 @@ export default function AuthExperience({
                       {a.emailVerified ? (
                         <span className="flex items-center gap-0.5 text-[10px] font-bold text-[#4C9A6A]">Verified</span>
                       ) : (
-                        <button type="button" onClick={() => a.sendOtp(false)} className={a.sendBounce ? "text-[11px] font-semibold text-[#9C6F2C] hover:underline animate-bounce" : "text-[11px] font-semibold text-[#9C6F2C] hover:underline"}>Send Code</button>
+                        <button type="button" onClick={() => a.sendOtp(false)} className={a.sendBounce ? "text-[11px] font-semibold text-[#9C6F2C] hover:underline animate-bounce" : "text-[11px] font-semibold text-[#9C6F2C] hover:underline"}>
+                          Send Code
+                        </button>
                       )}
                     </div>
                   </div>
@@ -126,10 +130,12 @@ export default function AuthExperience({
                 <div className="flex items-start pt-1">
                   <input id="agreeTerms" type="checkbox" checked={a.accepted} onChange={(e) => a.setAccepted(e.target.checked)} className="mt-0.5 h-3.5 w-3.5 cursor-pointer rounded accent-[#B8863B]" />
                   <label htmlFor="agreeTerms" className="ml-2 cursor-pointer text-[11px] leading-tight text-[#6B675F] dark:text-[#9C9890]">
-                    I accept the <Link href="/terms" className="text-[#9C6F2C] underline">Terms</Link> & <Link href="/privacy" className="text-[#9C6F2C] underline">Privacy Policy</Link>
+                    I accept the <Link href="/terms" className="text-[#9C6F2C] underline">Terms</Link> and <Link href="/privacy" className="text-[#9C6F2C] underline">Privacy Policy</Link>
                   </label>
                 </div>
-                <button type="submit" className={primaryBtn + " mt-1 text-xs sm:text-sm"}>Create Account</button>
+                <button type="submit" className={primaryBtn + " mt-1 text-xs sm:text-sm"}>
+                  Create Account
+                </button>
               </form>
               <p className="auth-switch">
                 Already have an account? <button type="button" onClick={() => a.setMode("signin")}>Sign in</button>
@@ -153,4 +159,35 @@ export default function AuthExperience({
         </div>
       </main>
       <footer className="z-10 flex w-full max-w-5xl flex-col items-center justify-between py-3 text-xs text-[#8C877C] dark:text-[#6B675F] sm:flex-row">
-        <p>{
+        <p>2026 Powfolio</p>
+        <div className="mt-1 flex space-x-5 sm:mt-0">
+          <a href="mailto:dev@powfolio.app" className="hover:underline">Support</a>
+        </div>
+      </footer>
+      {a.otpOpen ? (
+        <AuthOtpModal
+          dark={a.dark}
+          otp={a.otp}
+          otpPhase={a.otpPhase}
+          orbiting={a.orbiting}
+          resendLeft={a.resendLeft}
+          otpRefs={a.otpRefs}
+          onClose={() => {
+            a.setOtpOpen(false);
+            a.resetOtpUi();
+          }}
+          onChange={a.handleOtpInput}
+          onKey={a.handleOtpKey}
+          onPaste={a.handleOtpPaste}
+          onVerify={a.verifyOtp}
+          onResend={() => a.sendOtp(true)}
+        />
+      ) : null}
+      {a.toast ? (
+        <div className="fixed bottom-5 right-5 z-[350] flex items-center space-x-2 rounded-xl border border-[#2C2B27] bg-[#201F1C]/95 px-4 py-2.5 text-xs text-[#F2F0EC] shadow-xl backdrop-blur-md">
+          <span>{a.toast}</span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
