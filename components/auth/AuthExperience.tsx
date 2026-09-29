@@ -6,10 +6,17 @@ import AuthOtpModal from "@/components/auth/AuthOtpModal";
 import { EyeButton, SocialRow, ThemeToggle } from "@/components/auth/auth-icons";
 import { useAuthExperience, type AuthMode } from "@/components/auth/use-auth-experience";
 
-const goldBtn = "w-full rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground shadow-none transition-colors hover:bg-primary-hover active:bg-primary-pressed active:scale-[0.99]";
+const primaryBtn =
+  "w-full rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed active:scale-[0.99]";
 const overlayBtn = "overlay-btn-soft";
 
-export default function AuthExperience({ initialMode, nextPath = "/dashboard" }: { initialMode: AuthMode; nextPath?: string }) {
+export default function AuthExperience({
+  initialMode,
+  nextPath = "/dashboard",
+}: {
+  initialMode: AuthMode;
+  nextPath?: string;
+}) {
   const a = useAuthExperience(initialMode, nextPath);
   return (
     <div className="pow-auth-page relative flex min-h-screen flex-col items-center justify-between bg-[#FDFCFA] p-4 text-[#171614] dark:bg-darkBg dark:text-[#F2F0EC] sm:p-8">
@@ -20,14 +27,20 @@ export default function AuthExperience({ initialMode, nextPath = "/dashboard" }:
         <ThemeToggle dark={a.dark} onClick={a.toggleTheme} />
       </header>
       <main className="z-10 my-auto flex w-full items-center justify-center py-2">
-        <div className={`auth-container ${a.mode === "signup" ? "right-panel-active" : ""}`}>
+        <div className={a.mode === "signup" ? "auth-container right-panel-active" : "auth-container"}>
           <div className="form-panel sign-in-panel">
             <div className="mx-auto w-full max-w-sm">
               <div className="mb-4 text-left">
                 <h2 className="text-2xl font-semibold tracking-tight text-[#171614] dark:text-[#F2F0EC] sm:text-3xl">Welcome back</h2>
                 <p className="mt-1 text-xs text-[#6B675F] dark:text-[#9C9890] sm:text-sm">Log in to manage your Powfolio.</p>
               </div>
-              <SocialRow onGoogle={() => a.signInWithProvider("google")} onX={() => a.signInWithProvider("x")} onGithub={() => a.signInWithProvider("github")} onWallet={a.connectWallet} titles={{ google: "Sign in with Google", x: "Sign in with X", github: "Sign in with GitHub", wallet: "Connect Web3 Wallet" }} />
+              <SocialRow
+                onGoogle={() => a.signInWithProvider("google")}
+                onX={() => a.signInWithProvider("x")}
+                onGithub={() => a.signInWithProvider("github")}
+                onWallet={a.connectWallet}
+                titles={{ google: "Sign in with Google", x: "Sign in with X", github: "Sign in with GitHub", wallet: "Connect Web3 Wallet" }}
+              />
               <div className="relative mb-3 flex items-center justify-center">
                 <div className="w-full border-t border-[#E2DED5] dark:border-[#2C2B27]" />
                 <span className="absolute bg-white px-3 text-[10px] font-semibold uppercase tracking-wider text-[#8C877C] dark:bg-[#171715] dark:text-[#6B675F]">or email</span>
@@ -49,7 +62,7 @@ export default function AuthExperience({ initialMode, nextPath = "/dashboard" }:
                   </div>
                   <button type="button" onClick={a.handleForgot} className="text-xs text-[#9C6F2C] hover:underline">Forgot password?</button>
                 </div>
-                <button type="submit" className={`${goldBtn} text-sm`}>Sign In</button>
+                <button type="submit" className={primaryBtn + " text-sm"}>Sign In</button>
               </form>
               <p className="auth-switch">
                 New here? <button type="button" onClick={() => a.setMode("signup")}>Create an account</button>
@@ -62,7 +75,14 @@ export default function AuthExperience({ initialMode, nextPath = "/dashboard" }:
                 <h2 className="text-xl font-semibold tracking-tight text-[#171614] dark:text-[#F2F0EC] sm:text-2xl">Create account</h2>
                 <p className="text-[11px] text-[#6B675F] dark:text-[#9C9890] sm:text-xs">One public link for the work you can prove.</p>
               </div>
-              <SocialRow compact onGoogle={() => a.signInWithProvider("google")} onX={() => a.signInWithProvider("x")} onGithub={() => a.signInWithProvider("github")} onWallet={a.connectWallet} titles={{ google: "Sign up with Google", x: "Sign up with X", github: "Sign up with GitHub", wallet: "Connect Web3 Wallet" }} />
+              <SocialRow
+                compact
+                onGoogle={() => a.signInWithProvider("google")}
+                onX={() => a.signInWithProvider("x")}
+                onGithub={() => a.signInWithProvider("github")}
+                onWallet={a.connectWallet}
+                titles={{ google: "Sign up with Google", x: "Sign up with X", github: "Sign up with GitHub", wallet: "Connect Web3 Wallet" }}
+              />
               <form onSubmit={a.handleSignUp} className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="field-group">
@@ -80,13 +100,13 @@ export default function AuthExperience({ initialMode, nextPath = "/dashboard" }:
                     <label className="field-notch-label">Username</label>
                   </div>
                   <div className="field-group relative">
-                    <input type="email" required autoComplete="email" className={`pr-20 ${a.emailVerified ? "email-verified-border" : ""}`} value={a.email} onChange={(e) => a.setEmail(e.target.value)} />
+                    <input type="email" required autoComplete="email" className={a.emailVerified ? "pr-20 email-verified-border" : "pr-20"} value={a.email} onChange={(e) => a.setEmail(e.target.value)} />
                     <label className="field-notch-label">Email Address</label>
                     <div className="absolute right-2.5 top-2.5 z-20 flex items-center">
                       {a.emailVerified ? (
                         <span className="flex items-center gap-0.5 text-[10px] font-bold text-[#4C9A6A]">Verified</span>
                       ) : (
-                        <button type="button" onClick={() => a.sendOtp(false)} className={`text-[11px] font-semibold text-[#9C6F2C] hover:underline ${a.sendBounce ? "animate-bounce" : ""}`}>Send Code</button>
+                        <button type="button" onClick={() => a.sendOtp(false)} className={a.sendBounce ? "text-[11px] font-semibold text-[#9C6F2C] hover:underline animate-bounce" : "text-[11px] font-semibold text-[#9C6F2C] hover:underline"}>Send Code</button>
                       )}
                     </div>
                   </div>
@@ -98,7 +118,7 @@ export default function AuthExperience({ initialMode, nextPath = "/dashboard" }:
                     <EyeButton compact hidden={!a.showSignupPw} onClick={() => a.setShowSignupPw((v) => !v)} />
                   </div>
                   <div className="field-group relative">
-                    <input type={a.showConfirmPw ? "text" : "password"} required autoComplete="new-password" className={`pr-7 text-xs ${a.pwState}`} value={a.confirmPassword} onChange={(e) => a.setConfirmPassword(e.target.value)} />
+                    <input type={a.showConfirmPw ? "text" : "password"} required autoComplete="new-password" className={"pr-7 text-xs " + a.pwState} value={a.confirmPassword} onChange={(e) => a.setConfirmPassword(e.target.value)} />
                     <label className="field-notch-label">Confirm</label>
                     <EyeButton compact hidden={!a.showConfirmPw} onClick={() => a.setShowConfirmPw((v) => !v)} />
                   </div>
@@ -109,7 +129,7 @@ export default function AuthExperience({ initialMode, nextPath = "/dashboard" }:
                     I accept the <Link href="/terms" className="text-[#9C6F2C] underline">Terms</Link> & <Link href="/privacy" className="text-[#9C6F2C] underline">Privacy Policy</Link>
                   </label>
                 </div>
-                <button type="submit" className={`${goldBtn} mt-1 text-xs sm:text-sm">Create Account</button>
+                <button type="submit" className={primaryBtn + " mt-1 text-xs sm:text-sm"}>Create Account</button>
               </form>
               <p className="auth-switch">
                 Already have an account? <button type="button" onClick={() => a.setMode("signin")}>Sign in</button>
@@ -133,15 +153,4 @@ export default function AuthExperience({ initialMode, nextPath = "/dashboard" }:
         </div>
       </main>
       <footer className="z-10 flex w-full max-w-5xl flex-col items-center justify-between py-3 text-xs text-[#8C877C] dark:text-[#6B675F] sm:flex-row">
-        <p>© 2026 Powfolio</p>
-        <div className="mt-1 flex space-x-5 sm:mt-0"><a href="mailto:dev@powfolio.app" className="hover:underline">Support</a></div>
-      </footer>
-      {a.otpOpen ? (
-        <AuthOtpModal dark={a.dark} otp={a.otp} otpPhase={a.otpPhase} orbiting={a.orbiting} resendLeft={a.resendLeft} otpRefs={a.otpRefs} onClose={() => { a.setOtpOpen(false); a.resetOtpUi(); }} onChange={a.handleOtpInput} onKey={a.handleOtpKey} onPaste={a.handleOtpPaste} onVerify={a.verifyOtp} onResend={() => a.sendOtp(true)} />
-      ) : null}
-      {a.toast ? (
-        <div className="fixed bottom-5 right-5 z-[350] flex items-center space-x-2 rounded-xl border border-[#2C2B27] bg-[#201F1C]/95 px-4 py-2.5 text-xs text-[#F2F0EC] shadow-xl backdrop-blur-md"><span>{a.toast}</span></div>
-      ) : null}
-    </div>
-  );
-}
+        <p>{
