@@ -1,0 +1,65 @@
+/* Route loader + confirm-password live match. Loaded after palette-lock. */
+
+@keyframes inputShakeRed {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+@keyframes inputShakeRedB {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+@keyframes inputPulseGreen {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+@keyframes inputPulseGreenB {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.field-group input.pw-match,
+.field-group input.pw-match:focus,
+.field-group input.pw-match:focus-visible,
+.field-group input.pw-match:hover {
+  border-color: #4c9a6a !important;
+  box-shadow: 0 0 0 3px rgba(76, 154, 106, 0.28) !important;
+  outline: none !important;
+}
+.field-group input.pw-mismatch,
+.field-group input.pw-mismatch:focus,
+.field-group input.pw-mismatch:focus-visible,
+.field-group input.pw-mismatch:hover {
+  border-color: #c4453d !important;
+  box-shadow: 0 0 0 3px rgba(196, 69, 61, 0.28) !important;
+  outline: none !important;
+}
+
+.field-group input.pw-match.pw-replay-even { animation: inputPulseGreen 0.36s ease-in-out; }
+.field-group input.pw-match.pw-replay-odd { animation: inputPulseGreenB 0.36s ease-in-out; }
+.field-group input.pw-mismatch.pw-replay-even { animation: inputShakeRed 0.36s ease-in-out; }
+.field-group input.pw-mismatch.pw-replay-odd { animation: inputShakeRedB 0.36s ease-in-out; }
+
+.field-group:has(input.pw-match) .field-notch-label,
+.field-group:has(input.pw-match) input:focus ~ .field-notch-label {
+  color: #4c9a6a !important;
+}
+.field-group:has(input.pw-mismatch) .field-notch-label,
+.field-group:has(input.pw-mismatch) input:focus ~ .field-notch-label {
+  color: #c4453d !important;
+}
+
+.pow-auth-page button[aria-label="Toggle password visibility"],
+.pow-auth-page button[aria-label="Toggle password visibility"]:focus,
+.pow-auth-page button[aria-label="Toggle password visibility"]:focus-visible,
+.pow-auth-page button[aria-label="Toggle password visibility"]:hover {
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+#globalPreloader {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
