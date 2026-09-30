@@ -38,13 +38,14 @@ export default function AppRouteLoader() {
 
   function openLoader(payload: RouteLoaderPayload) {
     clearHide();
-    startedAt.current = payload.startedAt || Date.now();
+    const sameDest = destRef.current && destRef.current === payload.dest;
+    if (!sameDest) startedAt.current = payload.startedAt || Date.now();
     destRef.current = payload.dest;
-    setView({ open: true, title: payload.title, subtitle: payload.subtitle });
+    setView((current) => current.open && current.title === payload.title && current.subtitle === payload.subtitle
+      ? current
+      : { open: true, title: payload.title, subtitle: payload.subtitle });
     window.setTimeout(() => {
-      if (Date.now() - (payload.startedAt || Date.now()) >= MAX_VISIBLE_MS - 50) {
-        scheduleHide();
-      }
+      if (Date.now() - (startedAt.current || Date.now()) >= MAX_VISIBLE_MS - 50) scheduleHide();
     }, MAX_VISIBLE_MS);
   }
 
@@ -56,11 +57,7 @@ export default function AppRouteLoader() {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setView((s) => ({ ...s, open: false }));
-          try {
-            sessionStorage.removeItem("pow3folio_route_loader");
-          } catch {
-            /* ignore */
-          }
+          try { sessionStorage.removeItem("pow3folio_route_loader"); } catch { /* ignore */ }
         });
       });
     }, wait);
@@ -112,14 +109,6 @@ export default function AppRouteLoader() {
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
   }, [pathname]);
-
-  useEffect(() => {
-    function onPop() {
-      startRouteLoader("Loading...", "Restoring the previous screen", window.location.pathname);
-    }
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
 
   return <StairsLoader open={view.open} title={view.title} subtitle={view.subtitle} />;
 }
