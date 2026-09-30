@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import StairsLoader from "@/components/auth/StairsLoader";
 import AuthOtpModal from "@/components/auth/AuthOtpModal";
 import { EyeButton, SocialRow, ThemeToggle } from "@/components/auth/auth-icons";
 import { useAuthExperience, type AuthMode } from "@/components/auth/use-auth-experience";
@@ -19,9 +18,9 @@ export default function AuthExperience({
   nextPath?: string;
 }) {
   const a = useAuthExperience(initialMode, nextPath);
+  const confirmClass = ["pr-7 text-xs confirm-pw-field", a.pwState, a.pwAnim % 2 === 0 ? "pw-replay-even" : "pw-replay-odd"].filter(Boolean).join(" ");
   return (
     <div className="pow-auth-page relative flex min-h-screen flex-col items-center justify-between bg-[#FDFCFA] p-4 text-[#171614] dark:bg-darkBg dark:text-[#F2F0EC] sm:p-8">
-      <StairsLoader open={a.loader.open} title={a.loader.title} subtitle={a.loader.subtitle} />
       <div className="ambient-glow-1" />
       <div className="ambient-glow-2" />
       <header className="z-10 flex w-full max-w-5xl items-center justify-between py-2">
@@ -124,7 +123,7 @@ export default function AuthExperience({
                     <EyeButton compact hidden={!a.showSignupPw} onClick={() => a.setShowSignupPw((v) => !v)} />
                   </div>
                   <div className="field-group relative">
-                    <input type={a.showConfirmPw ? "text" : "password"} required autoComplete="new-password" className={"pr-7 text-xs " + a.pwState} value={a.confirmPassword} onChange={(e) => a.setConfirmPassword(e.target.value)} />
+                    <input type={a.showConfirmPw ? "text" : "password"} required autoComplete="new-password" className={confirmClass} value={a.confirmPassword} onChange={(e) => a.setConfirmPassword(e.target.value)} />
                     <label className="field-notch-label">Confirm</label>
                     <EyeButton compact hidden={!a.showConfirmPw} onClick={() => a.setShowConfirmPw((v) => !v)} />
                   </div>
