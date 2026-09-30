@@ -9,6 +9,7 @@ import { startXAuth } from "@/lib/x-oauth";
 import { checkWalletAvailable } from "@/lib/wallets/client-check";
 import { markNewSignup } from "@/components/onboarding/OnboardingTour";
 import { isReservedDeletedUsername, reservedUsernameMessage } from "@/lib/usernames";
+import { startRouteLoader, stopRouteLoader } from "@/lib/route-loader";
 
 export type AuthMode = "signin" | "signup";
 export type OtpPhase = "idle" | "orbit" | "success" | "error";
@@ -53,6 +54,7 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
   const [email, setEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwAnim, setPwAnim] = useState(0);
   const [showSignupPw, setShowSignupPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [accepted, setAccepted] = useState(false);
@@ -66,26 +68,42 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
   const toastTimer = useRef<number | null>(null);
   const animTimers = useRef<number[]>([]);
+  const holdNav = useRef(false);
 
   const pwState = useMemo(() => {
     if (!confirmPassword) return "";
-    if (signupPassword.startsWith(confirmPassword)) return signupPassword === confirmPassword ? "pw-match" : "";
-    return "pw-mismatch";
+    return signupPassword.startsWith(confirmPassword) ? "pw-match" : "pw-mismatch";
   }, [signupPassword, confirmPassword]);
+
+  function setConfirmPasswordLive(value: string) {
+    setConfirmPassword(value);
+    setPwAnim((n) => n + 1);
+  }
+
+  function setSignupPasswordLive(value: string) {
+    setSignupPassword(value);
+    if (confirmPassword) setPwAnim((n) => n + 1);
+  }
 
   function notice(msg: string) {
     setToast(msg);
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
     toastTimer.current = window.setTimeout(() => setToast(null), 3200);
   }
-  function showLoader(title: string, subtitle: string) {
+  function showLoader(title: string, subtitle: string, dest?: string) {
     setLoader({ open: true, title, subtitle });
+    startRouteLoader(title, subtitle, dest);
   }
   function hideLoader() {
+    if (holdNav.current) return;
     setLoader((s) => ({ ...s, open: false }));
+    stopRouteLoader();
   }
   function goNext() {
-    router.replace(nextPath || "/dashboard");
+    const dest = nextPath || "/dashboard";
+    holdNav.current = true;
+    showLoader("Opening workspace...", "Your dashboard is being prepared", dest);
+    router.replace(dest);
     router.refresh();
   }
   function clearAnimTimers() {
@@ -119,7 +137,10 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
     } catch {
       /* ignore */
     }
-    const t = window.setTimeout(() => hideLoader(), 500);
+    startRouteLoader("Loading...", "Preparing environment");
+    const t = window.setTimeout(() => {
+      if (!holdNav.current) hideLoader();
+    }, 700);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -143,12 +164,18 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
   async function signInWithProvider(id: "google" | "x" | "github") {
     if (mode === "signup" && !accepted) return notice("Accept the Terms and Privacy Policy first");
     const label = id === "x" ? "X" : id === "github" ? "GitHub" : "Google";
-    showLoader(`Connecting ${label}...`, "Open the provider page and accept the connection");
+    const dest = nextPath || "/dashboard";
+    holdNav.current = true;
+    showLoader(`Connecting ${label}...`, "Open the provider page and accept the connection", dest);
     const supabase = createClient();
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath || "/dashboard")}`;
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(dest)}`;
     if (id === "x") {
       const { error } = await startXAuth(supabase, "signIn", redirectTo);
-      if (error) { hideLoader(); notice(error); }
+      if (error) {
+        holdNav.current = false;
+        hideLoader();
+        notice(error);
+      }
       return;
     }
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -159,8 +186,17 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
         queryParams: oauthQuery(id),
       },
     });
-    if (error) { hideLoader(); notice(error.message); return; }
-    if (data?.url) { window.location.assign(data.url); return; }
+    if (error) {
+      holdNav.current = false;
+      hideLoader();
+      notice(error.message);
+      return;
+    }
+    if (data?.url) {
+      window.location.assign(data.url);
+      return;
+    }
+    holdNav.current = false;
     hideLoader();
     notice("No OAuth URL returned. This provider is not configured.");
   }
@@ -189,7 +225,6 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
     });
     if (error) throw error;
     persistRemember(rememberMe);
-    hideLoader();
     goNext();
   }
 
@@ -208,8 +243,8 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
           return;
         }
         const { error: upErr } = await supabase.from("profiles").update({ wallet_address: address }).eq("id", user.id);
-        hideLoader();
         if (upErr) {
+          hideLoader();
           notice(upErr.code === "23505" || upErr.message.toLowerCase().includes("wallet") ? "This wallet is already linked to another Powfolio account." : upErr.message);
           return;
         }
@@ -247,7 +282,6 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
     const { error } = await supabase.auth.setSession({ access_token: json.session.access_token, refresh_token: json.session.refresh_token });
     if (error) { hideLoader(); notice(error.message); return; }
     if (json.userId) await attachPendingWallet(json.userId);
-    hideLoader();
     goNext();
   }
 
@@ -374,8 +408,8 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
       await attachPendingWallet(data.user.id);
     }
     markNewSignup();
-    hideLoader();
     if (data.session) return goNext();
+    hideLoader();
     notice("Account created. Check your email if a confirmation step remains.");
     setMode("signin");
   }
@@ -384,8 +418,9 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
     mode, setMode, toast, loader, dark, toggleTheme,
     identifier, setIdentifier, loginPassword, setLoginPassword, showLoginPw, setShowLoginPw, rememberMe, setRememberMe,
     firstName, setFirstName, lastName, setLastName, username, setUsername, email, setEmail,
-    signupPassword, setSignupPassword, confirmPassword, setConfirmPassword, showSignupPw, setShowSignupPw, showConfirmPw, setShowConfirmPw,
-    accepted, setAccepted, emailVerified, sendBounce, pwState,
+    signupPassword, setSignupPassword: setSignupPasswordLive, confirmPassword, setConfirmPassword: setConfirmPasswordLive,
+    showSignupPw, setShowSignupPw, showConfirmPw, setShowConfirmPw,
+    accepted, setAccepted, emailVerified, sendBounce, pwState, pwAnim,
     otpOpen, otp, otpPhase, orbiting, resendLeft, otpRefs,
     signInWithProvider, connectWallet, handleSignIn, handleForgot, handleSignUp, sendOtp, verifyOtp,
     handleOtpInput, handleOtpKey, handleOtpPaste, resetOtpUi, setOtpOpen,
