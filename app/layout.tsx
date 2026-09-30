@@ -6,9 +6,12 @@ import "./landing-motion.css";
 import "./accent.css";
 import "./palette-lock.css";
 import "./ux-refine.css";
+import "./auth-ui-preloader.css";
+import "./route-loader.css";
 import Pow3Bot from "@/components/ai/Pow3Bot";
 import SkipToContent from "@/components/ui/SkipToContent";
 import CookieConsent from "@/components/legal/CookieConsent";
+import AppRouteLoader from "@/components/ui/AppRouteLoader";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -44,6 +47,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans`}>
         <SkipToContent />
+        <AppRouteLoader />
         {children}
         <Pow3Bot />
         <CookieConsent />
