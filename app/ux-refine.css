@@ -40,10 +40,6 @@ body {
   body.cookie-open .pow-auth-page {
     padding-bottom: 8rem;
   }
-  /* Flip overlay is a desktop pattern. On phones it collides with the form. */
-  .pow-auth-page .overlay-wrapper {
-    display: none !important;
-  }
 }
 
 /* Hide the AI chip while the cookie bar is up — two FABs fight */
@@ -89,7 +85,7 @@ button[aria-label="Close Pow3Bot"] {
   color: #0d0d0c;
 }
 
-/* Switcher links under auth forms */
+/* Switcher links under auth forms — desktop uses the sliding overlay */
 .auth-switch {
   margin-top: 0.85rem;
   text-align: center;
