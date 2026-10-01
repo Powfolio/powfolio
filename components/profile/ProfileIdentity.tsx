@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,12 @@ type Props = {
   credentials: Credential[];
 };
 
+const TABS: { id: TabId; label: string; short: string; icon: string }[] = [
+  { id: "identity", label: "Identity", short: "Identity", icon: "M20 21a8 8 0 0 0-16 0M12 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" },
+  { id: "skills", label: "Skills & Connections", short: "Skills", icon: "M9 7h6M9 11h6M9 15h4M7 3h10a2 2 0 0 1 2 2v14l-4-2-3 2-3-2-4 2V5a2 2 0 0 1 2-2Z" },
+  { id: "experience", label: "Experience & Education", short: "Experience", icon: "M4 7h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Zm4-3h8v3H8V4Z" },
+  { id: "docs", label: "Docs & Credentials", short: "Docs", icon: "M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm7 1.5V9h4.5" },
+];
 const URL_IN_BIO = /(?:https?:\/\/|www\.)[^\s]+|\b[a-z0-9-]+\.(?:com|io|xyz|net|org|app|dev|co|gg|me|link|bio|ng|eth)\b/i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -30,15 +36,41 @@ function absoluteUrl(url: string) {
   if (!t) return null;
   return /^https?:\/\//i.test(t) ? t : `https://${t.replace(/^\/+/, "")}`;
 }
+function parseSkill(value: unknown): Skill | null {
+  if (typeof value === "string") {
+    let current: unknown = value.trim();
+    for (let i = 0; i < 2; i++) {
+      if (typeof current !== "string") break;
+      const text = current.trim();
+      if (!text.startsWith("{") && !text.startsWith("[")) return text ? { name: text.slice(0, 60), description: "" } : null;
+      try { current = JSON.parse(text); } catch { return { name: text.slice(0, 60), description: "" }; }
+    }
+    value = current;
+  }
+  if (value && typeof value === "object" && "name" in value) {
+    const record = value as Skill;
+    const name = String(record.name || "").trim();
+    if (name.startsWith("{")) {
+      const nested = parseSkill(name);
+      if (nested) return { name: nested.name, description: nested.description || String(record.description || "").slice(0, 250) };
+    }
+    return name ? { name: name.slice(0, 60), description: String(record.description || "").slice(0, 250) } : null;
+  }
+  return null;
+}
 function normalizeSkills(raw: Profile["skills"]): Skill[] {
   if (!raw || !Array.isArray(raw)) return [];
-  return raw
-    .map((s) => {
-      if (typeof s === "string") return { name: s.trim().slice(0, 60), description: "" };
-      if (s && typeof s === "object" && "name" in s) return { name: String(s.name || "").slice(0, 60), description: String(s.description || "").slice(0, 250) };
-      return { name: "", description: "" };
-    })
-    .filter((s) => s.name);
+  const seen = new Set<string>();
+  const next: Skill[] = [];
+  for (const item of raw) {
+    const skill = parseSkill(item);
+    if (!skill) continue;
+    const key = skill.name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    next.push(skill);
+  }
+  return next;
 }
 function fileType(name: string) {
   return (name.split(".").pop() || "FILE").toUpperCase().slice(0, 5);
@@ -58,7 +90,8 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
   const publicUrl = `${SITE_URL.replace(/\/$/, "")}/${profile.username}`;
   const [tab, setTab] = useState<TabId>("identity");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [menuOpen, setMenuOpen] = useState(false);
+  const tabNavRef = useRef<HTMLElement>(null);
+  const [glide, setGlide] = useState({ x: 8, w: 0 });
   const [toast, setToast] = useState("");
   const [toastOn, setToastOn] = useState(false);
   const [tourKey, setTourKey] = useState(0);
@@ -143,6 +176,19 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
   }, [profile.id]);
 
   useEffect(() => {
+    const nav = tabNavRef.current;
+    if (!nav) return;
+    const measure = () => {
+      const active = nav.querySelector<HTMLButtonElement>(".tab.active");
+      if (!active) return;
+      setGlide({ x: active.offsetLeft, w: active.offsetWidth });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [tab]);
+
+  useEffect(() => {
     const v = username.trim().toLowerCase().replace(/^@/, "");
     if (!v) {
       setNameStatus("checking");
@@ -176,14 +222,6 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
     }, 500);
     return () => window.clearTimeout(t);
   }, [username, profile.id, profile.username]);
-
-  function setThemeValue(next: "dark" | "light") {
-    setTheme(next);
-    localStorage.setItem("pow3folio-theme", next);
-    localStorage.setItem("color-theme", next);
-    document.documentElement.classList.toggle("dark", next === "dark");
-    document.documentElement.dataset.theme = next;
-  }
 
   async function uploadImage(file: File, kind: "avatar" | "banner") {
     if (!file.type.startsWith("image/")) {
@@ -622,36 +660,22 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
       <OnboardingTour key={tourKey} force={tourKey > 0} />
       <header className="topbar">
         <Link className="brand" href="/" aria-label="Powfolio home"><span className="brand-mark">P</span><span className="brand-name">Powfolio</span></Link>
-        <div className="top-actions">
-          <button className="top-icon" aria-label="Switch theme" title="Switch theme" onClick={() => setThemeValue(theme === "dark" ? "light" : "dark")}>
-            {theme === "dark" ? <Icon d="M12 3v1m0 16v1M4.2 4.2l.7.7M19.1 19.1l.7.7M3 12h1m16 0h1M4.2 19.8l.7-.7M19.1 4.9l.7-.7M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" /> : <Icon d="M20.4 15.4A9 9 0 0 1 8.6 3.6 9 9 0 1 0 20.4 15.4Z" />}
-          </button>
-          <button className={`avatar-btn${menuOpen ? " active" : ""}`} aria-label="Account menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
-            <Icon d="M20 21a8 8 0 0 0-16 0M12 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" />
-          </button>
-        </div>
+        <Link className="top-link" href="/dashboard">Dashboard</Link>
       </header>
-      <div className={`menu-backdrop${menuOpen ? " show" : ""}`} onClick={() => setMenuOpen(false)} />
-      <div className={`account-menu${menuOpen ? " open" : ""}`}>
-        <Link className="menu-row" href="/dashboard/resume" onClick={() => setMenuOpen(false)}><Icon d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /><span>Download Powfolio</span></Link>
-        <div className="menu-row-link">
-          <a className="menu-link-text" href={publicUrl} target="_blank" rel="noreferrer"><Icon d="M14 5h5v5M19 5l-9 9M9 5H5v14h14v-4" /><span>Profile Link</span></a>
-          <button className="menu-copy-btn" aria-label="Copy public link" onClick={async () => { try { await navigator.clipboard.writeText(publicUrl); notify("Public profile link copied"); } catch { notify("Copy failed"); } }}><Icon d="M9 9h10v10H9zM5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" /></button>
-        </div>
-        <button className="menu-row" onClick={() => { resetOnboarding(); setTourKey((k) => k + 1); setMenuOpen(false); notify("Starting the Powfolio tour"); }}><Icon d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" /><span>Replay Tour</span></button>
-        <button className="menu-row" onClick={signOut}><Icon d="M9 6H5v12h4M10 12h10M16 8l4 4-4 4" /><span>Sign out</span></button>
-        <div className="menu-divider" />
-        <button className="menu-row danger" onClick={() => { setShowDelete(true); setMenuOpen(false); }}><Icon d="M4 7h16M9 7V5h6v2M8 7l1 13h6l1-13" /><span>Delete account</span></button>
-      </div>
 
       <main className="shell">
         <section className="hero">
           <div className="eyebrow">Profile workspace</div>
           <div className="hero-row"><div><h1>Profile &amp; Identity</h1><p>Manage the identity that powers your public Powfolio. Keep your name, username, location, skills and professional background clear and consistent.</p></div></div>
         </section>
-        <nav className="tabs" role="tablist" aria-label="Profile sections">
-          {([["identity", "Identity"], ["skills", "Skills & Connections"], ["experience", "Experience & Education"], ["docs", "Docs & Credentials"]] as [TabId, string][]).map(([id, label]) => (
-            <button key={id} className={`tab${tab === id ? " active" : ""}`} role="tab" aria-selected={tab === id} onClick={() => { setTab(id); history.replaceState(null, "", `#${id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{label}</button>
+        <nav className="tabs" role="tablist" aria-label="Profile sections" ref={tabNavRef}>
+          <span className="tab-glide" style={{ transform: `translateX(${glide.x}px)`, width: glide.w || undefined }} />
+          {TABS.map((item) => (
+            <button key={item.id} className={`tab${tab === item.id ? " active" : ""}`} role="tab" aria-selected={tab === item.id} onClick={() => { setTab(item.id); history.replaceState(null, "", `#${item.id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+              <Icon d={item.icon} size={15} />
+              <span className="tab-full">{item.label}</span>
+              <span className="tab-short">{item.short}</span>
+            </button>
           ))}
         </nav>
 
@@ -704,7 +728,7 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
           <div className="block">
             <div className="block-head"><div><div className="block-title">Skills</div><div className="block-desc">Keep the list focused. Add a skill with the button or press Enter on desktop and mobile.</div></div></div>
             <div className="add-row"><input className="input" value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }} placeholder="Type a skill" autoComplete="off" /><button className="action accent" type="button" onClick={addSkill}>Add skill</button></div>
-            <div className="skills">{skills.map((s) => <span className="chip" key={s.name}><span>{s.name}</span><button type="button" aria-label={`Remove ${s.name}`} onClick={() => setSkills((prev) => prev.filter((x) => x.name !== s.name))}>×</button></span>)}</div>
+            <div className="skills">{skills.map((s) => <span className="chip" key={s.name}><span>{s.name}</span><button type="button" aria-label={`Remove ${s.name}`} onClick={() => setSkills((prev) => prev.filter((x) => x.name !== s.name))}>×</button></span>)}{skills.length === 0 && <span className="empty">No skills added yet.</span>}</div>
           </div>
           <div className="block">
             <div className="block-head"><div><div className="block-title">Social accounts</div><div className="block-desc">Connect the platforms already supported by Powfolio. Each connection keeps its own action and status.</div></div></div>
@@ -848,6 +872,14 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
           </div>
           <div className="save-area"><button className="save" type="button" onClick={() => void saveDocs()}>{saving === "docs" ? "Saving..." : "Save changes"}</button>{saved === "docs" && <span className="save-state">Saved</span>}</div>
         </section>
+        <div className="account-strip">
+          <a href={publicUrl} target="_blank" rel="noreferrer">Public profile</a>
+          <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(publicUrl); notify("Public profile link copied"); } catch { notify("Copy failed"); } }}>Copy link</button>
+          <Link href="/dashboard/resume">Download CV</Link>
+          <button type="button" onClick={() => { resetOnboarding(); setTourKey((k) => k + 1); notify("Starting the Powfolio tour"); }}>Replay tour</button>
+          <button type="button" onClick={signOut}>Sign out</button>
+          <button type="button" className="danger" onClick={() => setShowDelete(true)}>Delete account</button>
+        </div>
         {showDelete && <div className="delete-sheet"><DeleteAccount email={email} /></div>}
       </main>
       <div className={`toast${toastOn ? " show" : ""}`}>{toast}</div>
