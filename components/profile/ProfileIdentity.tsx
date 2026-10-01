@@ -685,7 +685,6 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
                 <div className={`username-status ${nameStatus === "good" ? "status-good" : nameStatus === "bad" ? "status-bad" : "status-checking"}`}><span className={`status-dot${nameStatus === "checking" ? " pulse" : ""}`} /><span>{nameMsg}</span></div>
               </div>
               <div className="field"><label className="label" htmlFor="displayName">Display name</label><input className="input" id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your full name or professional name" autoComplete="name" /></div>
-              <div className="field"><label className="label" htmlFor="headline">Headline</label><input className="input" id="headline" value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="Your role, focus or professional headline" /></div>
               <div className="field">
                 <label className="label">Location</label>
                 <div className="location"><div className="location-main"><span className="location-pin"><Icon d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z M12 10.5a2.5 2.5 0 1 0-2.5-2.5 2.5 2.5 0 0 0 2.5 2.5Z" /></span><div><div className="location-value">{locationLabel}</div><div className="location-note">Detected automatically using device GPS.</div></div></div><button className="action" type="button" disabled={detecting} onClick={() => void detectLocation()}>{detecting ? "Detecting..." : country ? "Update" : "Detect"}</button></div>
@@ -751,7 +750,7 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
         <section className={`panel${tab === "experience" ? " active" : ""}`} role="tabpanel">
           <div className="section-intro"><h2>Experience &amp; Education</h2><p>Use the same clean entry flow as the existing live manager. Add real roles and education, edit them later, or remove entries you no longer want to publish.</p></div>
           <div className="block">
-            <div className="block-head"><div><div className="block-title">Work experience</div><div className="block-desc">Up to 5 entries. Company or project link is required by the existing profile logic.</div></div><button className="action accent" type="button" onClick={() => { resetWork(); setWorkOpen(true); }}>Add experience</button></div>
+            <div className="block-head"><div><div className="block-title">Work experience</div><div className="block-desc">Add as many roles as needed. Company or project link is required by the existing profile logic.</div></div><button className="action accent" type="button" onClick={() => { resetWork(); setWorkOpen(true); }}>Add experience</button></div>
             <div className="entry-list">
               {work.length === 0 && <div className="empty">No work experience added yet.</div>}
               {work.map((item, i) => (
