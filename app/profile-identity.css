@@ -341,3 +341,38 @@
 }
 .profile-identity .dock-tab.active { color: var(--accent) !important; border-color: var(--accent) !important; }
 .profile-identity .tab-dock { max-width: calc(100vw - 24px); flex-wrap: nowrap; }
+
+.profile-identity .add-row { display: flex !important; flex-direction: row !important; align-items: center; gap: 10px; }
+.profile-identity .add-row .input { height: 48px !important; font-size: 15px !important; }
+.profile-identity .add-row .action { flex: 0 0 auto; text-decoration: none !important; height: 40px; padding: 0 14px !important; border-radius: 10px !important; background: var(--accent-soft) !important; color: var(--accent) !important; }
+.profile-identity .switch { position: relative; width: 42px; min-width: 42px; height: 24px; padding: 3px; overflow: hidden; flex: 0 0 42px; }
+.profile-identity .switch span { width: 18px; height: 18px; }
+.profile-identity .switch.on span { transform: translateX(16px); }
+.profile-identity .cv-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.profile-identity .cv-copy { min-width: 0; flex: 1; }
+.profile-identity .cv-row .switch { margin-left: auto; }
+.profile-identity .logo-field { display: flex; align-items: center; gap: 10px; }
+.profile-identity .logo-preview, .profile-identity .doc-thumb {
+  width: 36px; height: 36px; border-radius: 8px; overflow: hidden; display: grid; place-items: center;
+  background: var(--surface-2); color: var(--muted); font-size: 11px; flex: 0 0 auto;
+}
+.profile-identity .logo-preview img, .profile-identity .doc-thumb { width: 100%; height: 100%; object-fit: cover; border: 0; }
+.profile-identity .logo-note { font-size: 11px; color: var(--soft); line-height: 1.4; }
+.profile-identity .side-note { font-size: 11px; color: var(--soft); margin-top: 2px; }
+@media (min-width: 861px) {
+  .profile-identity .side {
+    position: fixed !important;
+    top: 58px;
+    left: 0;
+    width: var(--side);
+    height: calc(100vh - 58px);
+    overflow: auto;
+    z-index: 30;
+  }
+  .profile-identity .shell { margin-left: var(--side); width: min(860px, calc(100% - var(--side) - 48px)); }
+}
+@media (max-width: 860px) {
+  .profile-identity .cv-row { align-items: flex-start; }
+  .profile-identity .cv-row .switch { margin-top: 2px; }
+  .profile-identity .add-row { flex-direction: row !important; }
+}

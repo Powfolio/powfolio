@@ -12,6 +12,15 @@ export default function CredentialThumb({
 }) {
   const kind = credentialKind(doc);
   const fillId = `docFill-${doc.id}`;
+  const image = (doc.file_type || "").startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(doc.file_name || "");
+
+  if (image) {
+    return (
+      <div className={`relative overflow-hidden rounded-xl bg-surface ${className}`}>
+        <img src={doc.file_url} alt={doc.title} className="h-full w-full object-cover" />
+      </div>
+    );
+  }
 
   return (
     <div className={`relative ${className}`}>

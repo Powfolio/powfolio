@@ -118,7 +118,7 @@ export default function PublicProfileTabs({
                   {workExperience.map((w, i) => (
                     <div key={w.id} className={i > 0 ? "pt-3 border-t border-border/50" : ""}>
                       <div className="min-w-0">
-                        {w.url ? <a href={w.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-primary hover:underline">{w.company}</a> : <p className="font-medium text-sm">{w.company}</p>}
+                        <span className="mr-2 inline-flex h-8 w-8 align-middle overflow-hidden rounded-md bg-surface">{w.logo_url ? <img src={w.logo_url} alt="" className="h-full w-full object-cover" /> : null}</span>{w.url ? <a href={w.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-primary hover:underline">{w.company}</a> : <p className="inline font-medium text-sm">{w.company}</p>}
                         <p className="text-xs text-foreground-muted mt-0.5">{w.role} · {w.employment_type === "full-time" ? "Full-time" : "Part-time"}</p>
                         <p className="text-xs text-foreground-subtle mt-0.5">{w.start_date}{w.end_date ? ` → ${w.end_date}` : " → Present"}</p>
                         {w.description && <p className="mt-1 text-xs text-foreground-muted leading-relaxed">{w.description}</p>}
@@ -134,7 +134,7 @@ export default function PublicProfileTabs({
                 <div className="space-y-4">
                   {education.map((e, i) => (
                     <div key={e.id} className={i > 0 ? "pt-3 border-t border-border/50" : ""}>
-                      {e.url ? <a href={e.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-primary hover:underline">{e.institution}</a> : <p className="font-medium text-sm">{e.institution}</p>}
+                      <span className="mr-2 inline-flex h-8 w-8 align-middle overflow-hidden rounded-md bg-surface">{e.logo_url ? <img src={e.logo_url} alt="" className="h-full w-full object-cover" /> : null}</span>{e.url ? <a href={e.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-primary hover:underline">{e.institution}</a> : <p className="inline font-medium text-sm">{e.institution}</p>}
                       <p className="text-xs text-foreground-muted mt-0.5">{[e.degree, e.field_of_study].filter(Boolean).join(" · ")}</p>
                       <p className="text-xs text-foreground-subtle mt-0.5">{[e.country, e.start_year && e.end_year ? `${e.start_year} - ${e.end_year}` : e.start_year || e.end_year].filter(Boolean).join(" · ")}</p>
                       {e.description && <p className="mt-1 text-xs text-foreground-muted">{e.description}</p>}

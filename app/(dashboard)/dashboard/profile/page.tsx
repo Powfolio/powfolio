@@ -22,11 +22,17 @@ export default async function ProfileEditPage() {
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
+  const identities = user.identities ?? [];
+  const google = identities.find((i) => i.provider === "google");
+  const googleEmail = typeof google?.identity_data?.email === "string" ? google.identity_data.email : null;
+
   return (
     <ProfileIdentity
       profile={profile as Profile}
       email={user.email ?? null}
       credentials={(credentials as Credential[]) ?? []}
+      linkedProviders={identities.map((i) => i.provider)}
+      googleEmail={googleEmail}
     />
   );
 }

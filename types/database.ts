@@ -12,6 +12,7 @@ export type WorkExperience = {
   employment_type: "full-time" | "part-time";
   start_date: string;
   end_date: string | null;
+  logo_url?: string | null;
 };
 
 export type Education = {
@@ -24,6 +25,7 @@ export type Education = {
   end_year: string | null;
   description: string | null;
   url: string | null;
+  logo_url?: string | null;
 };
 
 export type TradingPlatform = {

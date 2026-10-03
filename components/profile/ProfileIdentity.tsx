@@ -16,6 +16,8 @@ type Props = {
   profile: Profile;
   email: string | null;
   credentials: Credential[];
+  linkedProviders?: string[];
+  googleEmail?: string | null;
 };
 
 const TABS: { id: TabId; label: string; short: string; icon: string }[] = [
@@ -74,6 +76,18 @@ function normalizeSkills(raw: Profile["skills"]): Skill[] {
 function fileType(name: string) {
   return (name.split(".").pop() || "FILE").toUpperCase().slice(0, 5);
 }
+function siteLogo(url: string | null) {
+  if (!url) return null;
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    return host ? `https://www.google.com/s2/favicons?domain=${host}&sz=128` : null;
+  } catch {
+    return null;
+  }
+}
+function isImageFile(name: string | null, type: string | null) {
+  return (type || "").startsWith("image/") || /\.(png|jpe?g|webp|gif|svg)$/i.test(name || "");
+}
 
 function Icon({ d, size = 17 }: { d: string; size?: number }) {
   return (
@@ -83,7 +97,7 @@ function Icon({ d, size = 17 }: { d: string; size?: number }) {
   );
 }
 
-export default function ProfileIdentity({ profile, email, credentials }: Props) {
+export default function ProfileIdentity({ profile, email, credentials, linkedProviders = [], googleEmail = null }: Props) {
   const router = useRouter();
   const host = SITE_URL.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const publicUrl = `${SITE_URL.replace(/\/$/, "")}/${profile.username}`;
@@ -131,8 +145,8 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
   const [eduOpen, setEduOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<string | null>(null);
   const [editingEdu, setEditingEdu] = useState<string | null>(null);
-  const [wForm, setWForm] = useState({ company: "", role: "", url: "", desc: "", type: "Full-time", start: "", end: "" });
-  const [eForm, setEForm] = useState({ institution: "", degree: "", field: "", country: "", start: "", end: "", url: "", desc: "" });
+  const [wForm, setWForm] = useState({ company: "", role: "", url: "", desc: "", type: "Full-time", start: "", end: "", logo: "" });
+  const [eForm, setEForm] = useState({ institution: "", degree: "", field: "", country: "", start: "", end: "", url: "", desc: "", logo: "" });
   const [expError, setExpError] = useState("");
   const [eduError, setEduError] = useState("");
   const [dragWork, setDragWork] = useState<number | null>(null);
@@ -171,7 +185,8 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
     document.documentElement.dataset.theme = next;
     const hash = window.location.hash.replace("#", "") as TabId;
     if (["identity", "skills", "experience", "docs"].includes(hash)) setTab(hash);
-  }, [profile.id]);
+    if (googleEmail && !profile.secondary_email) setSecondaryEmail(googleEmail);
+  }, [profile.id, googleEmail, profile.secondary_email]);
 
 
 
@@ -366,10 +381,62 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
     try {
       const address = await connectEthereumWallet();
       setWallet(address);
-      notify("Wallet connected. Save skills & connections to keep it.");
+      const supabase = createClient();
+      const { error } = await supabase.from("profiles").update({ wallet_address: address }).eq("id", profile.id);
+      if (error) notify(error.message);
+      else notify("Wallet connected");
     } catch (err) {
       notify(err instanceof Error ? err.message : "Wallet connection failed");
     }
+  }
+  async function disconnectWallet() {
+    const supabase = createClient();
+    const { error } = await supabase.from("profiles").update({ wallet_address: null }).eq("id", profile.id);
+    if (error) { notify(error.message); return; }
+    setWallet("");
+    notify("Wallet disconnected");
+  }
+  async function connectGoogle() {
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.linkIdentity({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/dashboard/profile")}`, skipBrowserRedirect: true },
+    });
+    if (error) { notify(error.message); return; }
+    if (data?.url) window.location.assign(data.url);
+    else notify("Google sign-in did not return a link");
+  }
+  async function disconnectProvider(provider: "twitter" | "github" | "google") {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const identity = user?.identities?.find((i) => provider === "twitter" ? i.provider === "twitter" || i.provider === "x" : i.provider === provider);
+    if (identity) {
+      const { error } = await supabase.auth.unlinkIdentity(identity);
+      if (error) { notify(error.message); return; }
+    }
+    if (provider === "twitter") {
+      await supabase.from("profiles").update({ x_url: null }).eq("id", profile.id);
+      setXUrl("");
+    } else if (provider === "github") {
+      await supabase.from("profiles").update({ github_url: null }).eq("id", profile.id);
+      setGithubUrl("");
+    } else {
+      await supabase.from("profiles").update({ secondary_email: null, show_secondary_email: false }).eq("id", profile.id);
+      setSecondaryEmail("");
+      setShowSecondary(false);
+    }
+    notify("Disconnected");
+    router.refresh();
+  }
+  async function uploadLogo(file: File) {
+    if (!file.type.startsWith("image/")) { notify("Logo must be an image"); return null; }
+    if (file.size > 2 * 1024 * 1024) { notify("Logo must be under 2MB"); return null; }
+    const supabase = createClient();
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${profile.id}/logo-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (error) { notify(error.message); return null; }
+    return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
   }
 
   async function saveSkills() {
@@ -428,7 +495,7 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
   }
 
   function resetWork() {
-    setWForm({ company: "", role: "", url: "", desc: "", type: "Full-time", start: "", end: "" });
+    setWForm({ company: "", role: "", url: "", desc: "", type: "Full-time", start: "", end: "", logo: "" });
     setEditingWork(null);
     setExpError("");
     setWorkOpen(false);
@@ -438,15 +505,17 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
       setExpError("Company, role, company link and start date are required.");
       return;
     }
+    const url = absoluteUrl(wForm.url);
     const item: WorkExperience = {
       id: editingWork || uid(),
       company: wForm.company.trim(),
       role: wForm.role.trim(),
-      url: absoluteUrl(wForm.url),
+      url,
       description: wForm.desc.trim() || null,
       employment_type: wForm.type === "Part-time" ? "part-time" : "full-time",
       start_date: wForm.start,
       end_date: wForm.end || null,
+      logo_url: wForm.logo || siteLogo(url),
     };
     const next = editingWork ? work.map((w) => (w.id === editingWork ? item : w)) : [...work, item];
     const ok = await persistExperience(next, education);
@@ -465,12 +534,13 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
       type: item.employment_type === "part-time" ? "Part-time" : "Full-time",
       start: item.start_date || "",
       end: item.end_date || "",
+      logo: item.logo_url || "",
     });
     setWorkOpen(true);
   }
 
   function resetEdu() {
-    setEForm({ institution: "", degree: "", field: "", country: "", start: "", end: "", url: "", desc: "" });
+    setEForm({ institution: "", degree: "", field: "", country: "", start: "", end: "", url: "", desc: "", logo: "" });
     setEditingEdu(null);
     setEduError("");
     setEduOpen(false);
@@ -478,6 +548,11 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
   async function saveEduItem() {
     if (!eForm.institution.trim()) {
       setEduError("Institution is required.");
+      return;
+    }
+    const schoolUrl = absoluteUrl(eForm.url);
+    if (!schoolUrl && !eForm.logo) {
+      setEduError("Add the school website so the logo can be pulled, or upload the school logo.");
       return;
     }
     const item: Education = {
@@ -488,8 +563,9 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
       country: eForm.country.trim() || null,
       start_year: eForm.start.trim() || null,
       end_year: eForm.end.trim() || null,
-      url: absoluteUrl(eForm.url),
+      url: schoolUrl,
       description: eForm.desc.trim() || null,
+      logo_url: eForm.logo || siteLogo(schoolUrl),
     };
     const next = editingEdu ? education.map((e) => (e.id === editingEdu ? item : e)) : [...education, item];
     const ok = await persistExperience(work, next);
@@ -509,6 +585,7 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
       end: item.end_year || "",
       url: item.url || "",
       desc: item.description || "",
+      logo: item.logo_url || "",
     });
     setEduOpen(true);
   }
@@ -651,7 +728,7 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
           ))}
         </nav>
         <div className="side-foot">
-          <div className="side-handle" title={username}>@{username || "profile"}</div>
+          <div className="side-meta"><div className="side-handle" title={username}>@{username || "profile"}</div><div className="side-note">Profile workspace</div></div>
           <button className="side-collapse" type="button" aria-label={sideCollapsed ? "Expand sidebar" : "Minimize sidebar"} onClick={() => setSideCollapsed((v) => !v)}>
             <Icon d={sideCollapsed ? "M9 6l6 6-6 6" : "M15 6l-6 6 6 6"} size={16} />
           </button>
@@ -716,10 +793,8 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
           <div className="block">
             <div className="block-head"><div><div className="block-title">Social accounts</div><div className="block-desc">Connect the platforms already supported by Powfolio. Each connection keeps its own action and status.</div></div></div>
             <div className="connection-list">
-              <Connection title="X" value={xUrl || "Not connected"} action={xUrl ? "Edit" : "Connect X"} onAction={() => xUrl ? openEditor("x", xUrl) : void connectX()} icon="M18.2 2.2h3.3l-7.2 8.3 8.5 11.2h-5.4l-5.2-6.8-6 6.8H3.1l7.7-8.8L2.3 2.2h5.5l4.7 6.2Z" />
-              {editor === "x" && <Editor value={draft} onChange={setDraft} onSave={applyEditor} onCancel={() => setEditor(null)} placeholder="https://x.com/handle" />}
-              <Connection title="GitHub" value={githubUrl || "Not connected"} action={githubUrl ? "Edit" : "Connect GitHub"} onAction={() => githubUrl ? openEditor("github", githubUrl) : void connectGithub()} icon="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.2-3.4-1.2-.4-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.4-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.6 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c2-1.3 2.8-1 2.8-1 .5 1.3.2 2.3.1 2.6.6.7 1 1.6 1 2.7 0 3.9-2.3 4.7-4.6 5 .4.3.7.9.7 1.9v2.7c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" />
-              {editor === "github" && <Editor value={draft} onChange={setDraft} onSave={applyEditor} onCancel={() => setEditor(null)} placeholder="https://github.com/handle" />}
+              <Connection title="X" value={xUrl || (linkedProviders.includes("twitter") || linkedProviders.includes("x") ? "Connected" : "Not connected")} action={xUrl || linkedProviders.includes("twitter") || linkedProviders.includes("x") ? "Disconnect" : "Connect X"} onAction={() => xUrl || linkedProviders.includes("twitter") || linkedProviders.includes("x") ? void disconnectProvider("twitter") : void connectX()} icon="M18.2 2.2h3.3l-7.2 8.3 8.5 11.2h-5.4l-5.2-6.8-6 6.8H3.1l7.7-8.8L2.3 2.2h5.5l4.7 6.2Z" />
+              <Connection title="GitHub" value={githubUrl || (linkedProviders.includes("github") ? "Connected" : "Not connected")} action={githubUrl || linkedProviders.includes("github") ? "Disconnect" : "Connect GitHub"} onAction={() => githubUrl || linkedProviders.includes("github") ? void disconnectProvider("github") : void connectGithub()} icon="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.2-3.4-1.2-.4-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.4-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.6 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c2-1.3 2.8-1 2.8-1 .5 1.3.2 2.3.1 2.6.6.7 1 1.6 1 2.7 0 3.9-2.3 4.7-4.6 5 .4.3.7.9.7 1.9v2.7c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" />
               <Connection title="Telegram" value={telegramUrl || "Add your public Telegram handle"} action={telegramUrl ? "Edit" : "Add Telegram"} onAction={() => openEditor("telegram", telegramUrl)} icon="M21 4 3 11.2l6.2 2.1L17.5 7 11 14.2V20l3.2-3.6L18 19.5Z" />
               {editor === "telegram" && <Editor value={draft} onChange={setDraft} onSave={applyEditor} onCancel={() => setEditor(null)} placeholder="https://t.me/handle" />}
               <Connection title="Website" value={websiteUrl || "Add your personal or professional website"} action={websiteUrl ? "Edit" : "Add website"} onAction={() => openEditor("website", websiteUrl)} icon="M12 21a9 9 0 1 0-9-9 9 9 0 0 0 9 9ZM3 12h18M12 3c2.2 2.4 3.2 5.4 3.2 9s-1 6.6-3.2 9c-2.2-2.4-3.2-5.4-3.2-9s1-6.6 3.2-9Z" />
@@ -736,19 +811,12 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
                 </div>
                 <div className="email-row">
                   <div className="brand-icon"><Icon d="M3 5h18v14H3z M3 7l9 6 9-6" /></div>
-                  <div className="email-copy"><div className="conn-title">Second email</div><div className="conn-value">{secondaryEmail || "Optional public contact email"}</div></div>
-                  <div className="email-visibility"><button className="text-action" type="button" onClick={() => openEditor("email", secondaryEmail)}>{secondaryEmail ? "Edit" : "Add"}</button><span>Public</span><button className={`switch${showSecondary ? " on" : ""}`} type="button" aria-label="Show second email publicly" onClick={() => setShowSecondary((v) => !v)}><span /></button></div>
+                  <div className="email-copy"><div className="conn-title">Second email</div><div className="conn-value">{googleEmail || secondaryEmail || "Connect Google for a second email"}</div></div>
+                  <div className="email-visibility">{googleEmail || linkedProviders.includes("google") ? <button className="text-action" type="button" onClick={() => void disconnectProvider("google")}>Disconnect</button> : <button className="text-action" type="button" onClick={() => void connectGoogle()}>Connect Google</button>}<span>Public</span><button className={`switch${showSecondary ? " on" : ""}`} type="button" aria-label="Show second email publicly" onClick={() => setShowSecondary((v) => !v)}><span /></button></div>
                 </div>
-                {editor === "email" && <div className="conn-editor email-editor">
-                  <input className="input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Second email, optional" />
-                  <button className="text-action" type="button" onClick={applyEditor}>Apply</button>
-                  <button className="text-action" type="button" onClick={() => setEditor(null)}>Cancel</button>
-                </div>}
-              </div>
-              <Connection title="ENS name" value={ensName || "Add an ENS name if one is connected to your identity."} action={ensName ? "Edit" : "Add ENS"} onAction={() => openEditor("ens", ensName)} icon="M4 8h16v10H4z M7 8V6a5 5 0 0 1 10 0v2" />
+                <Connection title="ENS name" value={ensName || "Add an ENS name if one is connected to your identity."} action={ensName ? "Edit" : "Add ENS"} onAction={() => openEditor("ens", ensName)} icon="M4 8h16v10H4z M7 8V6a5 5 0 0 1 10 0v2" />
               {editor === "ens" && <Editor value={draft} onChange={setDraft} onSave={applyEditor} onCancel={() => setEditor(null)} placeholder="name.eth" />}
-              <Connection title="Wallet" value={wallet || "No wallet connected"} mono action={wallet ? "Edit" : "Connect wallet"} onAction={() => wallet ? openEditor("wallet", wallet) : void connectWallet()} icon="M4 6h15a2 2 0 0 1 2 2v10H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h13 M16 12h5" />
-              {editor === "wallet" && <Editor value={draft} onChange={setDraft} onSave={() => { setWallet(draft.trim()); setEditor(null); }} onCancel={() => setEditor(null)} placeholder="0x…" />}
+              <Connection title="Wallet" value={wallet || "No wallet connected"} mono action={wallet ? "Disconnect" : "Connect wallet"} onAction={() => wallet ? void disconnectWallet() : void connectWallet()} icon="M4 6h15a2 2 0 0 1 2 2v10H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h13 M16 12h5" />
             </div>
           </div>
           <div className="save-area"><button className="save" type="button" onClick={() => void saveSkills()}>{saving === "skills" ? "Saving..." : "Save changes"}</button>{saved === "skills" && <span className="save-state">Saved</span>}</div>
@@ -762,7 +830,7 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
               {work.length === 0 && <div className="empty">No work experience added yet.</div>}
               {work.map((item, i) => (
                 <div key={item.id} className="entry" draggable onDragStart={() => setDragWork(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragWork === null || dragWork === i) return; setWork(move(work, dragWork, i)); setDragWork(null); notify("Experience order updated"); }}>
-                  <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder experience"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><div className="brand-icon">{String(i + 1).padStart(2, "0")}</div><div><div className="entry-title">{item.company}</div><div className="entry-meta">{item.role} · {item.employment_type === "part-time" ? "Part-time" : "Full-time"} · {item.start_date}{item.end_date ? ` to ${item.end_date}` : " to Present"}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}</div></div>
+                  <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder experience"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><span className="logo-preview sm">{item.logo_url ? <img src={item.logo_url} alt="" /> : item.company.slice(0,1)}</span><div><div className="entry-title">{item.company}</div><div className="entry-meta">{item.role} · {item.employment_type === "part-time" ? "Part-time" : "Full-time"} · {item.start_date}{item.end_date ? ` to ${item.end_date}` : " to Present"}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}</div></div>
                   <div className="entry-actions">
                     <button className="small-action" type="button" onClick={() => editWork(item)}>Edit</button>
                     <button className="small-action danger-action" type="button" onClick={() => void persistExperience(work.filter((w) => w.id !== item.id), education)}>Remove</button>
@@ -774,7 +842,8 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
               <div className="form-grid">
                 <div className="field"><label className="label">Company / project *</label><input className="input" value={wForm.company} onChange={(e) => setWForm({ ...wForm, company: e.target.value })} placeholder="Company or project name" /></div>
                 <div className="field"><label className="label">Role *</label><input className="input" value={wForm.role} onChange={(e) => setWForm({ ...wForm, role: e.target.value })} placeholder="Your role" /></div>
-                <div className="field full"><label className="label">Company / project link *</label><input className="input" value={wForm.url} onChange={(e) => setWForm({ ...wForm, url: e.target.value })} placeholder="https://example.com" /></div>
+                <div className="field full"><label className="label">Company / project link *</label><input className="input" value={wForm.url} onChange={(e) => setWForm({ ...wForm, url: e.target.value, logo: "" })} placeholder="https://project.com" /></div>
+                <div className="field full logo-field"><span className="logo-preview">{wForm.logo || siteLogo(absoluteUrl(wForm.url)) ? <img src={wForm.logo || siteLogo(absoluteUrl(wForm.url)) || ""} alt="" /> : "Logo"}</span><label className="text-action">Replace logo<input type="file" accept="image/*" hidden onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadLogo(file); if (url) setWForm((f) => ({ ...f, logo: url })); }} /></label><span className="logo-note">The site logo is pulled from the link. Replace it if the image is wrong.</span></div>
                 <div className="field full"><label className="label">Description</label><textarea className="textarea" value={wForm.desc} onChange={(e) => setWForm({ ...wForm, desc: e.target.value })} placeholder="What did you work on and what was your responsibility?" /></div>
                 <div className="field"><label className="label">Employment type</label><select className="input" value={wForm.type} onChange={(e) => setWForm({ ...wForm, type: e.target.value })}><option>Full-time</option><option>Part-time</option></select></div>
                 <div className="field"><label className="label">Start date *</label><input className="input" type="month" value={wForm.start} onChange={(e) => setWForm({ ...wForm, start: e.target.value })} /></div>
@@ -790,7 +859,7 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
               {education.length === 0 && <div className="empty">No education added yet.</div>}
               {education.map((item, i) => (
                 <div key={item.id} className="entry" draggable onDragStart={() => setDragEdu(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragEdu === null || dragEdu === i) return; setEducation(move(education, dragEdu, i)); setDragEdu(null); notify("Education order updated"); }}>
-                  <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder education"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><div className="brand-icon">ED</div><div><div className="entry-title">{item.institution}</div><div className="entry-meta">{item.degree || "Program"}{item.field_of_study ? ` · ${item.field_of_study}` : ""}{item.start_year ? ` · ${item.start_year}` : ""}{item.end_year ? ` to ${item.end_year}` : ""}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}</div></div>
+                  <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder education"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><span className="logo-preview sm">{item.logo_url ? <img src={item.logo_url} alt="" /> : item.institution.slice(0,1)}</span><div><div className="entry-title">{item.institution}</div><div className="entry-meta">{item.degree || "Program"}{item.field_of_study ? ` · ${item.field_of_study}` : ""}{item.start_year ? ` · ${item.start_year}` : ""}{item.end_year ? ` to ${item.end_year}` : ""}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}</div></div>
                   <div className="entry-actions">
                     <button className="small-action" type="button" onClick={() => editEdu(item)}>Edit</button>
                     <button className="small-action danger-action" type="button" onClick={() => void persistExperience(work, education.filter((e) => e.id !== item.id))}>Remove</button>
@@ -806,7 +875,8 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
                 <div className="field"><label className="label">Country</label><input className="input" value={eForm.country} onChange={(e) => setEForm({ ...eForm, country: e.target.value })} placeholder="Country" /></div>
                 <div className="field"><label className="label">Start year</label><input className="input" value={eForm.start} onChange={(e) => setEForm({ ...eForm, start: e.target.value })} placeholder="2024" inputMode="numeric" /></div>
                 <div className="field"><label className="label">End year</label><input className="input" value={eForm.end} onChange={(e) => setEForm({ ...eForm, end: e.target.value })} placeholder="2028" inputMode="numeric" /></div>
-                <div className="field full"><label className="label">Institution link</label><input className="input" value={eForm.url} onChange={(e) => setEForm({ ...eForm, url: e.target.value })} placeholder="https://example.com" /></div>
+                <div className="field full"><label className="label">School website</label><input className="input" value={eForm.url} onChange={(e) => setEForm({ ...eForm, url: e.target.value, logo: "" })} placeholder="https://school.edu" /></div>
+                <div className="field full logo-field"><span className="logo-preview">{eForm.logo || siteLogo(absoluteUrl(eForm.url) ) ? <img src={eForm.logo || siteLogo(absoluteUrl(eForm.url)) || ""} alt="" /> : "ED"}</span><label className="text-action">Upload school logo<input type="file" accept="image/*" hidden onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadLogo(file); if (url) setEForm((f) => ({ ...f, logo: url })); }} /></label><span className="logo-note">Use the school website to pull the logo. Upload one if you have no link.</span></div>
                 <div className="field full"><label className="label">Description</label><textarea className="textarea" value={eForm.desc} onChange={(e) => setEForm({ ...eForm, desc: e.target.value })} placeholder="Optional context about the program." /></div>
               </div>
               {eduError && <div className="error">{eduError}</div>}
@@ -824,7 +894,7 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
               {docs.length === 0 && <div className="empty">No documents uploaded yet.</div>}
               {docs.map((d, i) => (
                 <div key={d.id} className="doc" draggable onDragStart={() => setDragDoc(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragDoc === null || dragDoc === i) return; setDocs(move(docs, dragDoc, i)); setDragDoc(null); notify("Document order updated"); }}>
-                  <div className="doc-main"><button className="drag-handle" type="button" aria-label="Rearrange document"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><div className="doc-type">{fileType(d.file_name || d.file_type || "FILE")}</div><div><div className="doc-title">{d.title}</div><div className="doc-meta">{d.file_name || "Uploaded file"}{d.issuer ? ` · ${d.issuer}` : ""} · View online</div></div></div>
+                  <div className="doc-main"><button className="drag-handle" type="button" aria-label="Rearrange document"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button>{isImageFile(d.file_name, d.file_type) ? <img className="doc-thumb" src={d.file_url} alt="" /> : <iframe className="doc-thumb" src={d.file_url} title={d.title} />}<div><div className="doc-title">{d.title}</div><div className="doc-meta">{d.file_name || "Uploaded file"}{d.issuer ? ` · ${d.issuer}` : ""} · View online</div></div></div>
                   <div className="doc-actions">
                     <a className="small-action" href={d.file_url} target="_blank" rel="noreferrer">View</a>
                     <button className="small-action" type="button" onClick={() => { setEditingDoc(d.id); setDocTitle(d.title); setDocIssuer(d.issuer || ""); setDocNote(d.description || ""); setDocOpen(true); }}>Edit</button>
