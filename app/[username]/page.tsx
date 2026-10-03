@@ -302,8 +302,8 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
             )}
           </div>
 
-          <div className="absolute -bottom-10 left-3 sm:-bottom-11 sm:left-5">
-            <div className="h-[4.5rem] w-[4.5rem] sm:h-[5.25rem] sm:w-[5.25rem] overflow-hidden rounded-full border-4 border-background bg-surface-elevated shadow-md">
+          <div className="absolute left-1/2 -bottom-10 -translate-x-1/2 sm:-bottom-12">
+            <div className="h-[4.5rem] w-[4.5rem] sm:h-[5.5rem] sm:w-[5.5rem] overflow-hidden rounded-full bg-surface-elevated shadow-[0_0_0_3px_var(--background),0_0_0_5px_#b8863b]">
               {p.avatar_url ? (
                 <ImageLightbox
                   src={p.avatar_url}
@@ -321,7 +321,7 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
           </div>
         </div>
 
-        <div className="mt-12 sm:mt-13 flex items-start justify-between gap-3 pl-0.5 animate-slide-up">
+        <div className="mt-14 sm:mt-16 flex flex-col items-center text-center gap-3 animate-slide-up sm:flex-row sm:items-start sm:justify-between sm:text-left">
           <div className="min-w-0 flex-1 space-y-0.5">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight break-words">

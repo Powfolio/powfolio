@@ -13,6 +13,16 @@ import type {
   Writing, Trade, TradeUpdate, CommunityItem, Airdrop, Collectible, Credential, Skill, WorkExperience, Education, TradingPlatform,
 } from "@/types/database";
 
+function siteLogo(url: string | null | undefined) {
+  if (!url) return null;
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    return host ? `https://www.google.com/s2/favicons?domain=${host}&sz=128` : null;
+  } catch {
+    return null;
+  }
+}
+
 type TabId = "about" | "projects" | "writing" | "trading" | "airdrops" | "onchain";
 
 const HEADING = "section-heading text-sm font-extrabold tracking-wide text-amber-700/90 dark:text-amber-400/75";
@@ -118,7 +128,7 @@ export default function PublicProfileTabs({
                   {workExperience.map((w, i) => (
                     <div key={w.id} className={i > 0 ? "pt-3 border-t border-border/50" : ""}>
                       <div className="min-w-0">
-                        <span className="mr-2 inline-flex h-8 w-8 align-middle overflow-hidden rounded-md bg-surface">{w.logo_url ? <img src={w.logo_url} alt="" className="h-full w-full object-cover" /> : null}</span>{w.url ? <a href={w.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-primary hover:underline">{w.company}</a> : <p className="inline font-medium text-sm">{w.company}</p>}
+                        <span className="mr-2 inline-flex h-9 w-9 align-middle overflow-hidden rounded-lg bg-surface">{(w.logo_url || siteLogo(w.url)) ? <img src={w.logo_url || siteLogo(w.url) || ""} alt="" className="h-full w-full object-cover" /> : <span className="m-auto text-[10px] font-semibold text-foreground-subtle">{w.company.slice(0, 1)}</span>}</span>{w.url ? <a href={w.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary">{w.company}</a> : <p className="inline font-medium text-sm">{w.company}</p>}
                         <p className="text-xs text-foreground-muted mt-0.5">{w.role} · {w.employment_type === "full-time" ? "Full-time" : "Part-time"}</p>
                         <p className="text-xs text-foreground-subtle mt-0.5">{w.start_date}{w.end_date ? ` → ${w.end_date}` : " → Present"}</p>
                         {w.description && <p className="mt-1 text-xs text-foreground-muted leading-relaxed">{w.description}</p>}
@@ -134,7 +144,7 @@ export default function PublicProfileTabs({
                 <div className="space-y-4">
                   {education.map((e, i) => (
                     <div key={e.id} className={i > 0 ? "pt-3 border-t border-border/50" : ""}>
-                      <span className="mr-2 inline-flex h-8 w-8 align-middle overflow-hidden rounded-md bg-surface">{e.logo_url ? <img src={e.logo_url} alt="" className="h-full w-full object-cover" /> : null}</span>{e.url ? <a href={e.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-primary hover:underline">{e.institution}</a> : <p className="inline font-medium text-sm">{e.institution}</p>}
+                      <span className="mr-2 inline-flex h-9 w-9 align-middle overflow-hidden rounded-lg bg-surface">{(e.logo_url || siteLogo(e.url)) ? <img src={e.logo_url || siteLogo(e.url) || ""} alt="" className="h-full w-full object-cover" /> : <span className="m-auto text-[10px] font-semibold text-foreground-subtle">{e.institution.slice(0, 1)}</span>}</span>{e.url ? <a href={e.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary">{e.institution}</a> : <p className="inline font-medium text-sm">{e.institution}</p>}
                       <p className="text-xs text-foreground-muted mt-0.5">{[e.degree, e.field_of_study].filter(Boolean).join(" · ")}</p>
                       <p className="text-xs text-foreground-subtle mt-0.5">{[e.country, e.start_year && e.end_year ? `${e.start_year} - ${e.end_year}` : e.start_year || e.end_year].filter(Boolean).join(" · ")}</p>
                       {e.description && <p className="mt-1 text-xs text-foreground-muted">{e.description}</p>}
@@ -181,7 +191,7 @@ export default function PublicProfileTabs({
             {writings.length === 0 ? <div className="card text-sm text-foreground-subtle">No technical writing or research yet.</div> : (
               <div className="tight-cards tight-cards-3">
                 {writings.map((w) => {
-                  const imgs = [w.thumbnail_url, w.image_url_2].filter((u): u is string => !!u);
+                  const imgs = [w.thumbnail_url, w.image_url_2, siteLogo(w.url)].filter((u): u is string => !!u);
                   return (
                     <article key={w.id} className="card flex h-auto w-full flex-col overflow-hidden p-0 transition-all duration-200 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-md">
                       {imgs.length > 0 && <TradeImageCarousel images={imgs} href={w.url} hideEmpty className="aspect-[16/10] w-full" />}
