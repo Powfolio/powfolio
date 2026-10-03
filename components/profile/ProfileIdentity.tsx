@@ -820,6 +820,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
             </div>
           </div>
           <div className="save-area"><button className="save" type="button" onClick={() => void saveSkills()}>{saving === "skills" ? "Saving..." : "Save changes"}</button>{saved === "skills" && <span className="save-state">Saved</span>}</div>
+          </div>
         </section>
 
         <section className={`panel${tab === "experience" ? " active" : ""}`} role="tabpanel">
