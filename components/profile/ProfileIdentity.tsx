@@ -851,7 +851,11 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
         </section>
       </main>
       <button className={`tab-fab${dock === "open" ? " open" : ""}`} type="button" aria-label={dock === "open" ? "Close sections" : "Open sections"} onClick={() => { if (dock === "open") { setDock("closing"); window.setTimeout(() => setDock("closed"), 380); } else setDock("open"); }}>
-        <span /><span /><span />
+        <svg className="burger" viewBox="0 0 24 18" width="22" height="16" aria-hidden>
+          <rect x="1" y="1" width="22" height="3.2" rx="1.6" />
+          <rect x="1" y="7.4" width="22" height="3.2" rx="1.6" />
+          <rect x="1" y="13.8" width="22" height="3.2" rx="1.6" />
+        </svg>
       </button>
       <div className={`tab-dock${dock === "open" ? " open" : ""}${dock === "closing" ? " closing" : ""}`}>
         {TABS.map((item, index) => (
