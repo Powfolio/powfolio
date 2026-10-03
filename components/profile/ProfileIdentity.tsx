@@ -8,6 +8,7 @@ import { connectEthereumWallet } from "@/lib/wallet";
 import { startXAuth } from "@/lib/x-oauth";
 import { SITE_URL } from "@/lib/site";
 import { isReservedUsername, reservedUsernameMessage } from "@/lib/usernames";
+import { moveItem } from "@/lib/move-item";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import type { Credential, Education, Profile, Skill, WorkExperience } from "@/types/database";
 
@@ -694,21 +695,14 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     notify("Documents saved");
   }
 
-  function moveItem(list: unknown[], from: number, to: number) {
-    if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return list;
-    const next = [...list];
-    const [item] = next.splice(from, 1);
-    next.splice(to, 0, item);
-    return next;
-  }
   function moveWorkBy(index: number, direction: -1 | 1) {
-    setWork((prev) => moveItem(prev, index, index + direction) as typeof prev);
+    setWork((prev) => moveItem(prev, index, index + direction));
   }
   function moveEducationBy(index: number, direction: -1 | 1) {
-    setEducation((prev) => moveItem(prev, index, index + direction) as typeof prev);
+    setEducation((prev) => moveItem(prev, index, index + direction));
   }
   function moveDocumentBy(index: number, direction: -1 | 1) {
-    setDocs((prev) => moveItem(prev, index, index + direction) as typeof prev);
+    setDocs((prev) => moveItem(prev, index, index + direction));
   }
 
   return (
