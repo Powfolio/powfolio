@@ -8,8 +8,7 @@ import { connectEthereumWallet } from "@/lib/wallet";
 import { startXAuth } from "@/lib/x-oauth";
 import { SITE_URL } from "@/lib/site";
 import { isReservedUsername, reservedUsernameMessage } from "@/lib/usernames";
-import DeleteAccount from "@/components/profile/DeleteAccount";
-import OnboardingTour, { resetOnboarding } from "@/components/onboarding/OnboardingTour";
+import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import type { Credential, Education, Profile, Skill, WorkExperience } from "@/types/database";
 
 type TabId = "identity" | "skills" | "experience" | "docs";
@@ -90,12 +89,11 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
   const publicUrl = `${SITE_URL.replace(/\/$/, "")}/${profile.username}`;
   const [tab, setTab] = useState<TabId>("identity");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const tabNavRef = useRef<HTMLElement>(null);
-  const [glide, setGlide] = useState({ x: 8, w: 0 });
+  const [dock, setDock] = useState<"closed" | "open" | "closing">("closed");
+  const [sideCollapsed, setSideCollapsed] = useState(false);
   const [toast, setToast] = useState("");
   const [toastOn, setToastOn] = useState(false);
   const [tourKey, setTourKey] = useState(0);
-  const [showDelete, setShowDelete] = useState(false);
 
   const [username, setUsername] = useState(profile.username || "");
   const [nameStatus, setNameStatus] = useState<"checking" | "good" | "bad">("checking");
@@ -175,18 +173,7 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
     if (["identity", "skills", "experience", "docs"].includes(hash)) setTab(hash);
   }, [profile.id]);
 
-  useEffect(() => {
-    const nav = tabNavRef.current;
-    if (!nav) return;
-    const measure = () => {
-      const active = nav.querySelector<HTMLButtonElement>(".tab.active");
-      if (!active) return;
-      setGlide({ x: active.offsetLeft, w: active.offsetWidth });
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [tab]);
+
 
   useEffect(() => {
     const v = username.trim().toLowerCase().replace(/^@/, "");
@@ -630,14 +617,6 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
     notify("Documents saved");
   }
 
-  function signOut() {
-    const form = document.createElement("form");
-    form.method = "post";
-    form.action = "/auth/signout";
-    document.body.appendChild(form);
-    form.submit();
-  }
-
   function move<T>(list: T[], from: number, to: number) {
     if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return list;
     const next = [...list];
@@ -656,29 +635,34 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
   }
 
   return (
-    <div className="profile-identity" data-theme={theme}>
+    <div className="profile-identity" data-theme={theme} data-collapsed={sideCollapsed ? "1" : "0"}>
       <OnboardingTour key={tourKey} force={tourKey > 0} />
       <header className="topbar">
+        <Link className="back" href="/dashboard" aria-label="Back to dashboard"><Icon d="M15 5 8 12l7 7" size={18} /></Link>
         <Link className="brand" href="/" aria-label="Powfolio home"><span className="brand-mark">P</span><span className="brand-name">Powfolio</span></Link>
-        <Link className="top-link" href="/dashboard">Dashboard</Link>
       </header>
+      <aside className={`side${sideCollapsed ? " collapsed" : ""}`}>
+        <nav className="side-nav" aria-label="Profile sections">
+          {TABS.map((item) => (
+            <button key={item.id} className={`side-tab${tab === item.id ? " active" : ""}`} type="button" onClick={() => { setTab(item.id); history.replaceState(null, "", `#${item.id}`); }}>
+              <Icon d={item.icon} size={16} />
+              <span>{item.short}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="side-foot">
+          <div className="side-handle" title={username}>@{username || "profile"}</div>
+          <button className="side-collapse" type="button" aria-label={sideCollapsed ? "Expand sidebar" : "Minimize sidebar"} onClick={() => setSideCollapsed((v) => !v)}>
+            <Icon d={sideCollapsed ? "M9 6l6 6-6 6" : "M15 6l-6 6 6 6"} size={16} />
+          </button>
+        </div>
+      </aside>
 
       <main className="shell">
         <section className="hero">
           <div className="eyebrow">Profile workspace</div>
           <div className="hero-row"><div><h1>Profile &amp; Identity</h1><p>Manage the identity that powers your public Powfolio. Keep your name, username, location, skills and professional background clear and consistent.</p></div></div>
         </section>
-        <nav className="tabs" role="tablist" aria-label="Profile sections" ref={tabNavRef}>
-          <span className="tab-glide" style={{ transform: `translateX(${glide.x}px)`, width: glide.w || undefined }} />
-          {TABS.map((item) => (
-            <button key={item.id} className={`tab${tab === item.id ? " active" : ""}`} role="tab" aria-selected={tab === item.id} onClick={() => { setTab(item.id); history.replaceState(null, "", `#${item.id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
-              <Icon d={item.icon} size={15} />
-              <span className="tab-full">{item.label}</span>
-              <span className="tab-short">{item.short}</span>
-            </button>
-          ))}
-        </nav>
-
         <section className={`panel${tab === "identity" ? " active" : ""}`} role="tabpanel">
           <div className="section-intro"><h2>Identity</h2><p>The information visitors use to recognize you and understand what you do. Username and display name come from the account profile, while location is detected from device GPS.</p></div>
           <div className="block">
@@ -693,7 +677,6 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
                   <div className="avatar">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</div>
                   <label className="avatar-edit-badge" title="Change avatar"><Icon d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /><input type="file" accept="image/*" hidden onChange={(e) => void onAvatar(e.target.files?.[0])} /></label>
                 </div>
-                <div className="avatar-note">Use a clear square image for your public profile.</div>
               </div>
             </div>
           </div>
@@ -752,14 +735,14 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
                   <div className="email-visibility"><span>Public</span><button className={`switch${showPrimary ? " on" : ""}`} type="button" aria-label="Show primary email publicly" onClick={() => setShowPrimary((v) => !v)}><span /></button></div>
                 </div>
                 <div className="email-row">
-                  <div className="connection-left"><div className="brand-icon"><Icon d="M3 5h18v14H3z M3 7l9 6 9-6" /></div><div><div className="conn-title">Second email</div><div className="conn-value">{secondaryEmail || "Optional public contact email"}</div></div></div>
-                  <div className="connection-actions"><button className="small-action" type="button" onClick={() => openEditor("email", secondaryEmail)}>{secondaryEmail ? "Edit" : "Add email"}</button></div>
+                  <div className="brand-icon"><Icon d="M3 5h18v14H3z M3 7l9 6 9-6" /></div>
+                  <div className="email-copy"><div className="conn-title">Second email</div><div className="conn-value">{secondaryEmail || "Optional public contact email"}</div></div>
+                  <div className="email-visibility"><button className="text-action" type="button" onClick={() => openEditor("email", secondaryEmail)}>{secondaryEmail ? "Edit" : "Add"}</button><span>Public</span><button className={`switch${showSecondary ? " on" : ""}`} type="button" aria-label="Show second email publicly" onClick={() => setShowSecondary((v) => !v)}><span /></button></div>
                 </div>
                 {editor === "email" && <div className="conn-editor email-editor">
                   <input className="input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Second email, optional" />
-                  <div className="email-editor-actions"><span>Make second email public</span><button className={`switch${showSecondary ? " on" : ""}`} type="button" aria-label="Show second email publicly" onClick={() => setShowSecondary((v) => !v)}><span /></button></div>
-                  <button className="action accent" type="button" onClick={applyEditor}>Apply</button>
-                  <button className="action" type="button" onClick={() => setEditor(null)}>Cancel</button>
+                  <button className="text-action" type="button" onClick={applyEditor}>Apply</button>
+                  <button className="text-action" type="button" onClick={() => setEditor(null)}>Cancel</button>
                 </div>}
               </div>
               <Connection title="ENS name" value={ensName || "Add an ENS name if one is connected to your identity."} action={ensName ? "Edit" : "Add ENS"} onAction={() => openEditor("ens", ensName)} icon="M4 8h16v10H4z M7 8V6a5 5 0 0 1 10 0v2" />
@@ -781,8 +764,6 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
                 <div key={item.id} className="entry" draggable onDragStart={() => setDragWork(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragWork === null || dragWork === i) return; setWork(move(work, dragWork, i)); setDragWork(null); notify("Experience order updated"); }}>
                   <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder experience"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><div className="brand-icon">{String(i + 1).padStart(2, "0")}</div><div><div className="entry-title">{item.company}</div><div className="entry-meta">{item.role} · {item.employment_type === "part-time" ? "Part-time" : "Full-time"} · {item.start_date}{item.end_date ? ` to ${item.end_date}` : " to Present"}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}</div></div>
                   <div className="entry-actions">
-                    <button className="small-action reorder-action" type="button" disabled={i === 0} onClick={() => moveWorkBy(i, -1)} aria-label="Move experience up">↑</button>
-                    <button className="small-action reorder-action" type="button" disabled={i === work.length - 1} onClick={() => moveWorkBy(i, 1)} aria-label="Move experience down">↓</button>
                     <button className="small-action" type="button" onClick={() => editWork(item)}>Edit</button>
                     <button className="small-action danger-action" type="button" onClick={() => void persistExperience(work.filter((w) => w.id !== item.id), education)}>Remove</button>
                   </div>
@@ -811,8 +792,6 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
                 <div key={item.id} className="entry" draggable onDragStart={() => setDragEdu(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragEdu === null || dragEdu === i) return; setEducation(move(education, dragEdu, i)); setDragEdu(null); notify("Education order updated"); }}>
                   <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder education"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><div className="brand-icon">ED</div><div><div className="entry-title">{item.institution}</div><div className="entry-meta">{item.degree || "Program"}{item.field_of_study ? ` · ${item.field_of_study}` : ""}{item.start_year ? ` · ${item.start_year}` : ""}{item.end_year ? ` to ${item.end_year}` : ""}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}</div></div>
                   <div className="entry-actions">
-                    <button className="small-action reorder-action" type="button" disabled={i === 0} onClick={() => moveEducationBy(i, -1)} aria-label="Move education up">↑</button>
-                    <button className="small-action reorder-action" type="button" disabled={i === education.length - 1} onClick={() => moveEducationBy(i, 1)} aria-label="Move education down">↓</button>
                     <button className="small-action" type="button" onClick={() => editEdu(item)}>Edit</button>
                     <button className="small-action danger-action" type="button" onClick={() => void persistExperience(work, education.filter((e) => e.id !== item.id))}>Remove</button>
                   </div>
@@ -847,8 +826,6 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
                 <div key={d.id} className="doc" draggable onDragStart={() => setDragDoc(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragDoc === null || dragDoc === i) return; setDocs(move(docs, dragDoc, i)); setDragDoc(null); notify("Document order updated"); }}>
                   <div className="doc-main"><button className="drag-handle" type="button" aria-label="Rearrange document"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><div className="doc-type">{fileType(d.file_name || d.file_type || "FILE")}</div><div><div className="doc-title">{d.title}</div><div className="doc-meta">{d.file_name || "Uploaded file"}{d.issuer ? ` · ${d.issuer}` : ""} · View online</div></div></div>
                   <div className="doc-actions">
-                    <button className="small-action reorder-action" type="button" disabled={i === 0} onClick={() => moveDocumentBy(i, -1)} aria-label="Move document up">↑</button>
-                    <button className="small-action reorder-action" type="button" disabled={i === docs.length - 1} onClick={() => moveDocumentBy(i, 1)} aria-label="Move document down">↓</button>
                     <a className="small-action" href={d.file_url} target="_blank" rel="noreferrer">View</a>
                     <button className="small-action" type="button" onClick={() => { setEditingDoc(d.id); setDocTitle(d.title); setDocIssuer(d.issuer || ""); setDocNote(d.description || ""); setDocOpen(true); }}>Edit</button>
                     <button className="small-action danger-action" type="button" onClick={() => void deleteDoc(d.id)}>Delete</button>
@@ -872,16 +849,19 @@ export default function ProfileIdentity({ profile, email, credentials }: Props) 
           </div>
           <div className="save-area"><button className="save" type="button" onClick={() => void saveDocs()}>{saving === "docs" ? "Saving..." : "Save changes"}</button>{saved === "docs" && <span className="save-state">Saved</span>}</div>
         </section>
-        <div className="account-strip">
-          <a href={publicUrl} target="_blank" rel="noreferrer">Public profile</a>
-          <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(publicUrl); notify("Public profile link copied"); } catch { notify("Copy failed"); } }}>Copy link</button>
-          <Link href="/dashboard/resume">Download CV</Link>
-          <button type="button" onClick={() => { resetOnboarding(); setTourKey((k) => k + 1); notify("Starting the Powfolio tour"); }}>Replay tour</button>
-          <button type="button" onClick={signOut}>Sign out</button>
-          <button type="button" className="danger" onClick={() => setShowDelete(true)}>Delete account</button>
-        </div>
-        {showDelete && <div className="delete-sheet"><DeleteAccount email={email} /></div>}
       </main>
+      <button className={`tab-fab${dock === "open" ? " open" : ""}`} type="button" aria-label={dock === "open" ? "Close sections" : "Open sections"} onClick={() => { if (dock === "open") { setDock("closing"); window.setTimeout(() => setDock("closed"), 380); } else setDock("open"); }}>
+        <span /><span /><span />
+      </button>
+      <div className={`tab-dock${dock === "open" ? " open" : ""}${dock === "closing" ? " closing" : ""}`}>
+        {TABS.map((item, index) => (
+          <button key={item.id} className={`dock-tab${tab === item.id ? " active" : ""}`} style={{ transitionDelay: `${index * 45}ms` }} type="button" onClick={() => { setTab(item.id); history.replaceState(null, "", `#${item.id}`); setDock("closing"); window.setTimeout(() => setDock("closed"), 380); }}>
+            <Icon d={item.icon} size={16} />
+            <span>{item.short}</span>
+          </button>
+        ))}
+      </div>
+      {dock !== "closed" && <button className="dock-backdrop" type="button" aria-label="Close sections" onClick={() => { setDock("closing"); window.setTimeout(() => setDock("closed"), 380); }} />}
       <div className={`toast${toastOn ? " show" : ""}`}>{toast}</div>
     </div>
   );
