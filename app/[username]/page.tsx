@@ -288,7 +288,7 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
 
       <main id="main" className="container-app max-w-5xl py-4 sm:py-5 px-3 sm:px-4">
         <div className="relative animate-fade-in">
-          <div className="h-28 sm:h-40 md:h-44 overflow-hidden rounded-xl border border-border bg-surface-elevated">
+          <div className="h-32 sm:h-48 overflow-hidden bg-surface-elevated sm:rounded-xl">
             {p.banner_url ? (
               <ImageLightbox
                 src={p.banner_url}
@@ -302,8 +302,8 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
             )}
           </div>
 
-          <div className="absolute left-1/2 -bottom-10 -translate-x-1/2 sm:-bottom-12">
-            <div className="h-[4.5rem] w-[4.5rem] sm:h-[5.5rem] sm:w-[5.5rem] overflow-hidden rounded-full bg-surface-elevated shadow-[0_0_0_3px_var(--background),0_0_0_5px_#b8863b]">
+          <div className="flex items-end justify-between gap-3 px-1 sm:px-2 -mt-10 sm:-mt-14">
+            <div className="h-20 w-20 sm:h-32 sm:w-32 shrink-0 overflow-hidden rounded-full bg-surface-elevated shadow-[0_0_0_4px_var(--background)]">
               {p.avatar_url ? (
                 <ImageLightbox
                   src={p.avatar_url}
@@ -318,11 +318,18 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
                 </div>
               )}
             </div>
+            <div className="mb-1 sm:mb-3">
+              <ScoreRings
+                username={p.username}
+                initialProfile={scores.profileScore}
+                initialBuilder={scores.builderScore}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="mt-14 sm:mt-16 flex flex-col items-center text-center gap-3 animate-slide-up sm:flex-row sm:items-start sm:justify-between sm:text-left">
-          <div className="min-w-0 flex-1 space-y-0.5">
+        <div className="mt-3 px-1 text-left animate-slide-up">
+          <div className="min-w-0 space-y-0.5">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight break-words">
                 {p.display_name || p.username}
@@ -336,12 +343,6 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
             </div>
             <p className="text-sm text-foreground-muted">@{p.username}</p>
           </div>
-
-          <ScoreRings
-            username={p.username}
-            initialProfile={scores.profileScore}
-            initialBuilder={scores.builderScore}
-          />
         </div>
 
         {(p.bio || locationLabel) && (
