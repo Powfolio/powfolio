@@ -233,7 +233,6 @@ export default function DashboardHome({
     }
   }
 
-
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -339,14 +338,16 @@ export default function DashboardHome({
                 <Link2 />
                 <input className="d-input" value={importUrl} onChange={(e) => setImportUrl(e.target.value)} placeholder="Paste a public link..." disabled={importing} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleImport(); } }} />
               </div>
-              <label className="d-btn" style={{ cursor: importing ? "wait" : "pointer" }}>
-                {importing ? "Working…" : "Upload file"}
-                <input type="file" accept=".pdf,.txt,.md,.doc,.docx,image/png,image/jpeg,image/webp,image/gif" hidden disabled={importing} onChange={(e) => void handleFile(e)} />
-              </label>
-              <button type="button" className="d-btn" disabled={importing} onClick={() => void handleImport()}>
-                <Sparkles size={14} />
-                {importing ? "Working…" : "Autofill"}
-              </button>
+              <div className="import-actions">
+                <button type="button" className="d-btn d-btn-primary" disabled={importing} onClick={() => void handleImport()}>
+                  <Sparkles size={14} />
+                  {importing ? "Working…" : "Autofill"}
+                </button>
+                <label className="d-btn d-btn-secondary" style={{ cursor: importing ? "wait" : "pointer" }}>
+                  {importing ? "Working…" : "Upload file"}
+                  <input type="file" accept=".pdf,.txt,.md,.doc,.docx,image/png,image/jpeg,image/webp,image/gif" hidden disabled={importing} onChange={(e) => void handleFile(e)} />
+                </label>
+              </div>
             </div>
             <div className="hint"><b>Tip:</b> You stay in control: review imported information before it appears publicly.</div>
           </section>
