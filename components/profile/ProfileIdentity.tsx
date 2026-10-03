@@ -694,7 +694,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     notify("Documents saved");
   }
 
-  function moveItem<TItem>(list: TItem[], from: number, to: number) {
+  function moveItem(list: unknown[], from: number, to: number) {
     if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return list;
     const next = [...list];
     const [item] = next.splice(from, 1);
@@ -702,13 +702,13 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     return next;
   }
   function moveWorkBy(index: number, direction: -1 | 1) {
-    setWork((prev) => moveItem(prev, index, index + direction));
+    setWork((prev) => moveItem(prev, index, index + direction) as typeof prev);
   }
   function moveEducationBy(index: number, direction: -1 | 1) {
-    setEducation((prev) => moveItem(prev, index, index + direction));
+    setEducation((prev) => moveItem(prev, index, index + direction) as typeof prev);
   }
   function moveDocumentBy(index: number, direction: -1 | 1) {
-    setDocs((prev) => moveItem(prev, index, index + direction));
+    setDocs((prev) => moveItem(prev, index, index + direction) as typeof prev);
   }
 
   return (
