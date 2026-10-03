@@ -103,9 +103,9 @@ export default function CollectibleCard({ item, profileUrl }: Props) {
         <NFTMediaRenderer src={src} type={kind} posterUrl={posterUrl} onExhausted={handleExhausted} />
       </div>
       <div className="mt-2 flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="text-sm font-medium leading-snug break-words">{item.title}</h3>
-          {meta && <p className="mt-0.5 text-[11px] text-foreground-muted">{meta}</p>}
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-medium leading-snug line-clamp-2">{item.title}</h3>
+          {meta && <p className="mt-0.5 text-[11px] text-foreground-muted line-clamp-2">{meta}</p>}
         </div>
         <ShareButton title={item.title} url={shareUrl} />
       </div>

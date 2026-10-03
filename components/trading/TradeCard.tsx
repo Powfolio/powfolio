@@ -41,7 +41,7 @@ export default function TradeCard({ trade, updates, profileUrl }: Props) {
 
   const titleBlock = (
     <>
-      <span className="text-sm font-semibold leading-tight text-primary">
+      <span className="text-sm font-semibold leading-tight text-foreground">
         {trade.ticker}
       </span>
       {trade.pair && (
@@ -52,7 +52,7 @@ export default function TradeCard({ trade, updates, profileUrl }: Props) {
 
   return (
     <>
-      <article className="card flex h-auto w-full flex-col overflow-hidden p-0 transition-colors hover:border-primary/40">
+      <article className="card flex h-auto w-full flex-col overflow-hidden p-0">
         <TradeImageCarousel
           images={images}
           className="aspect-[16/10] w-full"
@@ -60,7 +60,7 @@ export default function TradeCard({ trade, updates, profileUrl }: Props) {
           hideEmpty
         />
 
-        <div className="flex flex-col gap-1.5 p-3">
+        <div className="flex flex-col gap-1 p-2.5">
           {post ? (
             <a
               href={post}
@@ -77,25 +77,19 @@ export default function TradeCard({ trade, updates, profileUrl }: Props) {
           <div className="flex flex-wrap items-center gap-1">
             {trade.direction && (
               <span
-                className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none ${directionBadge(
-                  trade.direction
-                )}`}
+                className="rounded border border-border px-1.5 py-0.5 text-[10px] font-medium uppercase leading-none text-foreground-muted"
               >
                 {trade.direction}
               </span>
             )}
             <span
-              className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none ${statusBadge(
-                trade.status
-              )}`}
+              className="rounded border border-border px-1.5 py-0.5 text-[10px] font-medium uppercase leading-none text-foreground"
             >
               {trade.status}
             </span>
             {trade.roi != null && (
               <span
-                className={`rounded border px-1.5 py-0.5 text-[10px] font-bold leading-none ${roiBadge(
-                  trade.roi
-                )}`}
+                className="rounded border border-border px-1.5 py-0.5 text-[10px] font-medium leading-none text-foreground"
               >
                 {trade.roi > 0 ? "+" : ""}
                 {trade.roi}%
@@ -120,13 +114,13 @@ export default function TradeCard({ trade, updates, profileUrl }: Props) {
             )
           )}
 
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
             {post && (
               <a
                 href={post}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs font-medium text-primary hover:underline"
+                className="text-xs font-medium text-foreground underline underline-offset-2"
               >
                 View Post →
               </a>
@@ -136,7 +130,7 @@ export default function TradeCard({ trade, updates, profileUrl }: Props) {
               <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="text-xs font-medium text-accent hover:underline"
+                className="text-xs font-medium text-foreground-muted underline underline-offset-2"
               >
                 Updates ({updates.length}) →
               </button>

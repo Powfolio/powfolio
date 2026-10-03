@@ -148,3 +148,9 @@ button[aria-label="Close Pow3Bot"] {
   position: relative;
   z-index: 2;
 }
+
+.load-dots { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
+.load-dots i { width: 4px; height: 4px; border-radius: 99px; background: currentColor; animation: load-dot 1s infinite; }
+.load-dots i:nth-child(2) { animation-delay: .15s; }
+.load-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes load-dot { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-2px); } }

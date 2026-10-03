@@ -302,8 +302,8 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
             )}
           </div>
 
-          <div className="flex items-end justify-between gap-3 px-1 sm:px-2 -mt-10 sm:-mt-14">
-            <div className="h-20 w-20 sm:h-32 sm:w-32 shrink-0 overflow-hidden rounded-full bg-surface-elevated shadow-[0_0_0_4px_var(--background)]">
+          <div className="flex items-end justify-between gap-3 px-1 sm:px-2">
+            <div className="-mt-10 h-20 w-20 sm:-mt-14 sm:h-32 sm:w-32 shrink-0 overflow-hidden rounded-full bg-surface-elevated shadow-[0_0_0_4px_var(--background)]">
               {p.avatar_url ? (
                 <ImageLightbox
                   src={p.avatar_url}
@@ -318,7 +318,7 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
                 </div>
               )}
             </div>
-            <div className="mb-1 sm:mb-3">
+            <div className="score-slot mb-1 pt-2 sm:mb-3">
               <ScoreRings
                 username={p.username}
                 initialProfile={scores.profileScore}
@@ -334,14 +334,14 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight break-words">
                 {p.display_name || p.username}
               </h1>
-              {p.open_to_work && (
-                <span className="badge-open">
-                  <span className="badge-open-dot" aria-hidden />
-                  Open to opportunities
-                </span>
-              )}
             </div>
             <p className="text-sm text-foreground-muted">@{p.username}</p>
+            {p.open_to_work && (
+              <span className="badge-open mt-1">
+                <span className="badge-open-dot" aria-hidden />
+                Open to opportunities
+              </span>
+            )}
           </div>
         </div>
 

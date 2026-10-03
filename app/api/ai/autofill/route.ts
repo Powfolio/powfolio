@@ -34,6 +34,10 @@ function sleep(ms: number) {
 function detectMime(name: string, declared: string): string {
   const n = name.toLowerCase();
   if (n.endsWith(".pdf")) return "application/pdf";
+  if (n.endsWith(".png")) return "image/png";
+  if (n.endsWith(".jpg") || n.endsWith(".jpeg")) return "image/jpeg";
+  if (n.endsWith(".webp")) return "image/webp";
+  if (n.endsWith(".gif")) return "image/gif";
   if (n.endsWith(".txt")) return "text/plain";
   if (n.endsWith(".md")) return "text/markdown";
   if (n.endsWith(".docx"))
@@ -182,7 +186,8 @@ export async function POST(req: NextRequest) {
       mime === "application/pdf" ||
       mime.includes("word") ||
       mime.includes("document") ||
-      /\.(pdf|doc|docx|txt|md)$/i.test(fileName);
+      /\.(pdf|doc|docx|txt|md|png|jpe?g|webp|gif)$/i.test(fileName) ||
+      mime.startsWith("image/");
 
     if (!allowed) {
       return NextResponse.json(
@@ -288,7 +293,7 @@ export async function POST(req: NextRequest) {
         error:
           /\.(doc|docx)$/i.test(fileName)
             ? "DOC/DOCX is flaky on free AI. Save as PDF or paste into a TXT file and upload that."
-            : "Could not read document. Try PDF or TXT under 4MB.",
+            : "Could not read that file. Try a PDF, TXT, or a clear screenshot under 4MB.",
         detail: lastErr.slice(0, 180),
       },
       { status: 502 }

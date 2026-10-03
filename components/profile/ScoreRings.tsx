@@ -53,11 +53,11 @@ function Ring({
         className="pointer-events-none absolute flex flex-col items-center justify-center"
         style={{ width: size, height: size }}
       >
-        <span className="text-[11px] font-bold tabular-nums leading-none text-foreground">
+        <span className="text-[11px] font-bold tabular-nums leading-none text-zinc-900 dark:text-zinc-50">
           {pct}%
         </span>
       </div>
-      <span className="text-[9px] uppercase tracking-wide text-foreground-subtle">{label}</span>
+      <span className="text-[9px] uppercase tracking-wide text-zinc-700 dark:text-zinc-200">{label}</span>
     </div>
   );
 }

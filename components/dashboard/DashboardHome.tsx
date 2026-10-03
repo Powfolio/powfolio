@@ -233,6 +233,39 @@ export default function DashboardHome({
     }
   }
 
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!/\.(pdf|txt|md|doc|docx|png|jpe?g|webp|gif)$/i.test(file.name)) {
+      toast("Use a PDF, text file, or image");
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      toast("File must be under 4MB");
+      return;
+    }
+    setImporting(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file, file.name);
+      const res = await fetch("/api/ai/autofill", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { toast(data.error || "Could not read file"); return; }
+      if (!data.profile) { toast("No data extracted from that file"); return; }
+      const stored = savePendingAutofill(data.profile as AutofillPayload, file.name);
+      if (!stored.pending.length) { toast("Nothing useful extracted. Try another file or image."); return; }
+      toast("Import started: review results before publishing");
+      const first = stored.pending[0];
+      router.push(first === "writing" ? "/dashboard/writing" : first === "community" ? "/dashboard/community" : "/dashboard/profile");
+    } catch {
+      toast("Could not read file");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   const visibleCount = MODULES.filter((m) => (m.flag ? state[m.flag] : true)).length;
 
   return (
@@ -300,12 +333,16 @@ export default function DashboardHome({
         <div className="grid-top">
           <section>
             <div className="panel-title">Import your existing work</div>
-            <div className="panel-desc">Paste a public CV, Notion page, GitHub profile or personal portfolio. Powfolio will use it to prefill compatible sections.</div>
+            <div className="panel-desc">Paste a public link, or upload a CV, PDF, text file, or image. Powfolio reads it and prefills the matching sections.</div>
             <div className="import-row">
               <div className="input-wrap">
                 <Link2 />
                 <input className="d-input" value={importUrl} onChange={(e) => setImportUrl(e.target.value)} placeholder="Paste a public link..." disabled={importing} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleImport(); } }} />
               </div>
+              <label className="d-btn" style={{ cursor: importing ? "wait" : "pointer" }}>
+                {importing ? "Working…" : "Upload file"}
+                <input type="file" accept=".pdf,.txt,.md,.doc,.docx,image/png,image/jpeg,image/webp,image/gif" hidden disabled={importing} onChange={(e) => void handleFile(e)} />
+              </label>
               <button type="button" className="d-btn" disabled={importing} onClick={() => void handleImport()}>
                 <Sparkles size={14} />
                 {importing ? "Working…" : "Autofill"}

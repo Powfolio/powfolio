@@ -124,13 +124,14 @@ export function mergeChains(extra?: CustomChainInput[] | null): ChainDef[] {
     if (!name || (!host && !rpc)) continue;
     const id = (c.id || name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24);
     if (!id || out.some((b) => b.id === id || (host && b.host === host) || (rpc && b.rpc === rpc))) continue;
-    const explorerBase = (c.explorer || host || "").replace(/\/$/, "");
     const isKii = /kii/i.test(name) || id === "kiichain" || Number(c.chainId) === 1783;
+    const resolvedHost = host || (isKii ? "https://explorer.kiichain.io" : "");
+    const explorerBase = (c.explorer || resolvedHost || "").replace(/\/$/, "");
     out.push({
       id,
       name,
       slug: (c.slug || id).toLowerCase(),
-      host,
+      host: resolvedHost,
       explorer: explorerBase ? (explorerBase.includes("/address") ? explorerBase.endsWith("/") ? explorerBase : `${explorerBase}/` : `${explorerBase}/address/`) : "",
       tokenExplorer: c.tokenExplorer || (explorerBase ? `${explorerBase}/token/` : ""),
       native: c.native || (isKii ? "KII" : "ETH"),
@@ -427,7 +428,7 @@ export async function loadOnchainFootprint(
   const refs = importedTokens || [];
   const chainRows = await Promise.all(
     chainsToLoad.map(async (chain) => {
-      const useRpc = !!chain.rpc && !/blockscout/i.test(chain.host || "");
+      const useRpc = !!chain.rpc && !chain.host;
       if (useRpc && !chain.host) return loadFromRpc(chain, address, refs);
 
       const [info, counters, tokenItems, txs, transfers] = await Promise.all([

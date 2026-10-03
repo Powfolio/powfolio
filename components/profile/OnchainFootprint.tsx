@@ -92,7 +92,22 @@ export default function OnchainFootprint({
   const [savingChain, setSavingChain] = useState(false);
   const [chainMsg, setChainMsg] = useState<string | null>(null);
   const [chainOpen, setChainOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [loadStage, setLoadStage] = useState(0);
+  const [reloadTick, setReloadTick] = useState(0);
   const [deepLoading, setDeepLoading] = useState(false);
+  const knownChains = [
+    { name: "Ethereum", chainId: "1", rpc: "https://ethereum.publicnode.com", explorer: "https://etherscan.io", native: "ETH" },
+    { name: "Bitcoin", chainId: "0", rpc: "", explorer: "https://mempool.space", native: "BTC" },
+    { name: "Solana", chainId: "0", rpc: "https://api.mainnet-beta.solana.com", explorer: "https://solscan.io", native: "SOL" },
+    { name: "Arbitrum", chainId: "42161", rpc: "https://arbitrum-one.publicnode.com", explorer: "https://arbiscan.io", native: "ETH" },
+    { name: "Robinhood Chain", chainId: "4663", rpc: "https://rpc.mainnet.chain.robinhood.com", explorer: "https://robinhoodchain.blockscout.com", native: "ETH" },
+    { name: "Polygon", chainId: "137", rpc: "https://polygon-bor.publicnode.com", explorer: "https://polygonscan.com", native: "POL" },
+    { name: "Hyperliquid", chainId: "999", rpc: "https://rpc.hyperliquid.xyz/evm", explorer: "https://app.hyperliquid.xyz", native: "HYPE" },
+    { name: "Base", chainId: "8453", rpc: "https://base.publicnode.com", explorer: "https://basescan.org", native: "ETH" },
+    { name: "Optimism", chainId: "10", rpc: "https://optimism.publicnode.com", explorer: "https://optimistic.etherscan.io", native: "ETH" },
+    { name: "BNB Chain", chainId: "56", rpc: "https://bsc.publicnode.com", explorer: "https://bscscan.com", native: "BNB" },
+  ];
 
   useEffect(() => { setShowDust(showDustTokens); }, [showDustTokens]);
   useEffect(() => { setVisibleIds(publicChainIds); }, [publicChainIds]);
@@ -102,41 +117,46 @@ export default function OnchainFootprint({
   useEffect(() => {
     if (!activeWallet) return;
     let cancelled = false;
-    const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 15000);
     setLoading(true);
     setError(null);
+    setLoadStage(1);
     const params = new URLSearchParams();
     if (customChains.length) params.set("chains", JSON.stringify(customChains));
     if (savedTokens.length) params.set("tokens", JSON.stringify(savedTokens));
     const qs = params.toString() ? `?${params.toString()}` : "";
-    fetch(`/api/onchain/${activeWallet}${qs}`, { signal: ctrl.signal })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Could not load onchain data");
-        return (await res.json()) as Footprint;
-      })
-      .then((json) => {
+    const stages = [10000, 10000, 10000];
+    (async () => {
+      for (let stage = 0; stage < stages.length; stage += 1) {
         if (cancelled) return;
-        setData(json);
-        const preferred = [...json.chains]
-          .filter((c) => c.txCount > 0 || c.transferCount > 0 || c.imported || Number(c.balance) > 0)
-          .sort((a, b) => b.txCount - a.txCount || b.transferCount - a.transferCount)[0];
-        if (preferred) setChainId(preferred.id);
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        if (e instanceof DOMException && e.name === "AbortError") {
-          setError("Onchain lookup hit the 15s cap. Refresh. Healthy chains still load on their own.");
-        } else {
-          setError(e instanceof Error ? e.message : "Lookup failed");
+        setLoadStage(stage + 1);
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), stages[stage]);
+        try {
+          const res = await fetch(`/api/onchain/${activeWallet}${qs}`, { signal: ctrl.signal });
+          if (!res.ok) throw new Error("Could not load onchain data");
+          const json = (await res.json()) as Footprint;
+          if (cancelled) return;
+          setData(json);
+          const preferred = [...json.chains]
+            .filter((c) => c.txCount > 0 || c.transferCount > 0 || c.imported || Number(c.balance) > 0)
+            .sort((a, b) => b.txCount - a.txCount || b.transferCount - a.transferCount)[0];
+          if (preferred) setChainId(preferred.id);
+          setError(null);
+          setLoading(false);
+          clearTimeout(timer);
+          return;
+        } catch {
+          clearTimeout(timer);
+          if (cancelled) return;
         }
-      })
-      .finally(() => {
-        clearTimeout(timeout);
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; clearTimeout(timeout); ctrl.abort(); };
-  }, [activeWallet, customChains, savedTokens]);
+      }
+      if (!cancelled) {
+        setError("Stats did not arrive after three tries. Refresh the page or retry this wallet.");
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [activeWallet, customChains, savedTokens, reloadTick]);
 
   useEffect(() => {
     if (!activeWallet || !chainId || !data) return;
@@ -404,7 +424,7 @@ export default function OnchainFootprint({
           <a href={`https://zkcodex.com/id/${activeWallet}`} target="_blank" rel="noopener noreferrer" className="rounded-full border border-border bg-surface-elevated px-2.5 py-1 text-[11px] font-medium hover:border-primary/40 hover:text-primary">zkCodex</a>
         </div>
       </div>
-      {loading && <div className="card p-3 text-sm text-foreground-muted">Reading onchain footprint…</div>}
+      {loading && <div className="card p-3 text-sm text-foreground-muted">Reading onchain footprint<span className="load-dots" aria-hidden><i /><i /><i /></span><span className="ml-2 text-[11px] text-foreground-subtle">Try {loadStage} of 3</span></div>}
       {error && <div className="card p-3 text-sm text-danger">{error}</div>}
       {data && (
         <>
@@ -511,12 +531,20 @@ export default function OnchainFootprint({
           <form onSubmit={saveCustomChain} className="card space-y-2 p-3">
             <h3 className={HEADING}>Import a network</h3>
             <p className="text-[11px] text-foreground-subtle">Use the EVM chain ID and a public JSON-RPC. Explorer is optional.</p>
-            <button type="button" className="btn-ghost text-xs" onClick={() => persistChains(customChains.some((c) => (c.name || "").toLowerCase() === "kiichain") ? customChains : [...customChains, KII_PRESET], "KiiChain added.")}>Add KiiChain preset</button>
-            <input className="input text-sm" value={chainForm.name} onChange={(e) => setChainForm((s) => ({ ...s, name: e.target.value }))} placeholder="Network name (KiiChain)" />
-            <input className="input text-sm" value={chainForm.chainId} onChange={(e) => setChainForm((s) => ({ ...s, chainId: e.target.value }))} placeholder="Chain ID (1783)" />
-            <input className="input text-sm" value={chainForm.rpc} onChange={(e) => setChainForm((s) => ({ ...s, rpc: e.target.value }))} placeholder="https://json-rpc.example.com" />
-            <input className="input text-sm" value={chainForm.explorer} onChange={(e) => setChainForm((s) => ({ ...s, explorer: e.target.value }))} placeholder="https://explorer.example.com" />
-            <input className="input text-sm" value={chainForm.native} onChange={(e) => setChainForm((s) => ({ ...s, native: e.target.value }))} placeholder="Native symbol (KII)" />
+            <button type="button" className="btn-secondary text-xs" onClick={() => setPickerOpen(true)}>Add existing chains</button>
+            <input className="input text-sm" value={chainForm.name} onChange={(e) => setChainForm((s) => ({ ...s, name: e.target.value }))} placeholder="Network name (Ethereum)" />
+            <input className="input text-sm" value={chainForm.chainId} onChange={(e) => setChainForm((s) => ({ ...s, chainId: e.target.value }))} placeholder="Chain ID (1)" />
+            <input className="input text-sm" value={chainForm.rpc} onChange={(e) => setChainForm((s) => ({ ...s, rpc: e.target.value }))} placeholder="https://ethereum.publicnode.com" />
+            <input className="input text-sm" value={chainForm.explorer} onChange={(e) => setChainForm((s) => ({ ...s, explorer: e.target.value }))} placeholder="https://etherscan.io" />
+            <input className="input text-sm" value={chainForm.native} onChange={(e) => setChainForm((s) => ({ ...s, native: e.target.value }))} placeholder="Native symbol (ETH)" />
+            {pickerOpen && (
+              <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-3 backdrop-blur-sm sm:items-center" onClick={() => setPickerOpen(false)}>
+                <div className="max-h-[70vh] w-full max-w-md overflow-y-auto rounded-2xl bg-background p-4" onClick={(e) => e.stopPropagation()}>
+                  <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">Add existing chains</h3><button type="button" className="text-sm" onClick={() => setPickerOpen(false)}>Close</button></div>
+                  <div className="space-y-1">{knownChains.map((chain) => <button key={chain.name} type="button" className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm hover:bg-surface" onClick={() => { persistChains(customChains.some((c) => (c.name || "").toLowerCase() === chain.name.toLowerCase()) ? customChains : [...customChains, { ...chain, chainId: Number(chain.chainId) || undefined }], `${chain.name} added.`); setPickerOpen(false); }}><span>{chain.name}</span><span className="text-xs text-foreground-subtle">{chain.native}</span></button>)}</div>
+                </div>
+              </div>
+            )}
             {chainMsg && <p className="text-xs text-foreground-muted">{chainMsg}</p>}
             <button type="submit" className="btn-secondary text-xs" disabled={savingChain}>{savingChain ? "Saving…" : "Add network"}</button>
           </form>
