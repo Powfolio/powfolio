@@ -694,7 +694,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     notify("Documents saved");
   }
 
-  function move<T>(list: T[], from: number, to: number) {
+  function moveItem<TItem>(list: TItem[], from: number, to: number) {
     if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return list;
     const next = [...list];
     const [item] = next.splice(from, 1);
@@ -702,13 +702,13 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     return next;
   }
   function moveWorkBy(index: number, direction: -1 | 1) {
-    setWork((prev) => move(prev, index, index + direction));
+    setWork((prev) => moveItem(prev, index, index + direction));
   }
   function moveEducationBy(index: number, direction: -1 | 1) {
-    setEducation((prev) => move(prev, index, index + direction));
+    setEducation((prev) => moveItem(prev, index, index + direction));
   }
   function moveDocumentBy(index: number, direction: -1 | 1) {
-    setDocs((prev) => move(prev, index, index + direction));
+    setDocs((prev) => moveItem(prev, index, index + direction));
   }
 
   return (
@@ -829,7 +829,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
             <div className="entry-list">
               {work.length === 0 && <div className="empty">No work experience added yet.</div>}
               {work.map((item, i) => (
-                <div key={item.id} className="entry" draggable onDragStart={() => setDragWork(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragWork === null || dragWork === i) return; setWork(move(work, dragWork, i)); setDragWork(null); notify("Experience order updated"); }}>
+                <div key={item.id} className="entry" draggable onDragStart={() => setDragWork(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragWork === null || dragWork === i) return; setWork(moveItem(work, dragWork, i)); setDragWork(null); notify("Experience order updated"); }}>
                   <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder experience"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><span className="logo-preview sm">{item.logo_url ? <img src={item.logo_url} alt="" /> : item.company.slice(0,1)}</span><div><div className="entry-title">{item.company}</div><div className="entry-meta">{item.role} · {item.employment_type === "part-time" ? "Part-time" : "Full-time"} · {item.start_date}{item.end_date ? ` to ${item.end_date}` : " to Present"}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}</div></div>
                   <div className="entry-actions">
                     <button className="small-action" type="button" onClick={() => editWork(item)}>Edit</button>
@@ -858,7 +858,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
             <div className="entry-list">
               {education.length === 0 && <div className="empty">No education added yet.</div>}
               {education.map((item, i) => (
-                <div key={item.id} className="entry" draggable onDragStart={() => setDragEdu(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragEdu === null || dragEdu === i) return; setEducation(move(education, dragEdu, i)); setDragEdu(null); notify("Education order updated"); }}>
+                <div key={item.id} className="entry" draggable onDragStart={() => setDragEdu(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragEdu === null || dragEdu === i) return; setEducation(moveItem(education, dragEdu, i)); setDragEdu(null); notify("Education order updated"); }}>
                   <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder education"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><span className="logo-preview sm">{item.logo_url ? <img src={item.logo_url} alt="" /> : item.institution.slice(0,1)}</span><div><div className="entry-title">{item.institution}</div><div className="entry-meta">{item.degree || "Program"}{item.field_of_study ? ` · ${item.field_of_study}` : ""}{item.start_year ? ` · ${item.start_year}` : ""}{item.end_year ? ` to ${item.end_year}` : ""}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}</div></div>
                   <div className="entry-actions">
                     <button className="small-action" type="button" onClick={() => editEdu(item)}>Edit</button>
@@ -893,7 +893,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
             <div className="doc-list">
               {docs.length === 0 && <div className="empty">No documents uploaded yet.</div>}
               {docs.map((d, i) => (
-                <div key={d.id} className="doc" draggable onDragStart={() => setDragDoc(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragDoc === null || dragDoc === i) return; setDocs(move(docs, dragDoc, i)); setDragDoc(null); notify("Document order updated"); }}>
+                <div key={d.id} className="doc" draggable onDragStart={() => setDragDoc(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragDoc === null || dragDoc === i) return; setDocs(moveItem(docs, dragDoc, i)); setDragDoc(null); notify("Document order updated"); }}>
                   <div className="doc-main"><button className="drag-handle" type="button" aria-label="Rearrange document"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button>{isImageFile(d.file_name, d.file_type) ? <img className="doc-thumb" src={d.file_url} alt="" /> : <iframe className="doc-thumb" src={d.file_url} title={d.title} />}<div><div className="doc-title">{d.title}</div><div className="doc-meta">{d.file_name || "Uploaded file"}{d.issuer ? ` · ${d.issuer}` : ""} · View online</div></div></div>
                   <div className="doc-actions">
                     <a className="small-action" href={d.file_url} target="_blank" rel="noreferrer">View</a>
