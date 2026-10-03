@@ -772,7 +772,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
             </div>
           </div>
           <div className="block">
-            <div className="block-head"><div><div className="block-title">Profile visibility</div><div className="block-desc">Your profile remains public. Use this control for the existing open-to-work signal.</div></div><button className={`switch${openWork ? " on" : ""}`} type="button" aria-label="Open to opportunities" onClick={() => setOpenWork((v) => !v)}><span /></button></div>
+            <div className="cv-row"><div className="cv-copy"><div className="block-title">Profile visibility</div><div className="block-desc">Your profile stays public. This switch only marks you open to opportunities.</div></div><button className={`switch${openWork ? " on" : ""}`} type="button" aria-label="Open to opportunities" onClick={() => setOpenWork((v) => !v)}><span /></button></div>
           </div>
           <div className="save-area"><button className="save" type="button" onClick={() => void saveIdentity()}>{saving === "identity" ? "Saving..." : "Save changes"}</button>{saved === "identity" && <span className="save-state">Saved</span>}</div>
         </section>
@@ -889,7 +889,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
               {docs.length === 0 && <div className="empty">No documents uploaded yet.</div>}
               {docs.map((d, i) => (
                 <div key={d.id} className="doc" draggable onDragStart={() => setDragDoc(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragDoc === null || dragDoc === i) return; setDocs(moveItem(docs, dragDoc, i)); setDragDoc(null); notify("Document order updated"); }}>
-                  <div className="doc-main"><button className="drag-handle" type="button" aria-label="Rearrange document"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button>{isImageFile(d.file_name, d.file_type) ? <img className="doc-thumb" src={d.file_url} alt="" /> : <iframe className="doc-thumb" src={d.file_url} title={d.title} />}<div><div className="doc-title">{d.title}</div><div className="doc-meta">{d.file_name || "Uploaded file"}{d.issuer ? ` · ${d.issuer}` : ""} · View online</div></div></div>
+                  <div className="doc-main"><button className="drag-handle" type="button" aria-label="Rearrange document"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button>{isImageFile(d.file_name, d.file_type) ? <img className="doc-thumb" src={d.file_url} alt="" /> : <span className="doc-file" aria-hidden>PDF</span>}<div className="doc-copy"><div className="doc-title">{d.title}</div><div className="doc-meta">{d.file_name || "Uploaded file"}{d.issuer ? ` · ${d.issuer}` : ""}</div></div></div>
                   <div className="doc-actions">
                     <a className="small-action" href={d.file_url} target="_blank" rel="noreferrer">View</a>
                     <button className="small-action" type="button" onClick={() => { setEditingDoc(d.id); setDocTitle(d.title); setDocIssuer(d.issuer || ""); setDocNote(d.description || ""); setDocOpen(true); }}>Edit</button>
