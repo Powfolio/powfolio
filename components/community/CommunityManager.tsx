@@ -1,25 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { moveItem } from "@/lib/move-item";
 import type { CommunityItem } from "@/types/database";
-import {
-  loadPendingAutofill,
-  markSectionSaved,
-  AUTOFILL_HIGHLIGHT,
-} from "@/lib/autofill-store";
+import { loadPendingAutofill, markSectionSaved } from "@/lib/autofill-store";
 
-const CATEGORIES = [
+type TabId = "all" | "built" | "collaboration" | "community";
+type Category = "built" | "collaboration" | "community";
+
+const TABS: { id: TabId; short: string; icon: string }[] = [
+  { id: "all", short: "All", icon: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
+  { id: "built", short: "Built", icon: "M4 7h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Zm4-3h8v3H8V4Z" },
+  { id: "collaboration", short: "Collabs", icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" },
+  { id: "community", short: "Roles", icon: "M12 3l2.4 4.8L20 8.6l-4 3.9.9 5.5L12 15.8 7.1 18l.9-5.5-4-3.9 5.6-.8Z" },
+];
+
+const CATEGORIES: { value: Category; label: string }[] = [
   { value: "built", label: "Built by me" },
   { value: "collaboration", label: "Collaboration" },
   { value: "community", label: "Community role" },
-] as const;
-
-type Props = {
-  userId: string;
-  initialItems: CommunityItem[];
-};
+];
 
 type Draft = {
   title: string;
@@ -27,7 +30,7 @@ type Draft = {
   platform: string;
   description: string;
   url: string;
-  category: "built" | "collaboration" | "community";
+  category: Category;
 };
 
 const emptyForm = {
@@ -37,73 +40,114 @@ const emptyForm = {
   description: "",
   url: "",
   tags: "",
+  metrics: "",
+  started_at: "",
+  ended_at: "",
   is_visible: true,
   thumbnail_url: "" as string | null,
-  category: "built" as "built" | "collaboration" | "community",
+  category: "built" as Category,
 };
 
-function sortItems(list: CommunityItem[]) {
-  return [...list].sort((a, b) => {
-    const ao = a.sort_order ?? 0;
-    const bo = b.sort_order ?? 0;
-    if (ao !== bo) return ao - bo;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
+function absoluteUrl(url: string) {
+  const t = url.trim();
+  if (!t) return null;
+  return /^https?:\/\//i.test(t) ? t : `https://${t.replace(/^\/+/, "")}`;
 }
-
-function categoryFromTags(tags: string[] | null | undefined): "built" | "collaboration" | "community" {
+function siteLogo(url: string | null) {
+  if (!url) return null;
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    return host ? `https://www.google.com/s2/favicons?domain=${host}&sz=128` : null;
+  } catch {
+    return null;
+  }
+}
+function Icon({ d, size = 17 }: { d: string; size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" width={size} height={size} aria-hidden>
+      <path d={d} />
+    </svg>
+  );
+}
+function sortItems(list: CommunityItem[]) {
+  return [...list].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+}
+function categoryFromTags(tags: string[] | null | undefined): Category {
   const t = (tags || []).map((x) => x.toLowerCase());
-  if (t.includes("built") || t.includes("built by me")) return "built";
-  if (t.includes("community") || t.includes("community role")) return "community";
+  if (t.includes("built") || t.includes("built by me") || t.includes("personal project")) return "built";
+  if (t.includes("community") || t.includes("community role") || t.includes("mod")) return "community";
   return "collaboration";
 }
+function categoryLabel(value: Category) {
+  return CATEGORIES.find((c) => c.value === value)?.label || "Collaboration";
+}
 
-export default function CommunityManager({ userId, initialItems }: Props) {
+export default function CommunityManager({ userId, username, initialItems }: { userId: string; username: string; initialItems: CommunityItem[] }) {
   const router = useRouter();
   const [items, setItems] = useState<CommunityItem[]>(() => sortItems(initialItems));
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [reordering, setReordering] = useState(false);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [importing, setImporting] = useState(false);
+  const [tab, setTab] = useState<TabId>("all");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [dock, setDock] = useState<"closed" | "open" | "closing">("closed");
+  const [sideCollapsed, setSideCollapsed] = useState(false);
+  const [drag, setDrag] = useState<number | null>(null);
+  const [toast, setToast] = useState("");
+  const [toastOn, setToastOn] = useState(false);
+
+  function notify(msg: string) {
+    setToast(msg);
+    setToastOn(true);
+    window.setTimeout(() => setToastOn(false), 2200);
+  }
+
+  useEffect(() => {
+    const stored = localStorage.getItem("pow3folio-theme");
+    setTheme(stored === "light" ? "light" : "dark");
+    const hash = window.location.hash.replace("#", "") as TabId;
+    if (["all", "built", "collaboration", "community"].includes(hash)) setTab(hash);
+  }, []);
 
   useEffect(() => {
     function load() {
       const p = loadPendingAutofill();
       if (!p || !p.pending.includes("community")) return;
       const list = Array.isArray(p.data.community) ? p.data.community : [];
-      const mapped: Draft[] = list
-        .filter((c) => c?.title)
-        .slice(0, 15)
-        .map((c) => {
-          const plat = String(c.platform || "").toLowerCase();
-          let category: Draft["category"] =
-            c.category === "built" || c.category === "collaboration" || c.category === "community"
-              ? c.category
-              : "collaboration";
-          if (plat === "github" || plat.includes("github")) category = "built";
-          if (String(c.role || "").toLowerCase().includes("founder")) category = "community";
-          return {
-            title: String(c.title).slice(0, 120),
-            role: String(c.role || "").slice(0, 80),
-            platform: String(c.platform || "Other").slice(0, 40) || "Other",
-            description: String(c.description || "").slice(0, 500),
-            url: String(c.url || "").slice(0, 300),
-            category,
-          };
-        });
+      const mapped = list.filter((c) => c?.title).slice(0, 15).map((c) => {
+        const plat = String(c.platform || "").toLowerCase();
+        let category: Category = c.category === "built" || c.category === "collaboration" || c.category === "community" ? c.category : "collaboration";
+        if (plat === "github" || plat.includes("github")) category = "built";
+        if (String(c.role || "").toLowerCase().includes("founder")) category = "community";
+        return {
+          title: String(c.title).slice(0, 120),
+          role: String(c.role || "").slice(0, 80),
+          platform: String(c.platform || "Other").slice(0, 40) || "Other",
+          description: String(c.description || "").slice(0, 500),
+          url: String(c.url || "").slice(0, 300),
+          category,
+        };
+      });
       if (mapped.length) setDrafts(mapped);
     }
     load();
-    function onPending() {
-      load();
-    }
-    window.addEventListener("pow3-pending-autofill", onPending);
-    return () => window.removeEventListener("pow3-pending-autofill", onPending);
+    window.addEventListener("pow3-pending-autofill", load);
+    return () => window.removeEventListener("pow3-pending-autofill", load);
   }, []);
+
+  function selectTab(next: TabId) {
+    setTab(next);
+    history.replaceState(null, "", `#${next}`);
+  }
+  function closeDock() {
+    setDock("closing");
+    window.setTimeout(() => setDock("closed"), 380);
+  }
 
   async function saveDrafts() {
     if (!drafts.length) return;
@@ -114,33 +158,21 @@ export default function CommunityManager({ userId, initialItems }: Props) {
     const inserted: CommunityItem[] = [];
     for (const d of drafts) {
       maxOrder += 1;
-      const catTag =
-        d.category === "built"
-          ? "built"
-          : d.category === "community"
-            ? "community"
-            : "collaboration";
-      const { data, error: err } = await supabase
-        .from("community_items")
-        .insert({
-          title: d.title.trim(),
-          role: d.role.trim() || null,
-          platform: d.platform.trim() || null,
-          description: d.description.trim() || null,
-          url: d.url.trim() || null,
-          tags: [catTag],
-          is_visible: true,
-          user_id: userId,
-          sort_order: maxOrder,
-        })
-        .select()
-        .single();
+      const link = absoluteUrl(d.url);
+      const { data, error: err } = await supabase.from("community_items").insert({
+        title: d.title.trim(),
+        role: d.role.trim() || null,
+        platform: d.platform.trim() || null,
+        description: d.description.trim() || null,
+        url: link,
+        thumbnail_url: siteLogo(link),
+        tags: [d.category],
+        is_visible: true,
+        user_id: userId,
+        sort_order: maxOrder,
+      }).select().single();
       if (err) {
-        setError(
-          err.message.includes("community_items") || err.code === "42P01"
-            ? "Run the community_items SQL in Supabase first."
-            : err.message
-        );
+        setError(err.message.includes("community_items") || err.code === "42P01" ? "Run the community_items SQL in Supabase first." : err.message);
         setImporting(false);
         return;
       }
@@ -150,17 +182,16 @@ export default function CommunityManager({ userId, initialItems }: Props) {
     setDrafts([]);
     markSectionSaved("community");
     setImporting(false);
+    notify("Imported projects saved");
     router.refresh();
   }
 
   function startEdit(item: CommunityItem) {
-    setEditingId(item.id);
-    let category: "built" | "collaboration" | "community" = categoryFromTags(item.tags);
     const rawTags = item.tags || [];
-    const otherTags = rawTags.filter((t) => {
-      const k = t.toLowerCase();
-      return !["built", "built by me", "collaboration", "collab", "community", "community role"].includes(k);
-    });
+    const otherTags = rawTags.filter((t) => !["built", "built by me", "collaboration", "collab", "community", "community role", "personal project", "partner", "mod"].includes(t.toLowerCase()));
+    setEditingId(item.id);
+    setOpen(true);
+    setError(null);
     setForm({
       title: item.title,
       role: item.role ?? "",
@@ -168,115 +199,71 @@ export default function CommunityManager({ userId, initialItems }: Props) {
       description: item.description ?? "",
       url: item.url ?? "",
       tags: otherTags.join(", "),
+      metrics: item.metrics ?? "",
+      started_at: item.started_at ?? "",
+      ended_at: item.ended_at ?? "",
       is_visible: item.is_visible,
       thumbnail_url: item.thumbnail_url,
-      category,
+      category: categoryFromTags(item.tags),
     });
   }
-
   function resetForm() {
     setEditingId(null);
     setForm(emptyForm);
+    setOpen(false);
     setError(null);
   }
 
-  async function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
+  async function handleImage(file: File | null) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Image only");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Image under 2MB");
-      return;
-    }
+    if (!file.type.startsWith("image/")) return setError("Image only");
+    if (file.size > 2 * 1024 * 1024) return setError("Image under 2MB");
     setUploading(true);
     setError(null);
     const supabase = createClient();
     const ext = file.name.split(".").pop() || "jpg";
     const path = `${userId}/community-${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage
-      .from("avatars")
-      .upload(path, file, { upsert: true });
+    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
     setUploading(false);
-    if (upErr) {
-      setError(upErr.message);
-      return;
-    }
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("avatars").getPublicUrl(path);
+    if (upErr) return setError(upErr.message);
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
     setForm((f) => ({ ...f, thumbnail_url: publicUrl }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
+    if (!form.title.trim()) return setError("Title is required");
     setLoading(true);
     setError(null);
     const supabase = createClient();
-    const catTag =
-      form.category === "built"
-        ? "built"
-        : form.category === "community"
-          ? "community"
-          : "collaboration";
-    const extraTags = form.tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    const tags = [catTag, ...extraTags];
-    const payload: Record<string, unknown> = {
+    const link = absoluteUrl(form.url);
+    const extraTags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
+    const payload = {
       title: form.title.trim(),
       role: form.role.trim() || null,
       platform: form.platform.trim() || null,
       description: form.description.trim() || null,
-      url: form.url.trim() || null,
-      tags,
+      url: link,
+      tags: [form.category, ...extraTags],
+      metrics: form.metrics.trim() || null,
+      started_at: form.started_at || null,
+      ended_at: form.ended_at || null,
       is_visible: form.is_visible,
-      thumbnail_url: form.thumbnail_url || null,
+      thumbnail_url: form.thumbnail_url || siteLogo(link),
       user_id: userId,
     };
-
     if (editingId) {
-      const { data, error: err } = await supabase
-        .from("community_items")
-        .update(payload)
-        .eq("id", editingId)
-        .eq("user_id", userId)
-        .select()
-        .single();
+      const { data, error: err } = await supabase.from("community_items").update(payload).eq("id", editingId).eq("user_id", userId).select().single();
       setLoading(false);
-      if (err) {
-        setError(
-          err.message.includes("community_items")
-            ? "Run the community_items SQL in Supabase first."
-            : err.message
-        );
-        return;
-      }
-      setItems((prev) =>
-        sortItems(prev.map((i) => (i.id === editingId ? (data as CommunityItem) : i)))
-      );
+      if (err) return setError(err.message.includes("community_items") ? "Run the community_items SQL in Supabase first." : err.message);
+      setItems((prev) => sortItems(prev.map((i) => (i.id === editingId ? (data as CommunityItem) : i))));
+      notify("Project updated");
     } else {
       const maxOrder = items.reduce((m, i) => Math.max(m, i.sort_order ?? 0), -1);
-      payload.sort_order = maxOrder + 1;
-      const { data, error: err } = await supabase
-        .from("community_items")
-        .insert(payload)
-        .select()
-        .single();
+      const { data, error: err } = await supabase.from("community_items").insert({ ...payload, sort_order: maxOrder + 1 }).select().single();
       setLoading(false);
-      if (err) {
-        setError(
-          err.message.includes("community_items") || err.code === "42P01"
-            ? "Run the community_items SQL in Supabase first."
-            : err.message
-        );
-        return;
-      }
+      if (err) return setError(err.message.includes("community_items") || err.code === "42P01" ? "Run the community_items SQL in Supabase first." : err.message);
       setItems((prev) => sortItems([...prev, data as CommunityItem]));
+      notify("Project added");
     }
     resetForm();
     router.refresh();
@@ -285,270 +272,121 @@ export default function CommunityManager({ userId, initialItems }: Props) {
   async function handleDelete(id: string) {
     if (!confirm("Delete this item?")) return;
     const supabase = createClient();
-    const { error: err } = await supabase
-      .from("community_items")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", userId);
-    if (err) {
-      setError(err.message);
-      return;
-    }
+    const { error: err } = await supabase.from("community_items").delete().eq("id", id).eq("user_id", userId);
+    if (err) return setError(err.message);
     setItems((prev) => prev.filter((i) => i.id !== id));
     if (editingId === id) resetForm();
+    notify("Project deleted");
     router.refresh();
   }
 
-  async function move(id: string, dir: -1 | 1) {
-    const ordered = sortItems(items);
-    const idx = ordered.findIndex((i) => i.id === id);
-    const swap = idx + dir;
-    if (idx < 0 || swap < 0 || swap >= ordered.length) return;
-    setReordering(true);
-    const a = ordered[idx];
-    const b = ordered[swap];
+  async function persistOrder(next: CommunityItem[]) {
+    const ordered = next.map((item, index) => ({ ...item, sort_order: index }));
+    setItems(ordered);
     const supabase = createClient();
-    await Promise.all([
-      supabase
-        .from("community_items")
-        .update({ sort_order: b.sort_order ?? swap })
-        .eq("id", a.id),
-      supabase
-        .from("community_items")
-        .update({ sort_order: a.sort_order ?? idx })
-        .eq("id", b.id),
-    ]);
-    const next = [...ordered];
-    next[idx] = b;
-    next[swap] = a;
-    setItems(next);
-    setReordering(false);
-    router.refresh();
+    await Promise.all(ordered.map((item) => supabase.from("community_items").update({ sort_order: item.sort_order }).eq("id", item.id).eq("user_id", userId)));
   }
+
+  const visible = tab === "all" ? items : items.filter((item) => categoryFromTags(item.tags) === tab);
+  const logo = form.thumbnail_url || siteLogo(absoluteUrl(form.url));
 
   return (
-    <div className="space-y-8">
-      {drafts.length > 0 && (
-        <div className={`card space-y-3 ${AUTOFILL_HIGHLIGHT}`}>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-amber-500">
-                Imported projects / roles ({drafts.length})
-              </p>
-              <p className="text-xs text-foreground-muted">
-                From CV, Notion or GitHub. Review categories, then save.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="btn-primary text-xs"
-                disabled={importing}
-                onClick={saveDrafts}
-              >
-                {importing ? "Saving…" : "Save all imported"}
-              </button>
-              <button
-                type="button"
-                className="btn-ghost text-xs"
-                onClick={() => {
-                  setDrafts([]);
-                  markSectionSaved("community");
-                }}
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
-          {drafts.map((d, i) => (
-            <div
-              key={`${d.title}-${i}`}
-              className="rounded-lg border border-amber-400/40 bg-amber-400/5 p-3"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-medium">{d.title}</p>
-                <span className="text-[10px] uppercase tracking-wide rounded-full border border-amber-400/50 px-2 py-0.5 text-amber-500">
-                  {CATEGORIES.find((c) => c.value === d.category)?.label || d.category}
-                </span>
-              </div>
-              {d.role && <p className="text-xs text-foreground-muted mt-0.5">{d.role}</p>}
-              {d.url && <p className="text-[11px] text-primary break-all mt-0.5">{d.url}</p>}
-            </div>
+    <div className="profile-identity" data-theme={theme} data-collapsed={sideCollapsed ? "1" : "0"}>
+      <header className="topbar">
+        <Link className="back" href="/dashboard" aria-label="Back to dashboard"><Icon d="M15 5 8 12l7 7" size={18} /></Link>
+        <Link className="brand" href="/" aria-label="Powfolio home"><span className="brand-mark">P</span><span className="brand-name">Powfolio</span></Link>
+      </header>
+      <aside className={`side${sideCollapsed ? " collapsed" : ""}`}>
+        <nav className="side-nav" aria-label="Community sections">
+          {TABS.map((item) => (
+            <button key={item.id} className={`side-tab${tab === item.id ? " active" : ""}`} type="button" onClick={() => selectTab(item.id)}>
+              <Icon d={item.icon} size={16} />
+              <span>{item.short}</span>
+            </button>
           ))}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="card space-y-4">
-        <h2 className="font-semibold">
-          {editingId ? "Edit project / collab" : "Add project / collab"}
-        </h2>
-        {error && (
-          <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-            {error}
-          </div>
-        )}
-        <div>
-          <label className="label">Title *</label>
-          <input
-            className="input"
-            required
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-          />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="label">Role</label>
-            <input
-              className="input"
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              placeholder="Founder, Contributor, Mod…"
-            />
-          </div>
-          <div>
-            <label className="label">Platform</label>
-            <input
-              className="input"
-              value={form.platform}
-              onChange={(e) => setForm({ ...form, platform: e.target.value })}
-              placeholder="Telegram, Discord, GitHub…"
-            />
-          </div>
-        </div>
-        <div>
-          <label className="label">Category *</label>
-          <div className="flex flex-wrap gap-2 mt-1">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c.value}
-                type="button"
-                className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
-                  form.category === c.value
-                    ? "border-primary bg-primary/15 text-primary"
-                    : "border-border text-foreground-muted hover:border-primary/40"
-                }`}
-                onClick={() => setForm({ ...form, category: c.value })}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <label className="label">Description</label>
-          <textarea
-            className="input min-h-[80px]"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-        </div>
-        <div>
-          <label className="label">URL</label>
-          <input
-            className="input"
-            type="url"
-            value={form.url}
-            onChange={(e) => setForm({ ...form, url: e.target.value })}
-          />
-        </div>
-        <div>
-          <label className="label">Extra tags (comma separated)</label>
-          <input
-            className="input"
-            value={form.tags}
-            onChange={(e) => setForm({ ...form, tags: e.target.value })}
-            placeholder="optional"
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="btn-secondary cursor-pointer text-xs">
-            {uploading ? "Uploading…" : "Image (optional)"}
-            <input type="file" accept="image/*" className="hidden" onChange={handleImage} disabled={uploading} />
-          </label>
-          {form.thumbnail_url && (
-            <button
-              type="button"
-              className="btn-ghost text-xs text-danger"
-              onClick={() => setForm({ ...form, thumbnail_url: null })}
-            >
-              Remove image
-            </button>
-          )}
-          <label className="flex items-center gap-2 text-sm ml-auto">
-            <input
-              type="checkbox"
-              checked={form.is_visible}
-              onChange={(e) => setForm({ ...form, is_visible: e.target.checked })}
-              className="h-4 w-4 rounded border-border"
-            />
-            Visible on public profile
-          </label>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <button type="submit" disabled={loading} className="btn-primary">
-            {loading ? "Saving…" : editingId ? "Update" : "Add"}
+        </nav>
+        <div className="side-foot">
+          <div className="side-meta"><div className="side-handle" title={username}>@{username || "profile"}</div><div className="side-note">Community workspace</div></div>
+          <button className="side-collapse" type="button" aria-label={sideCollapsed ? "Expand sidebar" : "Minimize sidebar"} onClick={() => setSideCollapsed((v) => !v)}>
+            <Icon d={sideCollapsed ? "M9 6l6 6-6 6" : "M15 6l-6 6 6 6"} size={16} />
           </button>
-          {editingId && (
-            <button type="button" onClick={resetForm} className="btn-secondary">
-              Cancel
-            </button>
-          )}
         </div>
-      </form>
-
-      <div className="space-y-3">
-        <h2 className="font-semibold">Your projects / collab ({items.length})</h2>
-        {items.length === 0 && (
-          <p className="text-sm text-foreground-subtle">No items yet. Import from CV/link or add manually.</p>
-        )}
-        {items.map((item, idx) => (
-          <div
-            key={item.id}
-            className="card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium break-words">{item.title}</p>
-                <span className="text-[10px] uppercase tracking-wide rounded-full border border-border px-2 py-0.5 text-foreground-muted">
-                  {CATEGORIES.find((c) => c.value === categoryFromTags(item.tags))?.label || "Collab"}
-                </span>
+      </aside>
+      <main className="shell">
+        <section className="hero">
+          <div className="eyebrow">Community workspace</div>
+          <div className="hero-row"><div><h1>Projects & Collabs</h1><p>Personal builds, partnerships and community roles. The same entry flow as the rest of the workspace, with a logo pulled from each project link.</p></div></div>
+        </section>
+        <section className="panel active">
+          <div className="section-intro"><h2>{tab === "all" ? "All work" : categoryLabel(tab)}</h2><p>Add a project link so the logo is pulled automatically. Replace the image if the site mark is wrong. Drag a row to change the public order.</p></div>
+          {drafts.length > 0 && (
+            <div className="block">
+              <div className="block-head"><div><div className="block-title">Imported projects</div><div className="block-desc">{drafts.length} item{drafts.length === 1 ? "" : "s"} from CV, Notion or GitHub are waiting to be saved.</div></div><button className="action accent" type="button" disabled={importing} onClick={() => void saveDrafts()}>{importing ? "Saving..." : "Save imported"}</button></div>
+              <div className="entry-list">
+                {drafts.map((d, i) => (
+                  <div className="entry" key={`${d.title}-${i}`}>
+                    <div className="entry-left"><span className="logo-preview sm">{siteLogo(absoluteUrl(d.url)) ? <img src={siteLogo(absoluteUrl(d.url)) || ""} alt="" /> : d.title.slice(0, 1)}</span><div><div className="entry-title">{d.title}</div><div className="entry-meta">{categoryLabel(d.category)}{d.role ? ` · ${d.role}` : ""}</div></div></div>
+                  </div>
+                ))}
               </div>
-              {item.role && (
-                <p className="text-xs text-foreground-muted mt-0.5">{item.role}</p>
-              )}
+              <div className="form-actions"><button className="action" type="button" onClick={() => { setDrafts([]); markSectionSaved("community"); }}>Dismiss</button></div>
             </div>
-            <div className="flex shrink-0 gap-2">
-              <button
-                type="button"
-                disabled={reordering || idx === 0}
-                onClick={() => move(item.id, -1)}
-                className="btn-ghost text-xs"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                disabled={reordering || idx === items.length - 1}
-                onClick={() => move(item.id, 1)}
-                className="btn-ghost text-xs"
-              >
-                ↓
-              </button>
-              <button type="button" onClick={() => startEdit(item)} className="btn-secondary text-xs">
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDelete(item.id)}
-                className="btn-ghost text-xs text-danger"
-              >
-                Delete
-              </button>
+          )}
+          <div className="block">
+            <div className="block-head"><div><div className="block-title">Projects</div><div className="block-desc">{visible.length} visible in this section. Hidden items stay saved but do not publish.</div></div><button className="action accent" type="button" onClick={() => { resetForm(); setOpen(true); setForm({ ...emptyForm, category: tab === "all" ? "built" : tab }); }}>Add project</button></div>
+            <div className="entry-list">
+              {visible.length === 0 && <div className="empty">No projects in this section yet.</div>}
+              {visible.map((item, i) => {
+                const logoUrl = item.thumbnail_url || siteLogo(item.url);
+                return (
+                  <div key={item.id} className="entry" draggable onDragStart={() => setDrag(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (drag === null || drag === i) return; const from = items.findIndex((row) => row.id === visible[drag].id); const to = items.findIndex((row) => row.id === visible[i].id); if (from < 0 || to < 0) return; void persistOrder(moveItem(items, from, to)); setDrag(null); notify("Order updated"); }}>
+                    <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder project"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><span className="logo-preview sm">{logoUrl ? <img src={logoUrl} alt="" /> : item.title.slice(0, 1)}</span><div><div className="entry-title">{item.title}</div><div className="entry-meta">{categoryLabel(categoryFromTags(item.tags))}{item.role ? ` · ${item.role}` : ""}{item.platform ? ` · ${item.platform}` : ""}{item.is_visible ? "" : " · Hidden"}</div>{item.url && <div className="entry-meta">{item.url}</div>}</div></div>
+                    <div className="entry-actions">
+                      <button className="small-action" type="button" onClick={() => startEdit(item)}>Edit</button>
+                      <button className="small-action danger-action" type="button" onClick={() => void handleDelete(item.id)}>Delete</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className={`entry-form${open ? " open" : ""}`}>
+              <div className="form-grid">
+                <div className="field"><label className="label">Title *</label><input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Project, collab or community name" /></div>
+                <div className="field"><label className="label">Role</label><input className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Founder, contributor, mod" /></div>
+                <div className="field"><label className="label">Platform</label><input className="input" value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} placeholder="GitHub, Telegram, Discord" /></div>
+                <div className="field"><label className="label">Category</label><select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Category })}>{CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
+                <div className="field full"><label className="label">Project link</label><input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value, thumbnail_url: form.thumbnail_url && !form.thumbnail_url.includes("google.com/s2/favicons") ? form.thumbnail_url : siteLogo(absoluteUrl(e.target.value)) })} placeholder="https://project.com" /></div>
+                <div className="field full logo-field"><span className="logo-preview">{logo ? <img src={logo} alt="" /> : "Logo"}</span><label className="text-action">{uploading ? "Uploading..." : "Replace logo"}<input type="file" accept="image/*" hidden onChange={(e) => void handleImage(e.target.files?.[0] || null)} /></label><span className="logo-note">The site logo is pulled from the link. Upload another image if it is wrong.</span></div>
+                <div className="field full"><label className="label">Description</label><textarea className="textarea" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What you built, who you worked with, or the role you held." /></div>
+                <div className="field"><label className="label">Start</label><input className="input" type="month" value={form.started_at.slice(0, 7)} onChange={(e) => setForm({ ...form, started_at: e.target.value })} /></div>
+                <div className="field"><label className="label">End</label><input className="input" type="month" value={form.ended_at.slice(0, 7)} onChange={(e) => setForm({ ...form, ended_at: e.target.value })} /></div>
+                <div className="field full"><label className="label">Outcome</label><input className="input" value={form.metrics} onChange={(e) => setForm({ ...form, metrics: e.target.value })} placeholder="Optional result, members or shipped milestone" /></div>
+                <div className="field full"><label className="label">Extra tags</label><input className="input" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Comma separated, optional" /></div>
+              </div>
+              <div className="cv-row"><div className="cv-copy"><div className="cv-title">Visible on public profile</div><div className="cv-desc">Turn this off to keep the item in your workspace without publishing it.</div></div><button className={`switch${form.is_visible ? " on" : ""}`} type="button" aria-label="Visible on public profile" onClick={() => setForm((f) => ({ ...f, is_visible: !f.is_visible }))}><span /></button></div>
+              {error && <div className="error">{error}</div>}
+              <div className="form-actions"><button className="action accent" type="button" disabled={loading} onClick={() => void handleSubmit()}>{loading ? "Saving..." : editingId ? "Update project" : "Add project"}</button><button className="action" type="button" onClick={resetForm}>Cancel</button></div>
             </div>
           </div>
+        </section>
+      </main>
+      <button className={`tab-fab${dock === "open" ? " open" : ""}`} type="button" aria-label={dock === "open" ? "Close sections" : "Open sections"} onClick={() => { if (dock === "open") closeDock(); else setDock("open"); }}>
+        <svg className="burger" viewBox="0 0 24 18" width="22" height="16" aria-hidden>
+          <rect x="1" y="1" width="22" height="3.2" rx="1.6" />
+          <rect x="1" y="7.4" width="22" height="3.2" rx="1.6" />
+          <rect x="1" y="13.8" width="22" height="3.2" rx="1.6" />
+        </svg>
+      </button>
+      <div className={`tab-dock${dock === "open" ? " open" : ""}${dock === "closing" ? " closing" : ""}`}>
+        {TABS.map((item, index) => (
+          <button key={item.id} className={`dock-tab${tab === item.id ? " active" : ""}`} style={{ transitionDelay: `${index * 45}ms` }} type="button" onClick={() => { selectTab(item.id); closeDock(); }}>
+            <Icon d={item.icon} size={16} />
+            <span>{item.short}</span>
+          </button>
         ))}
       </div>
+      {dock !== "closed" && <button className="dock-backdrop" type="button" aria-label="Close sections" onClick={closeDock} />}
+      <div className={`toast${toastOn ? " show" : ""}`}>{toast}</div>
     </div>
   );
 }
