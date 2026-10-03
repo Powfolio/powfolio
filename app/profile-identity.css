@@ -465,3 +465,7 @@
   .profile-identity .block-head { flex-direction: row; align-items: flex-start; }
   .profile-identity .doc-title, .profile-identity .doc-meta { white-space: normal; }
 }
+.profile-identity .suggestion-list { display: flex; flex-direction: column; gap: 2px; }
+.profile-identity .suggestion { display: flex; align-items: center; gap: 8px; width: 100%; height: 36px; padding: 0 10px; border: 0; background: transparent; color: var(--text); text-align: left; text-decoration: none; }
+.profile-identity .suggestion:hover { background: var(--surface-2); }
+.profile-identity .legacy-fit .card, .profile-identity .block .card { border: 0; background: transparent; box-shadow: none; }
