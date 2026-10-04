@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -124,6 +124,7 @@ export default function DashboardHome({
   const [tourKey, setTourKey] = useState(0);
   const [importUrl, setImportUrl] = useState("");
   const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const publicUrl = username ? `${SITE_URL.replace(/\/$/, "")}/${username}` : "";
 
@@ -344,10 +345,23 @@ export default function DashboardHome({
                   <Sparkles size={14} />
                   {importing ? "Working…" : "Autofill"}
                 </button>
-                <label className="d-btn d-btn-primary" style={{ cursor: importing ? "wait" : "pointer" }}>
-                  <Upload size={14} />{importing ? "Working…" : "Upload file"}
-                  <input type="file" accept=".pdf,.txt,.md,.doc,.docx,image/png,image/jpeg,image/webp,image/gif" hidden disabled={importing} onChange={(e) => void handleFile(e)} />
-                </label>
+                <button
+                  type="button"
+                  className="d-btn d-btn-primary"
+                  disabled={importing}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload size={14} />
+                  {importing ? "Working…" : "Upload file"}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.txt,.md,.doc,.docx,image/png,image/jpeg,image/webp,image/gif"
+                  hidden
+                  disabled={importing}
+                  onChange={(e) => void handleFile(e)}
+                />
               </div>
             </div>
             <div className="hint"><b>Tip:</b> You stay in control: review imported information before it appears publicly.</div>
