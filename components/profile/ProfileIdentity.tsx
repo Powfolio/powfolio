@@ -9,10 +9,11 @@ import { startXAuth } from "@/lib/x-oauth";
 import { SITE_URL } from "@/lib/site";
 import { isReservedUsername, reservedUsernameMessage } from "@/lib/usernames";
 import { moveItem } from "@/lib/move-item";
+import CvDetails from "@/components/profile/CvDetails";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import type { Credential, Education, Profile, Skill, WorkExperience } from "@/types/database";
 
-type TabId = "identity" | "skills" | "experience" | "docs";
+type TabId = "identity" | "skills" | "experience" | "docs" | "cv";
 type Props = {
   profile: Profile;
   email: string | null;
@@ -26,6 +27,7 @@ const TABS: { id: TabId; label: string; short: string; icon: string }[] = [
   { id: "skills", label: "Skills & Connections", short: "Skills", icon: "M9 7h6M9 11h6M9 15h4M7 3h10a2 2 0 0 1 2 2v14l-4-2-3 2-3-2-4 2V5a2 2 0 0 1 2-2Z" },
   { id: "experience", label: "Experience & Education", short: "Experience", icon: "M4 7h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Zm4-3h8v3H8V4Z" },
   { id: "docs", label: "Docs & Credentials", short: "Docs", icon: "M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm7 1.5V9h4.5" },
+  { id: "cv", label: "CV details", short: "CV", icon: "M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z M8 13h8M8 17h5" },
 ];
 const URL_IN_BIO = /(?:https?:\/\/|www\.)[^\s]+|\b[a-z0-9-]+\.(?:com|io|xyz|net|org|app|dev|co|gg|me|link|bio|ng|eth)\b/i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -185,7 +187,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     document.documentElement.classList.toggle("dark", next === "dark");
     document.documentElement.dataset.theme = next;
     const hash = window.location.hash.replace("#", "") as TabId;
-    if (["identity", "skills", "experience", "docs"].includes(hash)) setTab(hash);
+    if (["identity", "skills", "experience", "docs", "cv"].includes(hash)) setTab(hash);
     if (googleEmail && !profile.secondary_email) setSecondaryEmail(googleEmail);
   }, [profile.id, googleEmail, profile.secondary_email]);
 
@@ -914,6 +916,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
           </div>
           <div className="save-area"><button className="save" type="button" onClick={() => void saveDocs()}>{saving === "docs" ? "Saving..." : "Save changes"}</button>{saved === "docs" && <span className="save-state">Saved</span>}</div>
         </section>
+        {tab === "cv" && <CvDetails userId={profile.id} />}
       </main>
       <button className={`tab-fab${dock === "open" ? " open" : ""}`} type="button" aria-label={dock === "open" ? "Close sections" : "Open sections"} onClick={() => { if (dock === "open") { setDock("closing"); window.setTimeout(() => setDock("closed"), 380); } else setDock("open"); }}>
         <svg className="burger" viewBox="0 0 24 18" width="22" height="16" aria-hidden>

@@ -10,6 +10,7 @@ import type {
   Education,
 } from "@/types/database";
 import PrintResume from "@/components/profile/PrintResume";
+import ResumeExtras from "@/components/profile/ResumeExtras";
 import { normalizeSkills, cleanPlainText } from "@/lib/skills";
 
 function categoryOf(item: CommunityItem): string {
@@ -80,7 +81,7 @@ export default async function DashboardResumePage() {
     location,
     p.show_primary_email && p.primary_email ? p.primary_email : null,
     p.show_secondary_email && p.secondary_email ? p.secondary_email : null,
-    p.website_url,
+    p.website_url && !/pow3folio/i.test(p.website_url) ? p.website_url : null,
     p.github_url,
     p.x_url,
     p.telegram_url,
@@ -101,15 +102,15 @@ export default async function DashboardResumePage() {
         }
         .resume-sheet { position: relative; overflow: hidden; }
         .resume-sheet::before {
-          content: "Powfolio";
+          content: "POWFOLIO.XYZ";
           position: absolute;
           left: 50%;
           top: 46%;
-          transform: translate(-50%, -50%) rotate(-32deg);
-          font-size: 92px;
+          transform: translate(-50%, -50%) rotate(-28deg);
+          font-size: 54px;
           font-weight: 800;
-          letter-spacing: 0.14em;
-          color: rgba(16, 185, 129, 0.07);
+          letter-spacing: 0.18em;
+          color: rgba(18, 32, 26, 0.055);
           white-space: nowrap;
           pointer-events: none;
           z-index: 0;
@@ -121,7 +122,7 @@ export default async function DashboardResumePage() {
         <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-800">
           Back to dashboard
         </Link>
-        <PrintResume />
+        <PrintResume username={p.username} />
       </div>
       <article className="resume-sheet mx-auto mb-10 max-w-[860px] bg-white shadow-[0_18px_50px_rgba(16,24,20,0.08)] print:mb-0 print:max-w-none print:shadow-none">
         <div className="h-1.5 w-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-teal-400" />
@@ -137,17 +138,16 @@ export default async function DashboardResumePage() {
                 <p className="mt-2 max-w-[34rem] text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(p.bio, 220)}</p>
               )}
             </div>
-            <div className="hidden shrink-0 text-right sm:block">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon.svg" alt="" width={44} height={44} className="ml-auto h-11 w-11 object-contain" />
+            <a href={`https://pow3folio.vercel.app/${p.username}`} className="shrink-0 text-right no-underline">
+              <span className="ml-auto flex h-11 w-11 items-center justify-center rounded-md bg-[#12201a] text-sm font-bold text-white">P</span>
               <p className="mt-2 text-[10px] font-semibold tracking-wide text-emerald-700">Powfolio</p>
-              <p className="text-[10px] text-zinc-400">pow3folio.vercel.app/{p.username}</p>
-            </div>
+              <p className="text-[10px] text-zinc-500">pow3folio.vercel.app/{p.username}</p>
+            </a>
           </header>
           {contacts.length > 0 && (
             <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-y border-emerald-100 py-2.5 text-[11px] text-zinc-600">
               {contacts.map((c) => (
-                <li key={c} className="break-words">{c}</li>
+                <li key={c} className="break-words">{/^https?:\/\//.test(c) || c.includes("@") ? <a href={c.includes("@") && !c.startsWith("http") ? `mailto:${c}` : c.startsWith("http") ? c : `https://${c}`} className="underline decoration-emerald-200 underline-offset-2">{c.replace(/^https?:\/\//, "")}</a> : c}</li>
               ))}
             </ul>
           )}
@@ -266,6 +266,11 @@ export default async function DashboardResumePage() {
               )}
             </aside>
           </div>
+          <ResumeExtras userId={p.id} username={p.username} />
+          <section className="mt-8 border-t border-emerald-100 pt-4">
+            <p className="text-[12.5px] leading-relaxed text-zinc-700">Proof of work lives on the public profile. Employers can open the live record for writing, trading, onchain activity and collaborations.</p>
+            <a href={`https://pow3folio.vercel.app/${p.username}`} className="mt-2 inline-block text-[12.5px] font-semibold text-emerald-800 underline underline-offset-2">pow3folio.vercel.app/{p.username}</a>
+          </section>
         </div>
       </article>
     </div>

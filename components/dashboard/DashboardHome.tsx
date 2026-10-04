@@ -344,7 +344,7 @@ export default function DashboardHome({
                   {importing ? "Working…" : "Autofill"}
                 </button>
                 <label className="d-btn d-btn-secondary" style={{ cursor: importing ? "wait" : "pointer" }}>
-                  {importing ? "Working…" : "Upload file"}
+                  <Download size={14} />{importing ? "Working…" : "Upload file"}
                   <input type="file" accept=".pdf,.txt,.md,.doc,.docx,image/png,image/jpeg,image/webp,image/gif" hidden disabled={importing} onChange={(e) => void handleFile(e)} />
                 </label>
               </div>

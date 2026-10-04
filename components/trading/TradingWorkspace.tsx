@@ -13,8 +13,6 @@ import type { Trade, TradeDirection, TradeStatus, TradingPlatform } from "@/type
 const TABS = [
   { id: "platforms", short: "Platforms", icon: "M4 7h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Zm4-3h8v3H8V4Z" },
   { id: "trades", short: "Trades", icon: "M4 18V6M4 18h16M8 14l3-4 3 2 4-6" },
-  { id: "wins", short: "Wins", icon: "M20 6 9 17l-5-5" },
-  { id: "losses", short: "Losses", icon: "M18 6 6 18M6 6l12 12" },
 ];
 const emptyForm = { ticker: "", pair: "", direction: "long" as TradeDirection, status: "win" as TradeStatus, roi: "", entry_price: "", exit_price: "", analysis: "", traded_at: "", post_url: "", is_visible: true, chart_url: "" as string | null, chart_url_2: "" as string | null };
 function uid() { return Math.random().toString(36).slice(2, 10); }

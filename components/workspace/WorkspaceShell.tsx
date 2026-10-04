@@ -23,6 +23,7 @@ export default function WorkspaceShell({
   tab,
   onTab,
   children,
+  hideDock = false,
 }: {
   title: string;
   eyebrow: string;
@@ -33,6 +34,7 @@ export default function WorkspaceShell({
   tab: string;
   onTab: (id: string) => void;
   children: React.ReactNode;
+  hideDock?: boolean;
 }) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [dock, setDock] = useState<"closed" | "open" | "closing">("closed");
@@ -82,6 +84,7 @@ export default function WorkspaceShell({
         </section>
         <section className="panel active">{children}</section>
       </main>
+      {!hideDock && <>
       <button className={`tab-fab${dock === "open" ? " open" : ""}`} type="button" aria-label={dock === "open" ? "Close sections" : "Open sections"} onClick={() => { if (dock === "open") closeDock(); else setDock("open"); }}>
         <svg className="burger" viewBox="0 0 24 18" width="22" height="16" aria-hidden>
           <rect x="1" y="1" width="22" height="3.2" rx="1.6" />
@@ -98,6 +101,7 @@ export default function WorkspaceShell({
         ))}
       </div>
       {dock !== "closed" && <button className="dock-backdrop" type="button" aria-label="Close sections" onClick={closeDock} />}
+      </>}
     </div>
   );
 }

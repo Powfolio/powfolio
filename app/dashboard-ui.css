@@ -181,3 +181,20 @@ html:not(.dark) .dash-app {
   .dash-app .helper { grid-template-columns: 1fr; gap: 20px; }
   .dash-app .toast { right: 16px; bottom: 16px; left: 16px; text-align: center; }
 }
+
+.dash-app .d-btn, .dash-app .d-btn-primary, .dash-app .d-btn-secondary {
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--d-text);
+  box-shadow: none;
+  height: 36px;
+  padding: 0 2px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.dash-app .d-btn-primary { color: var(--d-accent); }
+.dash-app .import-actions { display: flex; gap: 16px; align-items: center; }
+.cv-download { display: inline-flex; align-items: center; gap: 8px; border: 0; background: #12201a; color: white; border-radius: 999px; height: 36px; padding: 0 14px; font-size: 12px; font-weight: 600; }
+.cv-download svg { transition: transform .35s ease; }
+.cv-download:hover svg { transform: translateY(2px); }

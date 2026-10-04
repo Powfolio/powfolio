@@ -9,11 +9,6 @@ import type { Airdrop, AirdropStatus } from "@/types/database";
 
 const TABS = [
   { id: "all", short: "All", icon: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
-  { id: "farming", short: "Farming", icon: "M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18" },
-  { id: "qualified", short: "Qualified", icon: "M20 6 9 17l-5-5" },
-  { id: "claimed", short: "Claimed", icon: "M12 3l2.4 4.8L20 8.6l-4 3.9.9 5.5L12 15.8 7.1 18l.9-5.5-4-3.9 5.6-.8Z" },
-  { id: "pending", short: "Pending", icon: "M12 7v5l3 2M12 21a9 9 0 1 0-9-9 9 9 0 0 0 9 9Z" },
-  { id: "missed", short: "Missed", icon: "M18 6 6 18M6 6l12 12" },
 ];
 const STATUSES: AirdropStatus[] = ["farming", "qualified", "claimed", "pending", "missed"];
 const CHAINS = ["Ethereum", "Solana", "Base", "Arbitrum", "Optimism", "Polygon", "Cosmos", "Sui", "Aptos", "Bitcoin", "Multi-chain", "Other"];
@@ -127,7 +122,7 @@ export default function AirdropManager({ userId, username, initialItems }: { use
   const logo = form.thumbnail_url || siteLogo(absoluteUrl(form.url));
 
   return (
-    <WorkspaceShell title="Airdrops" eyebrow="Airdrop workspace" intro="Campaigns you farmed, qualified for, or claimed. The campaign link pulls a logo, and claim status stays on the same entry." username={username} note="Airdrop workspace" tabs={TABS} tab={tab} onTab={setTab}>
+    <WorkspaceShell title="Airdrops" eyebrow="Airdrop workspace" intro="Campaigns you farmed, qualified for, or claimed. The campaign link pulls a logo, and claim status stays on the same entry." username={username} note="Airdrop workspace" tabs={TABS} tab={tab} onTab={setTab} hideDock>
       <div className="section-intro"><h2>{tab === "all" ? "All campaigns" : label(tab)}</h2><p>Add the campaign link so the logo is pulled automatically. Replace it if the mark is wrong.</p></div>
       <div className="block">
         <div className="block-head"><div><div className="block-title">Campaigns</div><div className="block-desc">{visible.length} in this section.</div></div><button className="action accent" type="button" onClick={() => { resetForm(); setOpen(true); setForm({ ...emptyForm, status: tab === "all" ? "farming" : tab as AirdropStatus }); }}>Add campaign</button></div>
