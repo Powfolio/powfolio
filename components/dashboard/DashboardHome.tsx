@@ -8,6 +8,7 @@ import {
   Moon,
   User,
   Download,
+  Upload,
   ExternalLink,
   Copy,
   RotateCcw,
@@ -343,8 +344,8 @@ export default function DashboardHome({
                   <Sparkles size={14} />
                   {importing ? "Working…" : "Autofill"}
                 </button>
-                <label className="d-btn d-btn-secondary" style={{ cursor: importing ? "wait" : "pointer" }}>
-                  <Download size={14} />{importing ? "Working…" : "Upload file"}
+                <label className="d-btn d-btn-primary" style={{ cursor: importing ? "wait" : "pointer" }}>
+                  <Upload size={14} />{importing ? "Working…" : "Upload file"}
                   <input type="file" accept=".pdf,.txt,.md,.doc,.docx,image/png,image/jpeg,image/webp,image/gif" hidden disabled={importing} onChange={(e) => void handleFile(e)} />
                 </label>
               </div>
