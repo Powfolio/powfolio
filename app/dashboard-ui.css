@@ -182,71 +182,59 @@ html:not(.dark) .dash-app {
   .dash-app .toast { right: 16px; bottom: 16px; left: 16px; text-align: center; }
 }
 
-.dash-app .d-btn, .dash-app .d-btn-primary, .dash-app .d-btn-secondary {
-  border: 0 !important;
-  background: transparent !important;
-  color: var(--d-text);
-  box-shadow: none;
-  height: 36px;
-  padding: 0 2px;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-.dash-app .d-btn-primary { color: var(--d-accent); }
-.dash-app .import-actions { display: flex; gap: 16px; align-items: center; }
-.cv-download { display: inline-flex; align-items: center; gap: 8px; border: 0; background: #12201a; color: white; border-radius: 999px; height: 36px; padding: 0 14px; font-size: 12px; font-weight: 600; }
-.cv-download svg { transition: transform .35s ease; }
-.cv-download:hover svg { transform: translateY(2px); }
-
-
-/* Import actions: keep both controls visible, equal-sized, and in one row. */
+/* Import actions: minimal text controls with icons, matching the dashboard style. */
 .dash-app .import-actions {
   display: flex;
-  gap: 8px;
-  align-items: stretch;
+  gap: 16px;
+  align-items: center;
   flex-shrink: 0;
 }
 .dash-app .import-actions .d-btn {
-  flex: 1 1 0;
-  min-width: 112px;
-  height: 40px;
-  padding: 0 16px;
-  border: 1px solid var(--d-accent) !important;
-  border-radius: 8px;
-  background: var(--d-accent) !important;
-  color: var(--d-on-accent) !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--d-accent) !important;
   box-shadow: none;
-  text-decoration: none;
-  font-weight: 700;
+  height: 36px;
+  min-width: 112px;
+  padding: 0 2px;
+  border-radius: 0;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  box-sizing: border-box;
+}
+.dash-app .import-actions .d-btn svg {
+  width: 16px;
+  height: 16px;
+  color: var(--d-accent);
+  flex-shrink: 0;
 }
 .dash-app .import-actions .d-btn:hover {
-  background: var(--d-accent-hover) !important;
-  border-color: var(--d-accent-hover) !important;
-  color: var(--d-on-accent) !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--d-accent-hover) !important;
+}
+.dash-app .import-actions .d-btn:hover svg {
+  color: var(--d-accent-hover);
 }
 .dash-app .import-actions .d-btn:active {
-  background: var(--d-accent-pressed) !important;
-  border-color: var(--d-accent-pressed) !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--d-accent-pressed) !important;
 }
 .dash-app .import-actions .d-btn:disabled {
   opacity: .55;
   pointer-events: none;
-}
-.dash-app .import-actions label.d-btn {
-  cursor: pointer;
 }
 @media (max-width: 768px) {
   .dash-app .import-actions {
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 16px;
   }
   .dash-app .import-actions .d-btn {
     width: 100%;
