@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { TradeUpdate } from "@/types/database";
+import { packCharts, unpackCharts } from "@/components/trading/TradeUpdatesModal";
 
 type Props = {
   userId: string;
@@ -17,6 +18,7 @@ const empty = {
   post_url: "",
   occurred_at: "",
   chart_url: "" as string | null,
+  chart_url_2: "" as string | null,
 };
 
 export default function TradeUpdatesEditor({ userId, tradeId, onError }: Props) {
@@ -54,7 +56,8 @@ export default function TradeUpdatesEditor({ userId, tradeId, onError }: Props) 
       caption: u.caption ?? "",
       post_url: u.post_url ?? "",
       occurred_at: u.occurred_at ?? u.created_at?.slice(0, 10) ?? "",
-      chart_url: u.chart_url,
+      chart_url: unpackCharts(u.chart_url)[0] || null,
+      chart_url_2: unpackCharts(u.chart_url)[1] || null,
     });
   }
 
@@ -63,7 +66,7 @@ export default function TradeUpdatesEditor({ userId, tradeId, onError }: Props) 
     setForm(empty);
   }
 
-  async function handleChart(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleChart(e: React.ChangeEvent<HTMLInputElement>, slot: "chart_url" | "chart_url_2") {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -87,7 +90,7 @@ export default function TradeUpdatesEditor({ userId, tradeId, onError }: Props) 
     const {
       data: { publicUrl },
     } = supabase.storage.from("avatars").getPublicUrl(path);
-    setForm((p) => ({ ...p, chart_url: publicUrl }));
+    setForm((p) => ({ ...p, [slot]: publicUrl }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -100,7 +103,7 @@ export default function TradeUpdatesEditor({ userId, tradeId, onError }: Props) 
       label: form.label.trim() || "Update",
       caption: form.caption.trim() || null,
       post_url: form.post_url.trim() || null,
-      chart_url: form.chart_url || null,
+      chart_url: packCharts([form.chart_url, form.chart_url_2]),
       occurred_at: form.occurred_at || null,
     };
 
@@ -219,9 +222,13 @@ export default function TradeUpdatesEditor({ userId, tradeId, onError }: Props) 
         <div className="flex flex-wrap items-center gap-2">
           <label className="btn-secondary cursor-pointer text-xs">
             {uploading ? "Uploading…" : "Chart image"}
-            <input type="file" accept="image/*" className="hidden" onChange={handleChart} disabled={uploading} />
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleChart(e, "chart_url")} disabled={uploading} />
           </label>
-          {form.chart_url && <span className="text-xs text-primary">Image attached</span>}
+          <label className="btn-secondary cursor-pointer text-xs">
+            {uploading ? "Uploading…" : "Second image"}
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleChart(e, "chart_url_2")} disabled={uploading} />
+          </label>
+          {(form.chart_url || form.chart_url_2) && <span className="text-xs text-primary">{[form.chart_url, form.chart_url_2].filter(Boolean).length} image{[form.chart_url, form.chart_url_2].filter(Boolean).length === 1 ? "" : "s"}</span>}
           <button type="submit" disabled={loading} className="btn-primary text-xs ml-auto">
             {loading ? "Saving…" : editingId ? "Save changes" : "Add update"}
           </button>
