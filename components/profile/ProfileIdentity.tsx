@@ -743,8 +743,8 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
             <div className="media-studio">
               <div className="banner" style={bannerUrl ? { backgroundImage: `url(${bannerUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}>
                 {!bannerUrl && <div className="banner-label"><div className="banner-name">{displayName || "Your profile"}</div><div className="banner-role">WEB3 / CRYPTO PROFESSIONAL</div></div>}
-                <label className="action media-action">{uploadingBanner ? "Uploading..." : "Change banner"}<input type="file" accept="image/*" hidden onChange={(e) => void onBanner(e.target.files?.[0])} /></label>
               </div>
+              <label className="banner-edit-badge" title="Change banner"><Icon d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /><input type="file" accept="image/*" hidden onChange={(e) => void onBanner(e.target.files?.[0])} /></label>
               <div className="avatar-center">
                 <div className="avatar-preview-wrap">
                   <div className="avatar">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</div>

@@ -318,7 +318,7 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
                 </div>
               )}
             </div>
-            <div className="score-slot mb-1 pt-2 sm:mb-3">
+            <div className="score-slot mb-0 mt-6 sm:mt-8">
               <ScoreRings
                 username={p.username}
                 initialProfile={scores.profileScore}

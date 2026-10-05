@@ -8,6 +8,8 @@ import { getPlatformDomain, searchPlatforms } from "@/lib/cex-dex-list";
 import WorkspaceShell from "@/components/workspace/WorkspaceShell";
 import TradeUpdatesEditor from "@/components/trading/TradeUpdatesEditor";
 import PlatformLogo from "@/components/ui/PlatformLogo";
+import ChartCropper from "@/components/trading/ChartCropper";
+import { asChart } from "@/components/trading/TradeUpdatesModal";
 import type { Trade, TradeDirection, TradeStatus, TradingPlatform } from "@/types/database";
 
 const TABS = [
@@ -33,6 +35,8 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
   const [updatesTradeId, setUpdatesTradeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropSlot, setCropSlot] = useState<1 | 2>(1);
   const [error, setError] = useState<string | null>(null);
   const [drag, setDrag] = useState<number | null>(null);
   const [toast, setToast] = useState("");
@@ -77,14 +81,25 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
     if (uploadError) { setError(uploadError.message); return null; }
     return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
   }
-  async function handleChart(file: File | null, slot: 1 | 2) {
+  function handleChart(file: File | null, slot: 1 | 2) {
     if (!file) return;
+    setCropSlot(slot);
+    setCropFile(file);
+  }
+  async function saveCrop(thumb: Blob, full: File) {
+    setCropFile(null);
     setUploading(true); setError(null);
-    const url = await uploadImage(file);
+    const fullUrl = await uploadImage(full);
+    if (!fullUrl) { setUploading(false); return; }
+    const supabase = createClient();
+    const thumbPath = `${userId}/trade-thumb-${Date.now()}.jpg`;
+    const { error: thumbError } = await supabase.storage.from("avatars").upload(thumbPath, thumb, { upsert: true, contentType: "image/jpeg" });
     setUploading(false);
-    if (!url) return;
-    if (slot === 1) setForm((p) => ({ ...p, chart_url: url }));
-    else setForm((p) => ({ ...p, chart_url_2: url }));
+    if (thumbError) return setError(thumbError.message);
+    const thumbUrl = supabase.storage.from("avatars").getPublicUrl(thumbPath).data.publicUrl;
+    const packed = JSON.stringify({ thumb: thumbUrl, full: fullUrl });
+    if (cropSlot === 1) setForm((prev) => ({ ...prev, chart_url: packed }));
+    else setForm((prev) => ({ ...prev, chart_url_2: packed }));
   }
   async function handleSubmit() {
     if (!form.ticker.trim()) return setError("Ticker is required");
@@ -151,7 +166,7 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
             {visible.length === 0 && <div className="empty">No trades in this section yet.</div>}
             {visible.map((item, i) => (
               <div key={item.id} className="entry" draggable onDragStart={() => setDrag(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (drag === null || drag === i) return; const from = items.findIndex((row) => row.id === visible[drag].id); const to = items.findIndex((row) => row.id === visible[i].id); if (from < 0 || to < 0) return; void persistOrder(moveItem(items, from, to)); setDrag(null); notify("Order updated"); }}>
-                <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder trade"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="9" cy="6" r="1.2"/><circle cx="15" cy="6" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="9" cy="18" r="1.2"/><circle cx="15" cy="18" r="1.2"/></svg></button><span className="logo-preview sm">{item.chart_url ? <img src={item.chart_url} alt="" /> : item.ticker.slice(0, 1)}</span><div><div className="entry-title">{item.ticker}{item.pair ? ` / ${item.pair}` : ""}</div><div className="entry-meta">{item.status}{item.direction ? ` · ${item.direction}` : ""}{item.roi != null ? ` · ${item.roi}%` : ""}{item.is_visible ? "" : " · Hidden"}</div></div></div>
+                <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder trade"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="9" cy="6" r="1.2"/><circle cx="15" cy="6" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="9" cy="18" r="1.2"/><circle cx="15" cy="18" r="1.2"/></svg></button><span className="logo-preview sm">{item.chart_url ? <img src={asChart(item.chart_url)?.thumb || item.chart_url} alt="" /> : item.ticker.slice(0, 1)}</span><div><div className="entry-title">{item.ticker}{item.pair ? ` / ${item.pair}` : ""}</div><div className="entry-meta">{item.status}{item.direction ? ` · ${item.direction}` : ""}{item.roi != null ? ` · ${item.roi}%` : ""}{item.is_visible ? "" : " · Hidden"}</div></div></div>
                 <div className="entry-actions"><button className="small-action" type="button" onClick={() => startEdit(item)}>Edit</button><button className="small-action danger-action" type="button" onClick={() => void handleDelete(item.id)}>Delete</button></div>
               </div>
             ))}
@@ -167,7 +182,7 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
               <div className="field"><label className="label">Exit</label><input className="input" value={form.exit_price} onChange={(e) => setForm({ ...form, exit_price: e.target.value })} /></div>
               <div className="field"><label className="label">Date</label><input className="input" type="date" value={form.traded_at.slice(0, 10)} onChange={(e) => setForm({ ...form, traded_at: e.target.value })} /></div>
               <div className="field full"><label className="label">Post link</label><input className="input" value={form.post_url} onChange={(e) => setForm({ ...form, post_url: e.target.value })} placeholder="https://x.com/..." /></div>
-              <div className="field full logo-field"><span className="logo-preview">{form.chart_url ? <img src={form.chart_url} alt="" /> : "1"}</span><label className="text-action">{uploading ? "Uploading..." : "Chart image"}<input type="file" accept="image/*" hidden onChange={(e) => void handleChart(e.target.files?.[0] || null, 1)} /></label><span className="logo-preview">{form.chart_url_2 ? <img src={form.chart_url_2} alt="" /> : "2"}</span><label className="text-action">Second chart<input type="file" accept="image/*" hidden onChange={(e) => void handleChart(e.target.files?.[0] || null, 2)} /></label></div>
+              <div className="field full logo-field"><span className="logo-preview">{form.chart_url ? <img src={asChart(form.chart_url)?.thumb || ""} alt="" /> : "1"}</span><label className="text-action">{uploading ? "Uploading..." : "Chart image"}<input type="file" accept="image/*" hidden onChange={(e) => void handleChart(e.target.files?.[0] || null, 1)} /></label><span className="logo-preview">{form.chart_url_2 ? <img src={asChart(form.chart_url_2)?.thumb || ""} alt="" /> : "2"}</span><label className="text-action">Second chart<input type="file" accept="image/*" hidden onChange={(e) => void handleChart(e.target.files?.[0] || null, 2)} /></label></div>
               <div className="field full"><label className="label">Analysis</label><textarea className="textarea" value={form.analysis} onChange={(e) => setForm({ ...form, analysis: e.target.value })} placeholder="What the trade proved." /></div>
             </div>
             <div className="cv-row"><div className="cv-copy"><div className="cv-title">Visible on public profile</div><div className="cv-desc">Hidden trades stay in the record and do not publish.</div></div><button className={`switch${form.is_visible ? " on" : ""}`} type="button" aria-label="Visible on public profile" onClick={() => setForm((f) => ({ ...f, is_visible: !f.is_visible }))}><span /></button></div>
@@ -178,6 +193,7 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
         </div>
       )}
       <div className={`toast${toastOn ? " show" : ""}`}>{toast}</div>
+    <ChartCropper file={cropFile} onCancel={() => setCropFile(null)} onConfirm={(thumb, full) => void saveCrop(thumb, full)} />
     </WorkspaceShell>
   );
 }

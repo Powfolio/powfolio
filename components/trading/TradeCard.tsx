@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Trade, TradeUpdate } from "@/types/database";
 import TradeImageCarousel from "@/components/trading/TradeImageCarousel";
-import TradeUpdatesModal from "@/components/trading/TradeUpdatesModal";
+import TradeUpdatesModal, { asChart } from "@/components/trading/TradeUpdatesModal";
 import ShareButton from "@/components/writing/ShareButton";
 
 type Props = {
@@ -34,7 +34,7 @@ function roiBadge(roi: number) {
 
 export default function TradeCard({ trade, updates, profileUrl }: Props) {
   const [open, setOpen] = useState(false);
-  const images = [trade.chart_url, trade.chart_url_2].filter(Boolean) as string[];
+  const images = [trade.chart_url, trade.chart_url_2].map((url) => asChart(url)?.thumb).filter(Boolean) as string[];
   const shareUrl = trade.post_url || profileUrl;
   const title = `${trade.ticker}${trade.pair ? ` ${trade.pair}` : ""} · ${trade.status}`;
   const post = trade.post_url;

@@ -136,10 +136,7 @@
 .profile-identity .banner-label { position: absolute; left: 16px; bottom: 36px; }
 .profile-identity .banner-name { font-weight: 760; letter-spacing: -0.03em; }
 .profile-identity .banner-role { color: var(--muted); font-size: 12px; }
-.profile-identity .media-action {
-  position: absolute; right: 12px; bottom: 34px; background: rgba(12,12,14,0.72) !important; color: #fff !important;
-  border: 0 !important; border-radius: 999px !important; height: 32px; padding: 0 12px !important; font-size: 12px !important;
-}
+.profile-identity .banner-edit-badge { position: absolute; right: 14px; top: calc(156px - 14px); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--bg); color: var(--text); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); }
 .profile-identity .avatar-center {
   position: absolute; left: 50%; top: calc(156px - 24px); transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center;

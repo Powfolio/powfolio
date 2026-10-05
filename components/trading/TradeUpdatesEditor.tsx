@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { TradeUpdate } from "@/types/database";
 import { packCharts, unpackCharts } from "@/components/trading/TradeUpdatesModal";
+import ChartCropper from "@/components/trading/ChartCropper";
 
 type Props = {
   userId: string;
@@ -28,6 +29,8 @@ export default function TradeUpdatesEditor({ userId, tradeId, onError }: Props) 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropSlot, setCropSlot] = useState<"chart_url" | "chart_url_2">("chart_url");
 
   async function load() {
     const supabase = createClient();
@@ -56,8 +59,8 @@ export default function TradeUpdatesEditor({ userId, tradeId, onError }: Props) 
       caption: u.caption ?? "",
       post_url: u.post_url ?? "",
       occurred_at: u.occurred_at ?? u.created_at?.slice(0, 10) ?? "",
-      chart_url: unpackCharts(u.chart_url)[0] || null,
-      chart_url_2: unpackCharts(u.chart_url)[1] || null,
+      chart_url: unpackCharts(u.chart_url)[0] ? JSON.stringify(unpackCharts(u.chart_url)[0]) : null,
+      chart_url_2: unpackCharts(u.chart_url)[1] ? JSON.stringify(unpackCharts(u.chart_url)[1]) : null,
     });
   }
 
@@ -66,31 +69,30 @@ export default function TradeUpdatesEditor({ userId, tradeId, onError }: Props) 
     setForm(empty);
   }
 
-  async function handleChart(e: React.ChangeEvent<HTMLInputElement>, slot: "chart_url" | "chart_url_2") {
+  function handleChart(e: React.ChangeEvent<HTMLInputElement>, slot: "chart_url" | "chart_url_2") {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      onError("Must be an image");
-      return;
-    }
-    if (file.size > 4 * 1024 * 1024) {
-      onError("Max 4MB");
-      return;
-    }
+    if (!file.type.startsWith("image/")) { onError("Must be an image"); return; }
+    if (file.size > 4 * 1024 * 1024) { onError("Max 4MB"); return; }
+    setCropSlot(slot);
+    setCropFile(file);
+  }
+  async function saveCrop(thumb: Blob, full: File) {
+    setCropFile(null);
     setUploading(true);
     const supabase = createClient();
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `${userId}/update-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    const ext = full.name.split(".").pop() || "jpg";
+    const path = `${userId}/update-full-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, full, { upsert: true });
+    if (error) { setUploading(false); onError(error.message); return; }
+    const fullUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+    const thumbPath = `${userId}/update-thumb-${Date.now()}.jpg`;
+    const { error: thumbError } = await supabase.storage.from("avatars").upload(thumbPath, thumb, { upsert: true, contentType: "image/jpeg" });
     setUploading(false);
-    if (error) {
-      onError(error.message);
-      return;
-    }
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("avatars").getPublicUrl(path);
-    setForm((p) => ({ ...p, [slot]: publicUrl }));
+    if (thumbError) { onError(thumbError.message); return; }
+    const thumbUrl = supabase.storage.from("avatars").getPublicUrl(thumbPath).data.publicUrl;
+    setForm((prev) => ({ ...prev, [cropSlot]: JSON.stringify({ thumb: thumbUrl, full: fullUrl }) }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -239,6 +241,7 @@ export default function TradeUpdatesEditor({ userId, tradeId, onError }: Props) 
           )}
         </div>
       </form>
+      <ChartCropper file={cropFile} onCancel={() => setCropFile(null)} onConfirm={(thumb, full) => void saveCrop(thumb, full)} />
     </div>
   );
 }

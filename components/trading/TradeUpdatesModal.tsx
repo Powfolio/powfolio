@@ -11,18 +11,31 @@ type Props = {
   onClose: () => void;
 };
 
-export function unpackCharts(raw: string | null | undefined): string[] {
+export type ChartImage = { thumb: string; full: string };
+
+export function asChart(raw: string | null | undefined): ChartImage | null {
+  if (!raw) return null;
+  const value = raw.trim();
+  if (value.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed.thumb === "string") return { thumb: parsed.thumb, full: parsed.full || parsed.thumb };
+    } catch { /* plain url */ }
+  }
+  return { thumb: value, full: value };
+}
+
+export function unpackCharts(raw: string | null | undefined): ChartImage[] {
   if (!raw) return [];
   const value = raw.trim();
   if (value.startsWith("[")) {
     try {
       const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) return parsed.filter((item) => typeof item === "string" && item).slice(0, 2);
-    } catch {
-      return [value];
-    }
+      if (Array.isArray(parsed)) return parsed.map((item) => asChart(typeof item === "string" ? item : JSON.stringify(item))).filter((item): item is ChartImage => Boolean(item)).slice(0, 2);
+    } catch { return [asChart(value)].filter((item): item is ChartImage => Boolean(item)); }
   }
-  return [value];
+  const one = asChart(value);
+  return one ? [one] : [];
 }
 
 export function packCharts(urls: Array<string | null | undefined>): string | null {
@@ -35,6 +48,7 @@ export function packCharts(urls: Array<string | null | undefined>): string | nul
 export default function TradeUpdatesModal({ trade, updates, open, onClose }: Props) {
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [full, setFull] = useState<string | null>(null);
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
@@ -62,6 +76,9 @@ export default function TradeUpdatesModal({ trade, updates, open, onClose }: Pro
 
   return createPortal(
     <div className="trade-sheet-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label="Trade updates">
+      <button type="button" className="trade-sheet-close" onClick={onClose} aria-label="Close updates">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 6l12 12M18 6 6 18" /></svg>
+      </button>
       <div className="trade-sheet" data-theme={theme} onClick={(e) => e.stopPropagation()}>
         <header className="trade-sheet-head">
           <div className="min-w-0">
@@ -73,34 +90,34 @@ export default function TradeUpdatesModal({ trade, updates, open, onClose }: Pro
               {trade.roi != null && <span className={trade.roi >= 0 ? "up" : "down"}>{trade.roi > 0 ? "+" : ""}{trade.roi}%</span>}
             </div>
           </div>
-          <button type="button" className="trade-sheet-close" onClick={onClose} aria-label="Close updates">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 6l12 12M18 6 6 18" /></svg>
-          </button>
         </header>
         <div className="trade-sheet-body">
-          <TimelineItem label="Original Call" date={trade.traded_at || trade.created_at?.slice(0, 10)} charts={[trade.chart_url, trade.chart_url_2].filter(Boolean) as string[]} caption={trade.analysis} postUrl={trade.post_url} />
+          <TimelineItem label="Original Call" date={trade.traded_at || trade.created_at?.slice(0, 10)} charts={[trade.chart_url, trade.chart_url_2].map(asChart).filter((item): item is ChartImage => Boolean(item))} caption={trade.analysis} postUrl={trade.post_url} onOpen={setFull} />
           {sorted.map((u, i) => (
             <div key={u.id}>
               <div className="trade-sheet-join">↓ {u.label || `Update ${i + 1}`}</div>
-              <TimelineItem label={u.label || `Update ${i + 1}`} date={u.occurred_at || u.created_at?.slice(0, 10)} charts={unpackCharts(u.chart_url)} caption={u.caption} postUrl={u.post_url} />
+              <TimelineItem label={u.label || `Update ${i + 1}`} date={u.occurred_at || u.created_at?.slice(0, 10)} charts={unpackCharts(u.chart_url)} caption={u.caption} postUrl={u.post_url} onOpen={setFull} />
             </div>
           ))}
         </div>
       </div>
+      {full && <button className="trade-full" type="button" onClick={() => setFull(null)} aria-label="Close full chart"><img src={full} alt="" /></button>}
     </div>,
     document.body
   );
 }
 
-function TimelineItem({ label, date, charts, caption, postUrl }: { label: string; date?: string | null; charts: string[]; caption?: string | null; postUrl?: string | null }) {
+function TimelineItem({ label, date, charts, caption, postUrl, onOpen }: { label: string; date?: string | null; charts: ChartImage[]; caption?: string | null; postUrl?: string | null; onOpen: (src: string) => void }) {
   return (
     <article className="trade-sheet-item">
       <div className="trade-sheet-item-top"><span>{label}</span>{date && <time>{date}</time>}</div>
       {charts.length > 0 && (
         <div className={`trade-sheet-images${charts.length > 1 ? " two" : ""}`}>
-          {charts.slice(0, 2).map((src) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={src} src={src} alt="" />
+          {charts.slice(0, 2).map((chart) => (
+            <button key={chart.thumb} type="button" onClick={() => onOpen(chart.full)} aria-label="Open full chart">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={chart.thumb} alt="" />
+            </button>
           ))}
         </div>
       )}
