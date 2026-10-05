@@ -8,7 +8,6 @@ import { getPlatformDomain, searchPlatforms } from "@/lib/cex-dex-list";
 import WorkspaceShell from "@/components/workspace/WorkspaceShell";
 import TradeUpdatesEditor from "@/components/trading/TradeUpdatesEditor";
 import PlatformLogo from "@/components/ui/PlatformLogo";
-import ChartCropper from "@/components/trading/ChartCropper";
 import { asChart } from "@/components/trading/TradeUpdatesModal";
 import type { Trade, TradeDirection, TradeStatus, TradingPlatform } from "@/types/database";
 
@@ -35,8 +34,6 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
   const [updatesTradeId, setUpdatesTradeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [cropFile, setCropFile] = useState<File | null>(null);
-  const [cropSlot, setCropSlot] = useState<1 | 2>(1);
   const [error, setError] = useState<string | null>(null);
   const [drag, setDrag] = useState<number | null>(null);
   const [toast, setToast] = useState("");
@@ -81,25 +78,14 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
     if (uploadError) { setError(uploadError.message); return null; }
     return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
   }
-  function handleChart(file: File | null, slot: 1 | 2) {
+  async function handleChart(file: File | null, slot: 1 | 2) {
     if (!file) return;
-    setCropSlot(slot);
-    setCropFile(file);
-  }
-  async function saveCrop(thumb: Blob, full: File) {
-    setCropFile(null);
     setUploading(true); setError(null);
-    const fullUrl = await uploadImage(full);
-    if (!fullUrl) { setUploading(false); return; }
-    const supabase = createClient();
-    const thumbPath = `${userId}/trade-thumb-${Date.now()}.jpg`;
-    const { error: thumbError } = await supabase.storage.from("avatars").upload(thumbPath, thumb, { upsert: true, contentType: "image/jpeg" });
+    const url = await uploadImage(file);
     setUploading(false);
-    if (thumbError) return setError(thumbError.message);
-    const thumbUrl = supabase.storage.from("avatars").getPublicUrl(thumbPath).data.publicUrl;
-    const packed = JSON.stringify({ thumb: thumbUrl, full: fullUrl });
-    if (cropSlot === 1) setForm((prev) => ({ ...prev, chart_url: packed }));
-    else setForm((prev) => ({ ...prev, chart_url_2: packed }));
+    if (!url) return;
+    if (slot === 1) setForm((p) => ({ ...p, chart_url: url }));
+    else setForm((p) => ({ ...p, chart_url_2: url }));
   }
   async function handleSubmit() {
     if (!form.ticker.trim()) return setError("Ticker is required");
@@ -193,7 +179,6 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
         </div>
       )}
       <div className={`toast${toastOn ? " show" : ""}`}>{toast}</div>
-    <ChartCropper file={cropFile} onCancel={() => setCropFile(null)} onConfirm={(thumb, full) => void saveCrop(thumb, full)} />
     </WorkspaceShell>
   );
 }
