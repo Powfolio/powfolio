@@ -232,6 +232,7 @@ export default function CommunityManager({ userId, username, initialItems }: { u
 
   async function handleSubmit() {
     if (!form.title.trim()) return setError("Title is required");
+    if (!form.url.trim()) return setError("A project or collaboration link is required.");
     setLoading(true);
     setError(null);
     const supabase = createClient();
@@ -318,7 +319,7 @@ export default function CommunityManager({ userId, username, initialItems }: { u
           <div className="hero-row"><div><h1>Projects & Collabs</h1><p>Personal builds, partnerships and community roles. The same entry flow as the rest of the workspace, with a logo pulled from each project link.</p></div></div>
         </section>
         <section className="panel active">
-          <div className="section-intro"><h2>{tab === "all" ? "All work" : categoryLabel(tab)}</h2><p>Add a project link so the logo is pulled automatically. Replace the image if the site mark is wrong. Drag a row to change the public order.</p></div>
+          <div className="section-intro"><h2>{tab === "all" ? "All work" : categoryLabel(tab)}</h2><p>A project or collaboration link is required. The logo is pulled from it. Replace the image if the mark is wrong. Replace the image if the site mark is wrong. Drag a row to change the public order.</p></div>
           {drafts.length > 0 && (
             <div className="block">
               <div className="block-head"><div><div className="block-title">Imported projects</div><div className="block-desc">{drafts.length} item{drafts.length === 1 ? "" : "s"} from CV, Notion or GitHub are waiting to be saved.</div></div><button className="action accent" type="button" disabled={importing} onClick={() => void saveDrafts()}>{importing ? "Saving..." : "Save imported"}</button></div>
@@ -355,7 +356,7 @@ export default function CommunityManager({ userId, username, initialItems }: { u
                 <div className="field"><label className="label">Role</label><input className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Founder, contributor, mod" /></div>
                 <div className="field"><label className="label">Platform</label><input className="input" value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} placeholder="GitHub, Telegram, Discord" /></div>
                 <div className="field"><label className="label">Category</label><select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Category })}>{CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
-                <div className="field full"><label className="label">Project link</label><input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value, thumbnail_url: form.thumbnail_url && !form.thumbnail_url.includes("google.com/s2/favicons") ? form.thumbnail_url : siteLogo(absoluteUrl(e.target.value)) })} placeholder="https://project.com" /></div>
+                <div className="field full"><label className="label">Project link</label><input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value, thumbnail_url: form.thumbnail_url && !form.thumbnail_url.includes("google.com/s2/favicons") ? form.thumbnail_url : siteLogo(absoluteUrl(e.target.value)) })} placeholder="https://github.com/you/project" required /></div>
                 <div className="field full logo-field"><span className="logo-preview">{logo ? <img src={logo} alt="" /> : "Logo"}</span><label className="text-action">{uploading ? "Uploading..." : "Replace logo"}<input type="file" accept="image/*" hidden onChange={(e) => void handleImage(e.target.files?.[0] || null)} /></label><span className="logo-note">The site logo is pulled from the link. Upload another image if it is wrong.</span></div>
                 <div className="field full"><label className="label">Description</label><textarea className="textarea" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What you built, who you worked with, or the role you held." /></div>
                 <div className="field"><label className="label">Start</label><input className="input" type="month" value={form.started_at.slice(0, 7)} onChange={(e) => setForm({ ...form, started_at: e.target.value })} /></div>

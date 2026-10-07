@@ -9,7 +9,7 @@ import type {
   WorkExperience,
   Education,
 } from "@/types/database";
-import PrintResume from "@/components/profile/PrintResume";
+import ResumeStudio from "@/components/profile/ResumeStudio";
 import ResumeExtras from "@/components/profile/ResumeExtras";
 import { normalizeSkills, cleanPlainText } from "@/lib/skills";
 
@@ -46,6 +46,13 @@ function looksLikeJunk(title: string, description?: string | null): boolean {
 
 function sep(parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(" / ");
+}
+
+function abs(url?: string | null) {
+  if (!url) return "";
+  const v = url.trim();
+  if (!v) return "";
+  return /^https?:\/\//i.test(v) ? v : `https://${v}`;
 }
 
 export default async function DashboardResumePage() {
@@ -91,82 +98,50 @@ export default async function DashboardResumePage() {
   const roleLine = skillList.slice(0, 3).map((s) => s.name).join(" / ");
 
   return (
-    <div className="resume-page min-h-screen bg-[#e8ece8] text-[#12201a]">
-      <style>{`
-        @page { margin: 10mm 10mm; size: A4; }
-        @media print {
-          .no-print { display: none !important; }
-          html, body { background: white !important; }
-          .resume-sheet { box-shadow: none !important; margin: 0 !important; max-width: none !important; }
-          .resume-mark { position: fixed; }
-        }
-        .resume-sheet { position: relative; }
-        .resume-mark {
-          position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-          font-size: clamp(28px, 8vw, 64px); font-weight: 800; letter-spacing: 0.08em;
-          color: rgba(184, 134, 59, 0.16); white-space: nowrap; pointer-events: none; z-index: 0;
-        }
-        .resume-inner { position: relative; z-index: 1; }
-        .resume-link { color: #9a6b24; text-decoration: underline; text-underline-offset: 2px; }
-        @media (max-width: 700px) {
-          .resume-lead, .resume-summary { text-align: center; }
-        }
-        .resume-rule { height: 1px; background: linear-gradient(90deg, #10b981, rgba(16,185,129,0.08)); }
-      `}</style>
-      <div className="no-print mx-auto flex max-w-[860px] items-center justify-between gap-3 px-4 py-4">
-        <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-800">
-          Back to dashboard
-        </Link>
-        <PrintResume username={p.username} />
-      </div>
-      <div className="resume-mark" aria-hidden="true">POWFOLIO.XYZ</div>
-      <article className="resume-sheet mx-auto mb-10 max-w-[860px] bg-white shadow-[0_18px_50px_rgba(16,24,20,0.08)] print:mb-0 print:max-w-none print:shadow-none">
-        <div className="h-1.5 w-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-teal-400" />
+    <ResumeStudio username={p.username}>
+      <article className="resume-sheet mx-auto mb-10 max-w-[860px] shadow-[0_18px_50px_rgba(16,24,20,0.08)] print:mb-0 print:max-w-none print:shadow-none">
+        <div className="resume-mark" aria-hidden="true">POWFOLIO.XYZ</div>
+        <div className="resume-bar" />
         <div className="resume-inner px-8 py-7 print:px-6 print:py-5">
-          <header className="flex items-start justify-between gap-6">
-            <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-700">Curriculum vitae</p>
-              <h1 className="mt-1 text-[30px] font-bold leading-tight tracking-tight text-[#0b1f18]">
-                {p.display_name || p.username}
-              </h1>
-              {roleLine && <p className="resume-lead mt-1 text-[13px] font-medium text-emerald-800">{roleLine}</p>}
-              {p.bio && (
-                <p className="resume-lead mt-2 max-w-[34rem] text-[12.5px] leading-relaxed text-zinc-600 sm:mx-0 mx-auto">{cleanPlainText(p.bio, 220)}</p>
-              )}
+          <header>
+            <div className="flex items-start justify-between gap-6">
+              <div className="min-w-0">
+                <p className="resume-kicker text-[10px] font-semibold uppercase tracking-[0.22em]">Curriculum vitae</p>
+                <h1 className="resume-name mt-1 text-[30px] font-bold leading-tight tracking-tight">{p.display_name || p.username}</h1>
+              </div>
+              <a href={`https://pow3folio.vercel.app/${p.username}`} className="shrink-0 text-right no-underline">
+                <span className="ml-auto flex h-11 w-11 items-center justify-center rounded-md bg-[#12201a] text-sm font-bold text-white">P</span>
+                <p className="resume-kicker mt-2 text-[10px] font-semibold tracking-wide">Powfolio</p>
+                <p className="resume-muted text-[10px] text-zinc-500">pow3folio.vercel.app/{p.username}</p>
+              </a>
             </div>
-            <a href={`https://pow3folio.vercel.app/${p.username}`} className="shrink-0 text-right no-underline">
-              <span className="ml-auto flex h-11 w-11 items-center justify-center rounded-md bg-[#12201a] text-sm font-bold text-white">P</span>
-              <p className="mt-2 text-[10px] font-semibold tracking-wide text-emerald-700">Powfolio</p>
-              <p className="text-[10px] text-zinc-500">pow3folio.vercel.app/{p.username}</p>
-            </a>
+            <div className="resume-lead-block mt-3">
+              {roleLine && <p className="resume-role text-[13px] font-medium">{roleLine}</p>}
+              {p.bio && <p className="resume-muted mt-2 text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(p.bio, 280)}</p>}
+            </div>
           </header>
-
-          <div className="mt-6 grid grid-cols-1 gap-8 sm:grid-cols-[1.55fr_0.85fr]">
+          <div className="resume-grid mt-6 grid grid-cols-1 gap-8 sm:grid-cols-[1.55fr_0.85fr]">
             <div className="min-w-0 space-y-6">
               {summary && (
                 <section>
-                  <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">Profile</h2>
+                  <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Profile</h2>
                   <div className="resume-rule mb-2.5" />
-                  <p className="resume-summary text-[12.5px] leading-relaxed text-zinc-700">{summary}</p>
+                  <p className="resume-summary text-[12.5px] leading-relaxed">{summary}</p>
                 </section>
               )}
               {work.length > 0 && (
                 <section>
-                  <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">Experience</h2>
+                  <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Experience</h2>
                   <div className="resume-rule mb-3" />
                   <div className="space-y-4">
                     {work.map((w) => (
-                      <div key={w.id} className="relative pl-3 before:absolute before:left-0 before:top-1.5 before:h-full before:w-px before:bg-emerald-100">
-                        <p className="text-[13px] font-semibold text-[#0b1f18]">{w.role}</p>
-                        <p className="text-[12px] text-emerald-800">
-                          {w.company}
-                          <span className="font-normal text-zinc-500">
-                            {" "}{sep([w.employment_type === "full-time" ? "Full-time" : "Part-time", `${w.start_date}${w.end_date ? ` to ${w.end_date}` : " to Present"}`])}
-                          </span>
+                      <div key={w.id}>
+                        <p className="text-[13px] font-semibold">{w.role}</p>
+                        <p className="text-[12px]">
+                          {w.url ? <a className="resume-link" href={abs(w.url)}>{w.company}</a> : w.company}
+                          <span className="resume-muted font-normal text-zinc-500"> {sep([w.employment_type === "full-time" ? "Full-time" : "Part-time", `${w.start_date}${w.end_date ? ` to ${w.end_date}` : " to Present"}`])}</span>
                         </p>
-                        {w.description && (
-                          <p className="mt-1 text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(w.description, 420)}</p>
-                        )}
+                        {w.description && <p className="resume-muted mt-1 text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(w.description, 420)}</p>}
                       </div>
                     ))}
                   </div>
@@ -174,21 +149,17 @@ export default async function DashboardResumePage() {
               )}
               {projects.length > 0 && (
                 <section>
-                  <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">Projects and collaborations</h2>
+                  <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Projects and collaborations</h2>
                   <div className="resume-rule mb-3" />
                   <div className="space-y-3">
                     {projects.map((c) => (
                       <div key={c.id}>
-                        <p className="text-[13px] font-semibold text-[#0b1f18]">
-                          {c.title}
+                        <p className="text-[13px] font-semibold">
+                          {c.url ? <a className="resume-link" href={abs(c.url)}>{c.title}</a> : c.title}
                           {c.role ? <span className="font-normal text-zinc-600"> / {c.role}</span> : null}
-                          <span className="ml-2 rounded-sm bg-emerald-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700">
-                            {categoryOf(c)}
-                          </span>
+                          {c.url ? <a className="resume-link ml-2 text-[9px] font-semibold uppercase tracking-wide" href={abs(c.url)}>{categoryOf(c)}</a> : <span className="ml-2 text-[9px] font-semibold uppercase tracking-wide">{categoryOf(c)}</span>}
                         </p>
-                        {c.description && (
-                          <p className="mt-0.5 text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(c.description, 260)}</p>
-                        )}
+                        {c.description && <p className="resume-muted mt-0.5 text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(c.description, 260)}</p>}
                       </div>
                     ))}
                   </div>
@@ -196,18 +167,13 @@ export default async function DashboardResumePage() {
               )}
               {writingItems.length > 0 && (
                 <section>
-                  <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">Writing and research</h2>
+                  <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Writing and research</h2>
                   <div className="resume-rule mb-3" />
                   <div className="space-y-2">
                     {writingItems.slice(0, 8).map((w) => (
                       <div key={w.id}>
-                        <p className="text-[13px] font-semibold text-[#0b1f18]">
-                          {w.title}
-                          {w.published_at ? <span className="ml-2 text-[11px] font-normal text-zinc-500">{w.published_at}</span> : null}
-                        </p>
-                        {w.description && (
-                          <p className="text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(w.description, 180)}</p>
-                        )}
+                        <p className="text-[13px] font-semibold">{w.url ? <a className="resume-link" href={abs(w.url)}>{w.title}</a> : w.title}{w.published_at ? <span className="resume-muted ml-2 text-[11px] font-normal text-zinc-500">{w.published_at}</span> : null}</p>
+                        {w.description && <p className="resume-muted text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(w.description, 180)}</p>}
                       </div>
                     ))}
                   </div>
@@ -216,26 +182,22 @@ export default async function DashboardResumePage() {
             </div>
             <aside className="min-w-0 space-y-6">
               {skillList.length > 0 && (
-                <section className="rounded-xl bg-[#f4faf6] px-4 py-4">
-                  <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">Skills</h2>
+                <section className="resume-side">
+                  <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Skills</h2>
                   <div className="flex flex-wrap gap-1.5">
-                    {skillList.map((s) => (
-                      <span key={s.name} className="rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-[11px] font-medium text-emerald-900">
-                        {s.name}
-                      </span>
-                    ))}
+                    {skillList.map((s) => <span key={s.name} className="resume-chip rounded-full px-2 py-0.5 text-[11px] font-medium">{s.name}</span>)}
                   </div>
                 </section>
               )}
               {edu.length > 0 && (
                 <section>
-                  <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">Education</h2>
+                  <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Education</h2>
                   <div className="space-y-3">
                     {edu.map((e) => (
                       <div key={e.id}>
-                        <p className="text-[13px] font-semibold text-[#0b1f18]">{e.degree || e.institution}</p>
-                        <p className="text-[12px] text-zinc-600">{e.institution}</p>
-                        <p className="text-[11px] text-zinc-500">{sep([e.field_of_study, e.country, [e.start_year, e.end_year].filter(Boolean).join(" to ")])}</p>
+                        <p className="text-[13px] font-semibold">{e.url ? <a className="resume-link" href={abs(e.url)}>{e.degree || e.institution}</a> : (e.degree || e.institution)}</p>
+                        <p className="resume-muted text-[12px] text-zinc-600">{e.institution}</p>
+                        <p className="resume-muted text-[11px] text-zinc-500">{sep([e.field_of_study, e.country, [e.start_year, e.end_year].filter(Boolean).join(" to ")])}</p>
                       </div>
                     ))}
                   </div>
@@ -243,12 +205,12 @@ export default async function DashboardResumePage() {
               )}
               {docs.length > 0 && (
                 <section>
-                  <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">Credentials</h2>
+                  <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Credentials</h2>
                   <ul className="space-y-1.5">
                     {docs.map((d) => (
-                      <li key={d.id} className="text-[12px] text-zinc-700">
-                        {d.file_url ? <a className="resume-link" href={d.file_url} target="_blank" rel="noreferrer">{d.title}</a> : d.title}
-                        {d.issuer ? <span className="block text-[11px] text-zinc-500">{d.issuer}</span> : null}
+                      <li key={d.id} className="text-[12px]">
+                        {d.file_url ? <a className="resume-link" href={d.file_url}>{d.title}</a> : d.title}
+                        {d.issuer ? <span className="resume-muted block text-[11px] text-zinc-500">{d.issuer}</span> : null}
                       </li>
                     ))}
                   </ul>
@@ -258,17 +220,17 @@ export default async function DashboardResumePage() {
           </div>
           <ResumeExtras userId={p.id} username={p.username} />
           {contacts.length > 0 && (
-            <section className="mt-8 border-t border-emerald-100 pt-4">
-              <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">Contact</h2>
+            <section className="mt-8 border-t border-current/10 pt-4">
+              <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Contact</h2>
               <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
                 {contacts.map((c) => (
-                  <li key={c}>{/^https?:\/\//.test(c) || c.includes("@") || c.includes("t.me") || c.includes("github.com") || c.includes("x.com") ? <a className="resume-link" href={c.includes("@") && !c.startsWith("http") ? `mailto:${c}` : c.startsWith("http") ? c : `https://${c}`}>{c.replace(/^https?:\/\//, "")}</a> : c}</li>
+                  <li key={c}>{/^https?:\/\//.test(c) || c.includes("@") || c.includes(".") ? <a className="resume-link" href={c.includes("@") && !c.startsWith("http") ? `mailto:${c}` : c.startsWith("http") ? c : `https://${c}`}>{c.replace(/^https?:\/\//, "")}</a> : c}</li>
                 ))}
               </ul>
             </section>
           )}
         </div>
       </article>
-    </div>
+    </ResumeStudio>
   );
 }
