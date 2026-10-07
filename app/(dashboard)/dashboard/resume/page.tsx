@@ -97,25 +97,20 @@ export default async function DashboardResumePage() {
         @media print {
           .no-print { display: none !important; }
           html, body { background: white !important; }
-          a { color: inherit !important; text-decoration: none !important; }
           .resume-sheet { box-shadow: none !important; margin: 0 !important; max-width: none !important; }
+          .resume-mark { position: fixed; }
         }
-        .resume-sheet { position: relative; overflow: hidden; }
-        .resume-sheet::before {
-          content: "POWFOLIO.XYZ";
-          position: absolute;
-          left: 50%;
-          top: 46%;
-          transform: translate(-50%, -50%) rotate(-28deg);
-          font-size: 54px;
-          font-weight: 800;
-          letter-spacing: 0.18em;
-          color: rgba(18, 32, 26, 0.055);
-          white-space: nowrap;
-          pointer-events: none;
-          z-index: 0;
+        .resume-sheet { position: relative; }
+        .resume-mark {
+          position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+          font-size: clamp(28px, 8vw, 64px); font-weight: 800; letter-spacing: 0.08em;
+          color: rgba(184, 134, 59, 0.16); white-space: nowrap; pointer-events: none; z-index: 0;
         }
         .resume-inner { position: relative; z-index: 1; }
+        .resume-link { color: #9a6b24; text-decoration: underline; text-underline-offset: 2px; }
+        @media (max-width: 700px) {
+          .resume-lead, .resume-summary { text-align: center; }
+        }
         .resume-rule { height: 1px; background: linear-gradient(90deg, #10b981, rgba(16,185,129,0.08)); }
       `}</style>
       <div className="no-print mx-auto flex max-w-[860px] items-center justify-between gap-3 px-4 py-4">
@@ -124,6 +119,7 @@ export default async function DashboardResumePage() {
         </Link>
         <PrintResume username={p.username} />
       </div>
+      <div className="resume-mark" aria-hidden="true">POWFOLIO.XYZ</div>
       <article className="resume-sheet mx-auto mb-10 max-w-[860px] bg-white shadow-[0_18px_50px_rgba(16,24,20,0.08)] print:mb-0 print:max-w-none print:shadow-none">
         <div className="h-1.5 w-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-teal-400" />
         <div className="resume-inner px-8 py-7 print:px-6 print:py-5">
@@ -133,9 +129,9 @@ export default async function DashboardResumePage() {
               <h1 className="mt-1 text-[30px] font-bold leading-tight tracking-tight text-[#0b1f18]">
                 {p.display_name || p.username}
               </h1>
-              {roleLine && <p className="mt-1 text-[13px] font-medium text-emerald-800">{roleLine}</p>}
+              {roleLine && <p className="resume-lead mt-1 text-[13px] font-medium text-emerald-800">{roleLine}</p>}
               {p.bio && (
-                <p className="mt-2 max-w-[34rem] text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(p.bio, 220)}</p>
+                <p className="resume-lead mt-2 max-w-[34rem] text-[12.5px] leading-relaxed text-zinc-600 sm:mx-0 mx-auto">{cleanPlainText(p.bio, 220)}</p>
               )}
             </div>
             <a href={`https://pow3folio.vercel.app/${p.username}`} className="shrink-0 text-right no-underline">
@@ -144,20 +140,14 @@ export default async function DashboardResumePage() {
               <p className="text-[10px] text-zinc-500">pow3folio.vercel.app/{p.username}</p>
             </a>
           </header>
-          {contacts.length > 0 && (
-            <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-y border-emerald-100 py-2.5 text-[11px] text-zinc-600">
-              {contacts.map((c) => (
-                <li key={c} className="break-words">{/^https?:\/\//.test(c) || c.includes("@") ? <a href={c.includes("@") && !c.startsWith("http") ? `mailto:${c}` : c.startsWith("http") ? c : `https://${c}`} className="underline decoration-emerald-200 underline-offset-2">{c.replace(/^https?:\/\//, "")}</a> : c}</li>
-              ))}
-            </ul>
-          )}
+
           <div className="mt-6 grid grid-cols-1 gap-8 sm:grid-cols-[1.55fr_0.85fr]">
             <div className="min-w-0 space-y-6">
               {summary && (
                 <section>
                   <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">Profile</h2>
                   <div className="resume-rule mb-2.5" />
-                  <p className="text-[12.5px] leading-relaxed text-zinc-700">{summary}</p>
+                  <p className="resume-summary text-[12.5px] leading-relaxed text-zinc-700">{summary}</p>
                 </section>
               )}
               {work.length > 0 && (
@@ -224,9 +214,9 @@ export default async function DashboardResumePage() {
                 </section>
               )}
             </div>
-            <aside className="min-w-0 space-y-6 rounded-xl bg-[#f4faf6] px-4 py-4">
+            <aside className="min-w-0 space-y-6">
               {skillList.length > 0 && (
-                <section>
+                <section className="rounded-xl bg-[#f4faf6] px-4 py-4">
                   <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">Skills</h2>
                   <div className="flex flex-wrap gap-1.5">
                     {skillList.map((s) => (
@@ -257,7 +247,7 @@ export default async function DashboardResumePage() {
                   <ul className="space-y-1.5">
                     {docs.map((d) => (
                       <li key={d.id} className="text-[12px] text-zinc-700">
-                        {d.title}
+                        {d.file_url ? <a className="resume-link" href={d.file_url} target="_blank" rel="noreferrer">{d.title}</a> : d.title}
                         {d.issuer ? <span className="block text-[11px] text-zinc-500">{d.issuer}</span> : null}
                       </li>
                     ))}
@@ -267,10 +257,16 @@ export default async function DashboardResumePage() {
             </aside>
           </div>
           <ResumeExtras userId={p.id} username={p.username} />
-          <section className="mt-8 border-t border-emerald-100 pt-4">
-            <p className="text-[12.5px] leading-relaxed text-zinc-700">Proof of work lives on the public profile. Employers can open the live record for writing, trading, onchain activity and collaborations.</p>
-            <a href={`https://pow3folio.vercel.app/${p.username}`} className="mt-2 inline-block text-[12.5px] font-semibold text-emerald-800 underline underline-offset-2">pow3folio.vercel.app/{p.username}</a>
-          </section>
+          {contacts.length > 0 && (
+            <section className="mt-8 border-t border-emerald-100 pt-4">
+              <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-800">Contact</h2>
+              <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
+                {contacts.map((c) => (
+                  <li key={c}>{/^https?:\/\//.test(c) || c.includes("@") || c.includes("t.me") || c.includes("github.com") || c.includes("x.com") ? <a className="resume-link" href={c.includes("@") && !c.startsWith("http") ? `mailto:${c}` : c.startsWith("http") ? c : `https://${c}`}>{c.replace(/^https?:\/\//, "")}</a> : c}</li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
       </article>
     </div>

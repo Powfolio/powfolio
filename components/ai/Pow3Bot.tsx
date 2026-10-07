@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -27,6 +28,7 @@ type Props = {
 };
 
 export default function Pow3Bot({ context }: Props) {
+  const path = usePathname();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -158,6 +160,7 @@ export default function Pow3Bot({ context }: Props) {
       }
     : {};
 
+  if (path?.includes("/resume")) return null;
   return (
     <>
       {open && (

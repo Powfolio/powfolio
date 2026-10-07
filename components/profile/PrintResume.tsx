@@ -15,7 +15,7 @@ export default function PrintResume({ username }: { username: string }) {
         <path d="m8 10 4 4 4-4" className="cv-arrow" />
         <path d="M5 19h14" />
       </svg>
-      Download PDF
+      Download
     </button>
   );
 }
