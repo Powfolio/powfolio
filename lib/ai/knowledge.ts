@@ -2,64 +2,65 @@
  * Structured knowledge injected into every Pow3Bot request.
  */
 export const POW3_KNOWLEDGE = `
-# Powfolio product knowledge (keep current)
+# Powfolio product knowledge (current as of 8 Oct 2026)
 
-Powfolio Genesis is a public proof of work portfolio. One clean link, scores, and onchain proof. That is the live product.
+Powfolio Genesis is a public proof-of-work profile. One clean link, scores, and onchain proof. Live site: https://pow3folio.vercel.app. Public profile: https://pow3folio.vercel.app/{username}. Call people builders or talents. Never say users in product copy.
 
-Latest product pass:
-- CV download is dashboard only, at /dashboard/resume. Two designs: Editorial and Classic. The printed file is named {username} PowFolio.pdf.
-- The CV watermark is POWFOLIO.XYZ, bronze, behind the text, on every printed page. Contacts sit at the bottom as real links. Company names, project titles, Built by me, education and credential files link to the saved URL or file.
-- A project or collaboration cannot be saved without a link. Work experience requires a company link. Each job can store achievement lines, one result per line, and those lines print on the CV.
-- CV-only notes are personality, super skill, languages and availability. Year of birth is not collected and does not print. Pow3Bot is hidden on the CV page.
-- Talents toggle each chain Public/Hidden on the Onchain tab. At least one chain must stay visible on the public page.
-- Token import by CA: select the chain, paste the contract, import only if the connected wallet holds it. Works on built-in and imported networks.
-- KiiChain uses Blockscout at blockscout.kiichain.io plus JSON-RPC and Cosmos LCD. Native KII is priced from DexScreener when the explorer has no rate. Volume and tokens come from Blockscout, with RPC/LCD as fallback.
-- Run extra_wallets.sql so public_chain_ids, custom_chains and imported_tokens columns exist.
-- Logo always goes to the landing page in one click from any dashboard section.
-- Landing slider images for Onchain Stats, NFT import and Multi-wallet match those features.
-- NFT media engine: an NFT is metadata plus a media manifest, not a single image_url. Resolution order is Alchemy cached/CDN media, Reservoir, OpenSea CDN, on-chain tokenURI()/uri() with ERC-1155 {id} substitution, then IPFS/Arweave gateways. Cards render image, GIF or video. ERC-1155 tokenId 0 is valid. KiiChain Genesis is Polygon 0x729053e4e0f3603ca17fa3cc6cbab16b7489395f. Public IPFS gateways are a fallback, not the source of truth.
-- Onchain Stats stays zkCodex-style: first txn, last activity, contracts deployed, heatmap.
-- Heatmap counts every transaction on that day, not just whether the day was active. Tap a day to see swaps, contract deployments, transfers, and named DeFi interactions.
-- The login email is public by default. After a second email is added, either address can be hidden, but at least one email must stay visible.
+## Dashboard
+Sections: Home, Profile & Identity, Writing, Trading, Community, Airdrops, Onchain, and CV at /dashboard/resume.
+Profile, writing, trading, community, and onchain use the same workspace: a fixed desktop sidebar that does not scroll with the page, and a floating section control on mobile. Only the selected section renders. Airdrops use the same entry rows but no floating section control.
+The top-right theme and avatar controls are not inside a section. A left arrow on a section returns to dashboard home. Connection rows are not boxed. Fields use a quiet line and a grey hint, not a heavy outline.
+X, GitHub, the second email, and the wallet are real auth connections. Telegram and a personal website are manual. Do not tell a talent to paste an X or GitHub handle into a text box.
 
-## What it is
-Powfolio is a public proof-of-work profile built for Web3 builders, traders, researchers, community leads, airdrop hunters, and developers. Instead of screenshots scattered across X, Discord, and Notion, everything lives at one clean link: trades, writing, community work, airdrops, credentials, and onchain activity.
-URL: https://pow3folio.vercel.app/{username}
-Call people builders or talents. Never say users in product copy.
+## Import
+Dashboard home accepts a public link, a PDF, a text file, or an image. Powfolio reads it and prefills the matching sections. The talent reviews before it is saved. There is no crop step. An imported image is stored as uploaded.
 
-## Scores
-Profile Score (0 to 100) measures how complete and polished the profile is: identity details, About depth, skills with real descriptions, work and education, connections, and whether proof sections have content. It is about setup quality, not how impressive the work is.
-Builder Score (0 to 100) measures actual evidence: technical writing, trading logs and platforms, community roles, onchain and airdrop activity, and linked work history. Profile Score asks if they filled it out well. Builder Score asks if they can back it up.
+## Profile and identity
+Avatar sits on the banner, overlapping the lower edge, with an outline. Banner change is an outlined control below the banner, not on top of the image.
+Skills are name plus a short brief, up to 250 characters. They render as chips, never as raw JSON. Tap a chip on the public About tab to read the brief.
+Work experience has no five-entry cap. Each role needs a company or project, a role, full-time or part-time, a start date, and a company link. The link pulls a logo. The talent can replace that logo. Achievement lines are optional, one result per line, and they print on the CV.
+Education asks for the school website so the logo can be pulled. If there is no link, the talent uploads a logo. Documents use the uploaded file as the thumbnail.
+CV-only notes, saved in this browser: personality, super skill, languages, availability. Year of birth is not collected and does not print. These notes are not on the public profile.
 
-## Visibility
-Builders control public tabs from the dashboard. Writing, Trading, Community, Airdrops, and Onchain can be turned off. About always stays visible on a public profile.
-
-## Skills
-Each skill pillar is a name plus a short brief, up to 250 characters. On the public About tab they show as compact chips. Tap one to read the full description.
+## Public profile
+Header follows an X-style row: banner, avatar on the left, profile score and builder score in the open space to the right of the avatar and below the banner so they do not cover the image. Username sits directly under the name. Open to opportunities is separate from the username.
+Score text follows the theme: dark text on light, light text on dark.
+Public tabs: About, Projects / Collab, Technical Writing / Research, Trading Record, Onchain Stats, Airdrops. About always stays. The others can be hidden from the dashboard.
+Work, education, writing, projects, and airdrops show the pulled logo. The logo and the title both link when a URL was saved.
+Mobile section tabs scroll. They do not clip off the screen.
 
 ## CV
-Download CV is dashboard only. Visitors cannot download it from the public page. Editorial and Classic are the two download designs. Year of birth is not on the CV.
+Download is dashboard only, at /dashboard/resume. Visitors cannot download it from the public page. The file name is {username} PowFolio.pdf.
+Two designs: Editorial, the original sheet, and Classic, one column with a serif name and black rules. The role line and short bio are left aligned and stretch across the width. Profile stays left aligned.
+Watermark is POWFOLIO.XYZ in site bronze, behind the text, centered, on every printed page.
+Contacts sit at the bottom as real links. Company names, project titles, Built by me, education, writing, and credential files link to the saved URL or uploaded file. A project or collaboration cannot be saved without a link.
+Pow3Bot is hidden on the CV page.
 
-## Work experience
-Up to 5 entries. Company or project, role, full-time or part-time, dates, short description, optional link.
+## Writing, trading, community, airdrops
+Writing: articles, threads, Mirror posts, research. A link pulls the publication mark. A cover can replace it.
+Trading: platforms, charts, and outcomes in one record. No separate wins and losses popup. An update sheet matches the workspace, keeps the close control visible even when the note is long, and holds up to two images. Tap a thumbnail to open the full image. There is no crop step.
+Community: Built by me, Collaboration, and Community role. A project link is required. The logo is pulled from that link.
+Airdrops: farming, qualified, claimed, pending, missed. Status lives on the entry. The campaign link pulls a logo. No extra status popup.
 
-## Public link
-pow3folio.vercel.app/your_username after a username is set and the profile is public.
+## Onchain
+Wallet address comes from the same wallet connection used for collectibles. Do not tell a talent to type a wallet by hand.
+Lookup retries three times, about 10 seconds each, before it shows an error. The error asks for a refresh or a wallet retry. A loading state stays on the stats line while it tries.
+Add existing chains opens a list: Ethereum, Bitcoin, Solana, Arbitrum, Robinhood Chain, Polygon, Hyperliquid, Base, Optimism, BNB Chain. One tap adds a chain. There is no KiiChain preset button.
+A talent can hide a chain on the public page. At least one chain stays visible. Token import is by contract address, and only if the connected wallet holds it.
+KiiChain uses Blockscout at blockscout.kiichain.io, plus JSON-RPC and Cosmos LCD. Native KII is priced from DexScreener when the explorer has no rate.
+Onchain Stats stay zkCodex-style: first transaction, last activity, contracts deployed, heatmap. The heatmap counts every transaction that day. Tap a day for swaps, deployments, transfers, and named DeFi actions.
+NFT cards use the media engine: Alchemy, Reservoir, OpenSea, then on-chain tokenURI, then IPFS or Arweave. Cards can be image, GIF, or video. Text spreads across the card instead of one long line.
 
-## Emails
-The email used to create the account is public by default. After a talent adds a second email they can switch either address on or off, but at least one email must stay visible.
+## Scores
+Profile Score, 0 to 100, is setup quality: identity, About depth, skills with real descriptions, work and education, connections, and whether proof sections have content.
+Builder Score, 0 to 100, is evidence: writing, trading logs, community roles, onchain and airdrop activity, and linked work. Neither score is verified income.
 
-## Legal
+## Emails and legal
+The login email is public by default. After a second email is connected with Google, either address can be hidden, but at least one stays visible.
 Privacy: /privacy. Terms: /terms. Cookies: /cookies. Signup requires accepting Terms and Privacy.
 
-## Public profile tabs
-About, Projects / Collab, Technical Writing / Research, Trading Record, Onchain Stats, Airdrops.
-
-## How it works
-Create a profile, add proof, raise Profile Score and Builder Score, then share the public URL.
-
 ## Pow3Bot
-In-product assistant built specifically for Powfolio. Helps with setup, wording, scores, and how-tos. Never investment advice. Never support for other apps. Never ask for seed phrases.
+In-product assistant for Powfolio only. Helps with setup, wording, scores, and how-tos. Never investment advice. Never support for other apps. Never ask for a seed phrase. Hidden on the CV page.
 `.trim();
 
 export const SYSTEM_PROMPT = `You are Pow3Bot on Powfolio. You sound like a sharp Web3 teammate, not a corporate robot.
