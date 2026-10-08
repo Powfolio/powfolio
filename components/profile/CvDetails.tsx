@@ -3,14 +3,13 @@
 import { useEffect, useState } from "react";
 
 export type CvExtras = {
-  birthYear: string;
   personality: string;
   superSkill: string;
   languages: string;
   availability: string;
 };
 
-const empty: CvExtras = { birthYear: "", personality: "", superSkill: "", languages: "", availability: "" };
+const empty: CvExtras = { personality: "", superSkill: "", languages: "", availability: "" };
 
 export function cvKey(userId: string) {
   return `pow3-cv-${userId}`;
@@ -46,7 +45,6 @@ export default function CvDetails({ userId }: { userId: string }) {
       </div>
       <div className="block">
         <div className="form-grid">
-          <div className="field"><label className="label">Year of birth</label><input className="input" value={form.birthYear} onChange={(e) => setForm({ ...form, birthYear: e.target.value.replace(/[^\d]/g, "").slice(0, 4) })} placeholder="2006" inputMode="numeric" /></div>
           <div className="field"><label className="label">Languages</label><input className="input" value={form.languages} onChange={(e) => setForm({ ...form, languages: e.target.value })} placeholder="English, Igbo" /></div>
           <div className="field full"><label className="label">Personality</label><input className="input" value={form.personality} onChange={(e) => setForm({ ...form, personality: e.target.value })} placeholder="Calm under pressure, direct, community-first" /></div>
           <div className="field full"><label className="label">Super skill</label><textarea className="textarea" value={form.superSkill} onChange={(e) => setForm({ ...form, superSkill: e.target.value })} placeholder="The unfair advantage an employer should hire you for." /></div>

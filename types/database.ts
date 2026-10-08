@@ -13,6 +13,7 @@ export type WorkExperience = {
   start_date: string;
   end_date: string | null;
   logo_url?: string | null;
+  achievements?: string | null;
 };
 
 export type Education = {

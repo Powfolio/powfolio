@@ -142,6 +142,7 @@ export default async function DashboardResumePage() {
                           <span className="resume-muted font-normal text-zinc-500"> {sep([w.employment_type === "full-time" ? "Full-time" : "Part-time", `${w.start_date}${w.end_date ? ` to ${w.end_date}` : " to Present"}`])}</span>
                         </p>
                         {w.description && <p className="resume-muted mt-1 text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(w.description, 420)}</p>}
+                        {w.achievements && <ul className="mt-1 list-disc pl-4 text-[12.5px] leading-relaxed text-zinc-700">{w.achievements.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => <li key={line}>{line}</li>)}</ul>}
                       </div>
                     ))}
                   </div>

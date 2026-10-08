@@ -7,6 +7,10 @@ export const POW3_KNOWLEDGE = `
 Powfolio Genesis is a public proof of work portfolio. One clean link, scores, and onchain proof. That is the live product.
 
 Latest product pass:
+- CV download is dashboard only, at /dashboard/resume. Two designs: Editorial and Classic. The printed file is named {username} PowFolio.pdf.
+- The CV watermark is POWFOLIO.XYZ, bronze, behind the text, on every printed page. Contacts sit at the bottom as real links. Company names, project titles, Built by me, education and credential files link to the saved URL or file.
+- A project or collaboration cannot be saved without a link. Work experience requires a company link. Each job can store achievement lines, one result per line, and those lines print on the CV.
+- CV-only notes are personality, super skill, languages and availability. Year of birth is not collected and does not print. Pow3Bot is hidden on the CV page.
 - Talents toggle each chain Public/Hidden on the Onchain tab. At least one chain must stay visible on the public page.
 - Token import by CA: select the chain, paste the contract, import only if the connected wallet holds it. Works on built-in and imported networks.
 - KiiChain uses Blockscout at blockscout.kiichain.io plus JSON-RPC and Cosmos LCD. Native KII is priced from DexScreener when the explorer has no rate. Volume and tokens come from Blockscout, with RPC/LCD as fallback.
@@ -34,7 +38,7 @@ Builders control public tabs from the dashboard. Writing, Trading, Community, Ai
 Each skill pillar is a name plus a short brief, up to 250 characters. On the public About tab they show as compact chips. Tap one to read the full description.
 
 ## CV
-Download CV is dashboard only. Visitors cannot download it from the public page. Skill-specific export versions are planned.
+Download CV is dashboard only. Visitors cannot download it from the public page. Editorial and Classic are the two download designs. Year of birth is not on the CV.
 
 ## Work experience
 Up to 5 entries. Company or project, role, full-time or part-time, dates, short description, optional link.

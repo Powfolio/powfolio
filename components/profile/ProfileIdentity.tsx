@@ -148,7 +148,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
   const [eduOpen, setEduOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<string | null>(null);
   const [editingEdu, setEditingEdu] = useState<string | null>(null);
-  const [wForm, setWForm] = useState({ company: "", role: "", url: "", desc: "", type: "Full-time", start: "", end: "", logo: "" });
+  const [wForm, setWForm] = useState({ company: "", role: "", url: "", desc: "", achievements: "", type: "Full-time", start: "", end: "", logo: "" });
   const [eForm, setEForm] = useState({ institution: "", degree: "", field: "", country: "", start: "", end: "", url: "", desc: "", logo: "" });
   const [expError, setExpError] = useState("");
   const [eduError, setEduError] = useState("");
@@ -498,7 +498,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
   }
 
   function resetWork() {
-    setWForm({ company: "", role: "", url: "", desc: "", type: "Full-time", start: "", end: "", logo: "" });
+    setWForm({ company: "", role: "", url: "", desc: "", achievements: "", type: "Full-time", start: "", end: "", logo: "" });
     setEditingWork(null);
     setExpError("");
     setWorkOpen(false);
@@ -519,6 +519,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
       start_date: wForm.start,
       end_date: wForm.end || null,
       logo_url: wForm.logo || siteLogo(url),
+      achievements: wForm.achievements.trim() || null,
     };
     const next = editingWork ? work.map((w) => (w.id === editingWork ? item : w)) : [...work, item];
     const ok = await persistExperience(next, education);
@@ -538,6 +539,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
       start: item.start_date || "",
       end: item.end_date || "",
       logo: item.logo_url || "",
+      achievements: item.achievements || "",
     });
     setWorkOpen(true);
   }
@@ -827,7 +829,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
               {work.length === 0 && <div className="empty">No work experience added yet.</div>}
               {work.map((item, i) => (
                 <div key={item.id} className="entry" draggable onDragStart={() => setDragWork(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragWork === null || dragWork === i) return; setWork(moveItem(work, dragWork, i)); setDragWork(null); notify("Experience order updated"); }}>
-                  <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder experience"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><span className="logo-preview sm">{item.logo_url ? <img src={item.logo_url} alt="" /> : item.company.slice(0,1)}</span><div><div className="entry-title">{item.company}</div><div className="entry-meta">{item.role} · {item.employment_type === "part-time" ? "Part-time" : "Full-time"} · {item.start_date}{item.end_date ? ` to ${item.end_date}` : " to Present"}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}</div></div>
+                  <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder experience"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><span className="logo-preview sm">{item.logo_url ? <img src={item.logo_url} alt="" /> : item.company.slice(0,1)}</span><div><div className="entry-title">{item.company}</div><div className="entry-meta">{item.role} · {item.employment_type === "part-time" ? "Part-time" : "Full-time"} · {item.start_date}{item.end_date ? ` to ${item.end_date}` : " to Present"}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}{item.achievements && <div className="entry-meta">{item.achievements}</div>}</div></div>
                   <div className="entry-actions">
                     <button className="small-action" type="button" onClick={() => editWork(item)}>Edit</button>
                     <button className="small-action danger-action" type="button" onClick={() => void persistExperience(work.filter((w) => w.id !== item.id), education)}>Remove</button>
@@ -841,7 +843,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
                 <div className="field"><label className="label">Role *</label><input className="input" value={wForm.role} onChange={(e) => setWForm({ ...wForm, role: e.target.value })} placeholder="Your role" /></div>
                 <div className="field full"><label className="label">Company / project link *</label><input className="input" value={wForm.url} onChange={(e) => setWForm({ ...wForm, url: e.target.value, logo: "" })} placeholder="https://project.com" /></div>
                 <div className="field full logo-field"><span className="logo-preview">{wForm.logo || siteLogo(absoluteUrl(wForm.url)) ? <img src={wForm.logo || siteLogo(absoluteUrl(wForm.url)) || ""} alt="" /> : "Logo"}</span><label className="text-action">Replace logo<input type="file" accept="image/*" hidden onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadLogo(file); if (url) setWForm((f) => ({ ...f, logo: url })); }} /></label><span className="logo-note">The site logo is pulled from the link. Replace it if the image is wrong.</span></div>
-                <div className="field full"><label className="label">Description</label><textarea className="textarea" value={wForm.desc} onChange={(e) => setWForm({ ...wForm, desc: e.target.value })} placeholder="What did you work on and what was your responsibility?" /></div>
+                <div className="field full"><label className="label">Description</label><textarea className="textarea" value={wForm.desc} onChange={(e) => setWForm({ ...wForm, desc: e.target.value })} placeholder="What did you work on and what was your responsibility?" /></div><div className="field full"><label className="label">Achievement lines</label><textarea className="textarea" value={wForm.achievements} onChange={(e) => setWForm({ ...wForm, achievements: e.target.value })} placeholder={"One result per line.\nIncreased Discord engagement by 45% through structured campaigns."} /></div>
                 <div className="field"><label className="label">Employment type</label><select className="input" value={wForm.type} onChange={(e) => setWForm({ ...wForm, type: e.target.value })}><option>Full-time</option><option>Part-time</option></select></div>
                 <div className="field"><label className="label">Start date *</label><input className="input" type="month" value={wForm.start} onChange={(e) => setWForm({ ...wForm, start: e.target.value })} /></div>
                 <div className="field"><label className="label">End date</label><input className="input" type="month" value={wForm.end} onChange={(e) => setWForm({ ...wForm, end: e.target.value })} /></div>
