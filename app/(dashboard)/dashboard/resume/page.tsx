@@ -219,7 +219,7 @@ export default async function DashboardResumePage() {
               )}
             </aside>
           </div>
-          <ResumeExtras userId={p.id} username={p.username} />
+          <ResumeExtras userId={p.id} username={p.username} initial={p.cv_notes || null} />
           {contacts.length > 0 && (
             <section className="mt-8 border-t border-current/10 pt-4">
               <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Contact</h2>

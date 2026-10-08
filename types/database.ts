@@ -81,6 +81,7 @@ export type Profile = {
   location_region: string | null;
   skills: Skill[] | string[] | null;
   work_experience: WorkExperience[] | null;
+  cv_notes?: { personality?: string; superSkill?: string; languages?: string; availability?: string } | null;
   education: Education[] | null;
   trading_platforms: TradingPlatform[] | null;
   show_writing: boolean;

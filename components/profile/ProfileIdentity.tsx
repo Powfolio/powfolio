@@ -918,7 +918,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
           </div>
           <div className="save-area"><button className="save" type="button" onClick={() => void saveDocs()}>{saving === "docs" ? "Saving..." : "Save changes"}</button>{saved === "docs" && <span className="save-state">Saved</span>}</div>
         </section>
-        {tab === "cv" && <CvDetails userId={profile.id} />}
+        {tab === "cv" && <CvDetails userId={profile.id} initial={profile.cv_notes || null} />}
       </main>
       <button className={`tab-fab${dock === "open" ? " open" : ""}`} type="button" aria-label={dock === "open" ? "Close sections" : "Open sections"} onClick={() => { if (dock === "open") { setDock("closing"); window.setTimeout(() => setDock("closed"), 380); } else setDock("open"); }}>
         <svg className="burger" viewBox="0 0 24 18" width="22" height="16" aria-hidden>

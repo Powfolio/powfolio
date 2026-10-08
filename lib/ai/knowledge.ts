@@ -20,7 +20,7 @@ Avatar sits on the banner, overlapping the lower edge, with an outline. Banner c
 Skills are name plus a short brief, up to 250 characters. They render as chips, never as raw JSON. Tap a chip on the public About tab to read the brief.
 Work experience has no five-entry cap. Each role needs a company or project, a role, full-time or part-time, a start date, and a company link. The link pulls a logo. The talent can replace that logo. Achievement lines are optional, one result per line, and they print on the CV.
 Education asks for the school website so the logo can be pulled. If there is no link, the talent uploads a logo. Documents use the uploaded file as the thumbnail.
-CV-only notes, saved in this browser: personality, super skill, languages, availability. Year of birth is not collected and does not print. These notes are not on the public profile.
+CV-only notes, saved on the account: personality, super skill, languages, availability. Year of birth is not collected and does not print. These notes are not on the public profile.
 
 ## Public profile
 Header follows an X-style row: banner, avatar on the left, profile score and builder score in the open space to the right of the avatar and below the banner so they do not cover the image. Username sits directly under the name. Open to opportunities is separate from the username.

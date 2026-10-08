@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { readCv } from "@/components/profile/CvDetails";
+import { normalizeCv, readCv, type CvExtras } from "@/components/profile/CvDetails";
 
-export default function ResumeExtras({ userId, username }: { userId: string; username: string }) {
-  const [cv, setCv] = useState(readCv(userId));
+export default function ResumeExtras({ userId, username, initial }: { userId: string; username: string; initial?: Partial<CvExtras> | null }) {
+  const [cv, setCv] = useState(normalizeCv(initial));
   useEffect(() => {
-    setCv(readCv(userId));
+    const cloud = normalizeCv(initial);
+    setCv(Object.values(cloud).some(Boolean) ? cloud : readCv(userId));
     const prev = document.title;
     document.title = `${username} PowFolio`;
     return () => { document.title = prev; };
-  }, [userId, username]);
+  }, [userId, username, initial]);
   if (!cv.personality && !cv.superSkill && !cv.languages && !cv.availability) return null;
   return (
     <section className="mt-6">
