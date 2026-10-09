@@ -157,14 +157,15 @@ export default function DashboardHome({
 
   async function toggle(flag: SectionKey, title: string) {
     const next = !state[flag];
+    setState((s) => ({ ...s, [flag]: next }));
+    toast(next ? `${title} is now visible` : `${title} is hidden from your profile`);
     const supabase = createClient();
     const { error } = await supabase.from("profiles").update({ [flag]: next }).eq("id", userId);
     if (error) {
+      setState((s) => ({ ...s, [flag]: !next }));
       toast(error.message.includes("column") ? "Run the profile section columns SQL first." : error.message);
       return;
     }
-    setState((s) => ({ ...s, [flag]: next }));
-    toast(next ? `${title} is now visible` : `${title} is hidden from your profile`);
     router.refresh();
   }
 

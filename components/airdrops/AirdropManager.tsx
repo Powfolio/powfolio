@@ -103,11 +103,12 @@ export default function AirdropManager({ userId, username, initialItems }: { use
     router.refresh();
   }
   async function handleDelete(id: string) {
-    if (!confirm("Delete this airdrop entry?")) return;
+    if (!confirm("Delete this campaign?")) return;
+    const previous = items;
+    setItems((prev) => prev.filter((i) => i.id !== id));
     const supabase = createClient();
     const { error: err } = await supabase.from("airdrops").delete().eq("id", id).eq("user_id", userId);
-    if (err) return setError(err.message);
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    if (err) { setItems(previous); return setError(err.message); }
     if (editingId === id) resetForm();
     notify("Airdrop deleted");
     router.refresh();

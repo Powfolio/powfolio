@@ -25,7 +25,7 @@ CV-only notes, saved on the account: personality, super skill, languages, availa
 ## Public profile
 Header follows an X-style row: banner, avatar on the left, profile score and builder score in the open space to the right of the avatar and below the banner so they do not cover the image. Username sits directly under the name. Open to opportunities is separate from the username.
 Score text follows the theme: dark text on light, light text on dark.
-Public tabs: About, Projects / Collab, Technical Writing / Research, Trading Record, Onchain Stats, Airdrops. About always stays. The others can be hidden from the dashboard.
+Public tabs: About, Projects / Collab, Technical Writing / Research, Trading Record, Onchain Stats, Airdrops. About longer than 435 characters collapses with an ellipsis and a small expand icon. Work, education, project and airdrop marks are the same 36px circle with the logo centered. About always stays. The others can be hidden from the dashboard.
 Work, education, writing, projects, and airdrops show the pulled logo. The logo and the title both link when a URL was saved.
 Mobile section tabs scroll. They do not clip off the screen.
 

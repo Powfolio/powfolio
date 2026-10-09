@@ -13,6 +13,36 @@ import type {
   Writing, Trade, TradeUpdate, CommunityItem, Airdrop, Collectible, Credential, Skill, WorkExperience, Education, TradingPlatform,
 } from "@/types/database";
 
+const ABOUT_LIMIT = 435;
+
+function AboutCopy({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const long = text.trim().length > ABOUT_LIMIT;
+  const preview = long ? text.trim().slice(0, ABOUT_LIMIT).trimEnd() : text;
+  return (
+    <div>
+      <h3 className={HEADING}>About</h3>
+      <p className="whitespace-pre-wrap text-sm leading-relaxed break-words text-foreground">
+        {open || !long ? text : preview}
+        {!open && long ? "..." : ""}
+        {long && (
+          <button type="button" className="ml-1 inline-flex h-5 w-5 items-center justify-center align-middle text-foreground-muted" aria-expanded={open} aria-label={open ? "Collapse about" : "Expand about"} onClick={() => setOpen((v) => !v)}>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" className={open ? "rotate-180" : ""}><path d="m6 9 6 6 6-6" /></svg>
+          </button>
+        )}
+      </p>
+    </div>
+  );
+}
+
+function Mark({ src, fallback }: { src?: string | null; fallback: string }) {
+  return (
+    <span className="brand-mark">
+      {src ? <img src={src} alt="" /> : <span>{fallback.slice(0, 1)}</span>}
+    </span>
+  );
+}
+
 function siteLogo(url: string | null | undefined) {
   if (!url) return null;
   try {
@@ -115,12 +145,7 @@ export default function PublicProfileTabs({
                 </div>
               </div>
             )}
-            {longBio && (
-              <div>
-                <h3 className={HEADING}>About</h3>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed break-words text-foreground">{longBio}</p>
-              </div>
-            )}
+            {longBio && <AboutCopy text={longBio} />}
             {workExperience.length > 0 && (
               <div>
                 <h3 className={HEADING}>Work experience</h3>
@@ -128,7 +153,7 @@ export default function PublicProfileTabs({
                   {workExperience.map((w, i) => (
                     <div key={w.id} className={i > 0 ? "pt-3 border-t border-border/50" : ""}>
                       <div className="min-w-0">
-                        {w.url ? <a href={w.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center font-medium text-sm hover:text-primary"><span className="mr-2 inline-flex h-9 w-9 overflow-hidden rounded-lg bg-surface">{(w.logo_url || siteLogo(w.url)) ? <img src={w.logo_url || siteLogo(w.url) || ""} alt="" className="h-full w-full object-cover" /> : <span className="m-auto text-[10px] font-semibold text-foreground-subtle">{w.company.slice(0, 1)}</span>}</span>{w.company}</a> : <span className="inline-flex items-center font-medium text-sm"><span className="mr-2 inline-flex h-9 w-9 overflow-hidden rounded-lg bg-surface">{w.company.slice(0, 1)}</span>{w.company}</span>}
+                        {w.url ? <a href={w.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center font-medium text-sm hover:text-primary"><span className="mr-2"><Mark src={w.logo_url || siteLogo(w.url)} fallback={w.company} /></span>{w.company}</a> : <span className="inline-flex items-center font-medium text-sm"><span className="mr-2"><Mark fallback={w.company} /></span>{w.company}</span>}
                         <p className="text-xs text-foreground-muted mt-0.5">{w.role} · {w.employment_type === "full-time" ? "Full-time" : "Part-time"}</p>
                         <p className="text-xs text-foreground-subtle mt-0.5">{w.start_date}{w.end_date ? ` → ${w.end_date}` : " → Present"}</p>
                         {w.description && <p className="mt-1 text-xs text-foreground-muted leading-relaxed">{w.description}</p>}
@@ -144,7 +169,7 @@ export default function PublicProfileTabs({
                 <div className="space-y-4">
                   {education.map((e, i) => (
                     <div key={e.id} className={i > 0 ? "pt-3 border-t border-border/50" : ""}>
-                      {e.url ? <a href={e.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center font-medium text-sm hover:text-primary"><span className="mr-2 inline-flex h-9 w-9 overflow-hidden rounded-lg bg-surface">{(e.logo_url || siteLogo(e.url)) ? <img src={e.logo_url || siteLogo(e.url) || ""} alt="" className="h-full w-full object-cover" /> : <span className="m-auto text-[10px] font-semibold text-foreground-subtle">{e.institution.slice(0, 1)}</span>}</span>{e.institution}</a> : <span className="inline-flex items-center font-medium text-sm"><span className="mr-2 inline-flex h-9 w-9 overflow-hidden rounded-lg bg-surface">{e.institution.slice(0, 1)}</span>{e.institution}</span>}
+                      {e.url ? <a href={e.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center font-medium text-sm hover:text-primary"><span className="mr-2"><Mark src={e.logo_url || siteLogo(e.url)} fallback={e.institution} /></span>{e.institution}</a> : <span className="inline-flex items-center font-medium text-sm"><span className="mr-2"><Mark fallback={e.institution} /></span>{e.institution}</span>}
                       <p className="text-xs text-foreground-muted mt-0.5">{[e.degree, e.field_of_study].filter(Boolean).join(" · ")}</p>
                       <p className="text-xs text-foreground-subtle mt-0.5">{[e.country, e.start_year && e.end_year ? `${e.start_year} - ${e.end_year}` : e.start_year || e.end_year].filter(Boolean).join(" · ")}</p>
                       {e.description && <p className="mt-1 text-xs text-foreground-muted">{e.description}</p>}

@@ -317,3 +317,7 @@
 .crop-sheet input[type="range"] { flex: 1; }
 .crop-actions { display: flex; justify-content: flex-end; gap: 16px; }
 .crop-actions .accent { color: #b8863b; text-decoration: underline; text-underline-offset: 3px; }
+
+.brand-mark { width: 36px; height: 36px; border-radius: 999px; overflow: hidden; background: #fff; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.brand-mark img { width: 72%; height: 72%; object-fit: contain; object-position: center; }
+.brand-mark span { font-size: 11px; font-weight: 650; color: #12201a; }

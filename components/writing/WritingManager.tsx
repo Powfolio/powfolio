@@ -189,10 +189,11 @@ export default function WritingManager({ userId, username, initialItems }: { use
   }
   async function handleDelete(id: string) {
     if (!confirm("Delete this writing?")) return;
+    const previous = items;
+    setItems((prev) => prev.filter((i) => i.id !== id));
     const supabase = createClient();
     const { error: err } = await supabase.from("writings").delete().eq("id", id).eq("user_id", userId);
-    if (err) return setError(err.message);
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    if (err) { setItems(previous); return setError(err.message); }
     if (editingId === id) resetForm();
     notify("Writing deleted");
     router.refresh();

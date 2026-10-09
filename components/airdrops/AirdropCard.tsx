@@ -33,10 +33,10 @@ export default function AirdropCard({ item, profileUrl }: Props) {
   const CardInner = (
     <>
       <div className="flex gap-3">
-        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-border bg-surface-elevated">
+        <div className="brand-mark">
           {item.thumbnail_url || item.url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.thumbnail_url || `https://www.google.com/s2/favicons?domain=${encodeURIComponent((item.url || "").replace(/^https?:\/\//, "").split("/")[0])}&sz=128`} alt="" className="h-full w-full object-cover" />
+            <img src={item.thumbnail_url || `https://www.google.com/s2/favicons?domain=${encodeURIComponent((item.url || "").replace(/^https?:\/\//, "").split("/")[0])}&sz=128`} alt="" className="" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs font-medium text-foreground-subtle">
               {(item.title || "AD").slice(0, 2).toUpperCase()}

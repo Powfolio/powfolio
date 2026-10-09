@@ -272,10 +272,11 @@ export default function CommunityManager({ userId, username, initialItems }: { u
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this item?")) return;
+    const previous = items;
+    setItems((prev) => prev.filter((i) => i.id !== id));
     const supabase = createClient();
     const { error: err } = await supabase.from("community_items").delete().eq("id", id).eq("user_id", userId);
-    if (err) return setError(err.message);
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    if (err) { setItems(previous); return setError(err.message); }
     if (editingId === id) resetForm();
     notify("Project deleted");
     router.refresh();
