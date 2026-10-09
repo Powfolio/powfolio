@@ -18,7 +18,7 @@ Dashboard home accepts a public link, a PDF, a text file, or an image. Powfolio 
 ## Profile and identity
 Avatar sits on the banner, overlapping the lower edge, with an outline. Banner change is an outlined control below the banner, not on top of the image.
 Skills are name plus a short brief, up to 250 characters. They render as chips, never as raw JSON. Tap a chip on the public About tab to read the brief.
-Work experience has no five-entry cap. Each role needs a company or project, a role, full-time or part-time, a start date, and a company link. The link pulls a logo. The talent can replace that logo. Achievement lines are optional, one result per line, and they print on the CV.
+Work experience has no five-entry cap. Each role needs a company or project, a role, full-time or part-time, remote or onsite, optional hours per day, a start date, and a company link. The link pulls a logo. The talent can replace that logo. Achievement lines are optional, one result per line, and they print on the CV.
 Education asks for the school website so the logo can be pulled. If there is no link, the talent uploads a logo. Documents use the uploaded file as the thumbnail.
 CV-only notes, saved on the account: personality, super skill, languages, availability. Year of birth is not collected and does not print. These notes are not on the public profile.
 

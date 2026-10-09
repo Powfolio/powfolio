@@ -139,7 +139,7 @@ export default async function DashboardResumePage() {
                         <p className="text-[13px] font-semibold">{w.role}</p>
                         <p className="text-[12px]">
                           {w.url ? <a className="resume-link" href={abs(w.url)}>{w.company}</a> : w.company}
-                          <span className="resume-muted font-normal text-zinc-500"> {sep([w.employment_type === "full-time" ? "Full-time" : "Part-time", `${w.start_date}${w.end_date ? ` to ${w.end_date}` : " to Present"}`])}</span>
+                          <span className="resume-muted font-normal text-zinc-500"> {sep([w.employment_type === "full-time" ? "Full-time" : "Part-time", w.work_mode === "onsite" ? "Onsite" : "Remote", w.hours_per_day ? `${w.hours_per_day}h/day` : "", `${w.start_date}${w.end_date ? ` to ${w.end_date}` : " to Present"}`])}</span>
                         </p>
                         {w.description && <p className="resume-muted mt-1 text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(w.description, 420)}</p>}
                         {w.achievements && <ul className="mt-1 list-disc pl-4 text-[12.5px] leading-relaxed text-zinc-700">{w.achievements.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => <li key={line}>{line}</li>)}</ul>}

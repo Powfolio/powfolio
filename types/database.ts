@@ -14,6 +14,8 @@ export type WorkExperience = {
   end_date: string | null;
   logo_url?: string | null;
   achievements?: string | null;
+  work_mode?: "remote" | "onsite" | null;
+  hours_per_day?: number | null;
 };
 
 export type Education = {
