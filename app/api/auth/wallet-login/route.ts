@@ -7,6 +7,12 @@ import { WALLET_NONCE_COOKIE } from "@/lib/wallets/nonce";
 
 export const runtime = "nodejs";
 
+function deny(status: number, error: string) {
+  const res = NextResponse.json({ ok: false, error }, { status });
+  res.cookies.set(WALLET_NONCE_COOKIE, "", { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 0 });
+  return res;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -16,10 +22,10 @@ export async function POST(req: NextRequest) {
     const nonce = req.cookies.get(WALLET_NONCE_COOKIE)?.value || "";
 
     if (!address || !signature || !message || !nonce) {
-      return NextResponse.json({ ok: false, error: "Wallet signature is required." }, { status: 400 });
+      return deny(400, "Wallet signature is required.");
     }
     if (!message.includes(nonce)) {
-      return NextResponse.json({ ok: false, error: "Wallet challenge expired. Try again." }, { status: 400 });
+      return deny(400, "Wallet challenge expired. Try again.");
     }
 
     const valid = await verifyMessage({
@@ -28,29 +34,23 @@ export async function POST(req: NextRequest) {
       signature: signature as `0x${string}`,
     });
     if (!valid) {
-      return NextResponse.json({ ok: false, error: "Wallet signature did not match." }, { status: 401 });
+      return deny(401, "Wallet signature did not match.");
     }
 
     if (!hasServiceRole()) {
-      return NextResponse.json({ ok: false, error: "Wallet login is not configured." }, { status: 503 });
+      return deny(503, "Wallet login is not configured.");
     }
 
     const owner = await walletOwner(address);
     if (!owner?.userId) {
-      return NextResponse.json(
-        { ok: false, error: "This wallet is not linked to a Powfolio account. Create an account first, then connect it." },
-        { status: 404 },
-      );
+      return deny(404, "This wallet is not linked to a Powfolio account. Create an account first, then connect it.");
     }
 
     const admin = createServiceClient();
     const { data: userData, error: userErr } = await admin.auth.admin.getUserById(owner.userId);
     const email = userData.user?.email;
     if (userErr || !email) {
-      return NextResponse.json(
-        { ok: false, error: "This wallet account has no email. Sign in with email, Google, X, or GitHub." },
-        { status: 400 },
-      );
+      return deny(400, "This wallet account has no email. Sign in with email, Google, X, or GitHub.");
     }
 
     const { data: link, error: linkErr } = await admin.auth.admin.generateLink({
@@ -59,19 +59,19 @@ export async function POST(req: NextRequest) {
     });
     const otp = link?.properties?.email_otp;
     if (linkErr || !otp) {
-      return NextResponse.json({ ok: false, error: "Could not start wallet login. Try email sign-in." }, { status: 500 });
+      return deny(500, "Could not start wallet login. Try email sign-in.");
     }
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !anon) {
-      return NextResponse.json({ ok: false, error: "Auth is not configured." }, { status: 500 });
+      return deny(500, "Auth is not configured.");
     }
 
     const supabase = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
     const { data, error } = await supabase.auth.verifyOtp({ email, token: otp, type: "email" });
     if (error || !data.session) {
-      return NextResponse.json({ ok: false, error: error?.message || "Wallet login failed." }, { status: 401 });
+      return deny(401, error?.message || "Wallet login failed.");
     }
 
     const res = NextResponse.json({
@@ -86,6 +86,6 @@ export async function POST(req: NextRequest) {
     return res;
   } catch (e) {
     console.error("wallet-login", e);
-    return NextResponse.json({ ok: false, error: "Wallet login failed." }, { status: 500 });
+    return deny(500, "Wallet login failed.");
   }
 }

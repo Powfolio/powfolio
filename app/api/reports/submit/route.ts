@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { checkReportEligibility } from "@/lib/reports/eligibility";
+import { allowRate } from "@/lib/security/rate-limit";
 import {
   GROUP_WINDOW_MS,
   MAX_ATTACHMENT_BYTES,
@@ -20,6 +21,9 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Log in to submit a report." }, { status: 401 });
+  }
+  if (!(await allowRate(`report:${user.id}`, 5, 60 * 60_000))) {
+    return NextResponse.json({ error: "Report limit reached. Try again in an hour." }, { status: 429 });
   }
 
   const form = await req.formData();

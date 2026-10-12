@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { allowRate } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
-
-const buckets = new Map<string, { count: number; reset: number }>();
 
 const MODELS = [
   "gemini-2.5-flash-lite",
@@ -14,18 +13,6 @@ const MODELS = [
   "gemini-flash-lite-latest",
   "gemini-flash-latest",
 ];
-
-function rateLimit(key: string, limit = 8): boolean {
-  const now = Date.now();
-  const b = buckets.get(key);
-  if (!b || now > b.reset) {
-    buckets.set(key, { count: 1, reset: now + 60_000 });
-    return true;
-  }
-  if (b.count >= limit) return false;
-  b.count += 1;
-  return true;
-}
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -156,7 +143,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     }
 
-    if (!rateLimit(`autofill:${user.id}`)) {
+    if (!(await allowRate(`autofill:${user.id}`, 8))) {
       return NextResponse.json({ error: "Too many uploads. Wait a minute." }, { status: 429 });
     }
 

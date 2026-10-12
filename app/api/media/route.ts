@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { lookup } from "node:dns/promises";
 import { gatewayUrls, rewriteUrl, sniffMediaType } from "@/lib/nft-media";
 
 export const revalidate = 86400;
@@ -9,31 +10,73 @@ const UA =
 
 const MAX_BYTES = 12 * 1024 * 1024;
 
-async function fetchMedia(url: string) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 10000);
+function blockedHost(hostname: string) {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (!host || host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) return true;
+  if (host === "metadata.google.internal" || host === "metadata") return true;
+  if (host === "::1" || host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80")) return true;
+  const parts = host.split(".").map(Number);
+  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return false;
+  const [a, b] = parts;
+  if (a === 0 || a === 10 || a === 127) return true;
+  if (a === 169 && b === 254) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 100 && b >= 64 && b <= 127) return true;
+  return false;
+}
+
+async function safeTarget(url: string) {
+  let parsed: URL;
+  try { parsed = new URL(url); } catch { return null; }
+  if (!/^https?:$/.test(parsed.protocol) || blockedHost(parsed.hostname)) return null;
   try {
-    const res = await fetch(url, {
-      headers: {
-        Accept: "image/avif,image/webp,image/apng,image/gif,image/*,video/mp4,video/webm,*/*;q=0.8",
-        "User-Agent": UA,
-      },
-      redirect: "follow",
-      signal: ctrl.signal,
-    });
-    if (!res.ok) return null;
-    const type = (res.headers.get("content-type") || "").toLowerCase();
-    if (type.includes("text/html") || type.includes("application/json")) return null;
-    const buf = await res.arrayBuffer();
-    if (!buf.byteLength || buf.byteLength > MAX_BYTES) return null;
-    const sniffed = sniffMediaType(buf, type);
-    if (!sniffed) return null;
-    return { buf, type: sniffed.contentType };
+    const records = await lookup(parsed.hostname, { all: true, verbatim: true });
+    if (records.some((r) => blockedHost(r.address))) return null;
   } catch {
     return null;
-  } finally {
-    clearTimeout(t);
   }
+  return parsed.toString();
+}
+
+async function fetchMedia(url: string) {
+  let current = url;
+  for (let hop = 0; hop < 3; hop += 1) {
+    const safe = await safeTarget(current);
+    if (!safe) return null;
+    const parsed = new URL(safe);
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const res = await fetch(parsed.toString(), {
+        headers: {
+          Accept: "image/avif,image/webp,image/apng,image/gif,image/*,video/mp4,video/webm,*/*;q=0.8",
+          "User-Agent": UA,
+        },
+        redirect: "manual",
+        signal: ctrl.signal,
+      });
+      if (res.status >= 300 && res.status < 400) {
+        const next = res.headers.get("location");
+        if (!next) return null;
+        current = new URL(next, parsed).toString();
+        continue;
+      }
+      if (!res.ok) return null;
+      const type = (res.headers.get("content-type") || "").toLowerCase();
+      if (type.includes("text/html") || type.includes("application/json")) return null;
+      const buf = await res.arrayBuffer();
+      if (!buf.byteLength || buf.byteLength > MAX_BYTES) return null;
+      const sniffed = sniffMediaType(buf, type);
+      if (!sniffed) return null;
+      return { buf, type: sniffed.contentType };
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(t);
+    }
+  }
+  return null;
 }
 
 export async function GET(req: Request) {
@@ -44,10 +87,7 @@ export async function GET(req: Request) {
   } catch {
     return NextResponse.json({ error: "bad url" }, { status: 400 });
   }
-  if (!/^https?:$/.test(parsed.protocol)) {
-    return NextResponse.json({ error: "protocol" }, { status: 400 });
-  }
-  if (["localhost", "127.0.0.1", "0.0.0.0"].includes(parsed.hostname)) {
+  if (!/^https?:$/.test(parsed.protocol) || blockedHost(parsed.hostname)) {
     return NextResponse.json({ error: "host" }, { status: 400 });
   }
 

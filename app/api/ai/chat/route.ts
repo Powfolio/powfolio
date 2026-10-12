@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SYSTEM_PROMPT } from "@/lib/ai/knowledge";
 import { buildProfileContext, computeScores } from "@/lib/ai/scores";
+import { allowRate } from "@/lib/security/rate-limit";
 import type {
   Profile,
   Writing,
@@ -29,22 +30,9 @@ const DEFAULT_MODELS = [
 const MAX_HISTORY = 12;
 const MAX_USER_CHARS = 4000;
 
-const buckets = new Map<string, { count: number; reset: number }>();
 const LIMIT_GUEST = 12;
 const LIMIT_USER = 40;
 const WINDOW_MS = 60_000;
-
-function rateLimit(key: string, limit: number): boolean {
-  const now = Date.now();
-  const b = buckets.get(key);
-  if (!b || now > b.reset) {
-    buckets.set(key, { count: 1, reset: now + WINDOW_MS });
-    return true;
-  }
-  if (b.count >= limit) return false;
-  b.count += 1;
-  return true;
-}
 
 /** Strip common prompt-injection markers from untrusted client strings. */
 function sanitizeClientText(raw: string, max: number): string {
@@ -218,7 +206,7 @@ export async function POST(req: NextRequest) {
       "anon";
     const limitKey = userId ? `u:${userId}` : `ip:${ip}`;
     const limit = userId ? LIMIT_USER : LIMIT_GUEST;
-    if (!rateLimit(limitKey, limit)) {
+    if (!(await allowRate(`chat:${limitKey}`, limit, WINDOW_MS))) {
       return NextResponse.json(
         {
           error: userId

@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { allowRate } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
-
-const buckets = new Map<string, { count: number; reset: number }>();
 
 const BLOCKED_HOSTS = [
   "linkedin.com",
@@ -26,18 +25,6 @@ const MODELS = [
   "gemini-flash-lite-latest",
   "gemini-flash-latest",
 ];
-
-function rateLimit(key: string, limit = 6): boolean {
-  const now = Date.now();
-  const b = buckets.get(key);
-  if (!b || now > b.reset) {
-    buckets.set(key, { count: 1, reset: now + 60_000 });
-    return true;
-  }
-  if (b.count >= limit) return false;
-  b.count += 1;
-  return true;
-}
 
 function extractJson(raw: string): Record<string, unknown> | null {
   const cleaned = raw
@@ -366,7 +353,7 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     }
-    if (!rateLimit(`link:${user.id}`)) {
+    if (!(await allowRate(`link:${user.id}`, 6))) {
       return NextResponse.json(
         { error: "Too many link imports. Wait a minute." },
         { status: 429 }
