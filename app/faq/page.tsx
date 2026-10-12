@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "FAQ",
-  description: "What Powfolio is, how Profile Score and Builder Score work, and how public profiles stay under your control.",
+  description: "What Powfolio is, how Profile Score and Builder Score work, and how the public page and CV stay under your control.",
   alternates: { canonical: "/faq" },
 };
 

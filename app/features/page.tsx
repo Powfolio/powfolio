@@ -3,7 +3,7 @@ import LandingView from "@/components/landing/LandingView";
 
 export const metadata: Metadata = {
   title: "Features",
-  description: "Trading record, onchain stats, writing, community roles, airdrops, scores, and a private CV.",
+  description: "Profile, projects, writing, trading, onchain collectibles, airdrops, scores, and a downloadable CV.",
   alternates: { canonical: "/features" },
 };
 

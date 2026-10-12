@@ -5,7 +5,7 @@ export const SITE_URL = (
 ).replace(/\/$/, "");
 
 export const SITE_DESCRIPTION =
-  "A public proof-of-work profile for Web3 builders, traders, researchers, community leads, airdrop hunters, and developers. One clean link for trades, writing, community work, airdrops, credentials, and onchain activity.";
+  "A public proof-of-work profile for Web3 talent. One link for writing, trading, projects, airdrops, onchain activity, and a downloadable CV.";
 
 export function absoluteUrl(path = "/") {
   if (/^https?:\/\//i.test(path)) return path;
