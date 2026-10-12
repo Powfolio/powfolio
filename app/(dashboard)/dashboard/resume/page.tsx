@@ -12,6 +12,7 @@ import type {
 import ResumeStudio from "@/components/profile/ResumeStudio";
 import ResumeExtras from "@/components/profile/ResumeExtras";
 import { normalizeSkills, cleanPlainText } from "@/lib/skills";
+import { loadSiteBrand } from "@/app/api/branding/route";
 
 function categoryOf(item: CommunityItem): string {
   const tags = item.tags ?? [];
@@ -94,13 +95,24 @@ export default async function DashboardResumePage() {
     p.telegram_url,
   ].filter(Boolean) as string[];
 
-  const summary = cleanPlainText(p.long_bio || p.bio, 700);
+  const summary = cleanPlainText(p.long_bio || p.bio, 20000);
   const roleLine = skillList.slice(0, 3).map((s) => s.name).join(" / ");
+  const brand = await loadSiteBrand();
+  const markStyle = {
+    left: `${brand.watermark_x}%`,
+    top: `${brand.watermark_y}%`,
+    transform: `translate(-50%, -50%) rotate(${brand.watermark_rotate}deg)`,
+    opacity: brand.watermark_opacity,
+  };
 
   return (
     <ResumeStudio username={p.username}>
       <article className="resume-sheet mx-auto mb-10 max-w-[860px] shadow-[0_18px_50px_rgba(16,24,20,0.08)] print:mb-0 print:max-w-none print:shadow-none">
-        <div className="resume-mark" aria-hidden="true">POWFOLIO.XYZ</div>
+        <div className="resume-mark" aria-hidden="true" style={markStyle}>
+          {brand.watermark_mode === "image" && brand.watermark_url ? (
+            <img src={brand.watermark_url} alt="" style={{ maxWidth: 280, maxHeight: 160, objectFit: "contain" }} />
+          ) : brand.watermark_text}
+        </div>
         <div className="resume-bar" />
         <div className="resume-inner px-8 py-7 print:px-6 print:py-5">
           <header>
@@ -110,7 +122,11 @@ export default async function DashboardResumePage() {
                 <h1 className="resume-name mt-1 text-[30px] font-bold leading-tight tracking-tight">{p.display_name || p.username}</h1>
               </div>
               <a href={`https://pow3folio.vercel.app/${p.username}`} className="shrink-0 text-right no-underline">
-                <span className="ml-auto flex h-11 w-11 items-center justify-center rounded-md bg-[#12201a] text-sm font-bold text-white">P</span>
+                {brand.logo_url ? (
+                  <img src={brand.logo_url} alt="" className="ml-auto h-11 w-11 object-contain" />
+                ) : (
+                  <span className="ml-auto flex h-11 w-11 items-center justify-center rounded-md bg-[#12201a] text-sm font-bold text-white">P</span>
+                )}
                 <p className="resume-kicker mt-2 text-[10px] font-semibold tracking-wide">Powfolio</p>
                 <p className="resume-muted text-[10px] text-zinc-500">pow3folio.vercel.app/{p.username}</p>
               </a>

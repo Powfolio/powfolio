@@ -25,14 +25,14 @@ CV-only notes, saved on the account: personality, super skill, languages, availa
 ## Public profile
 Header follows an X-style row: banner, avatar on the left, profile score and builder score in the open space to the right of the avatar and below the banner so they do not cover the image. Username sits directly under the name. Open to opportunities is separate from the username.
 Score text follows the theme: dark text on light, light text on dark.
-Public tabs: About, Projects / Collab, Technical Writing / Research, Trading Record, Onchain Stats, Airdrops. About longer than 435 characters collapses with an ellipsis and a small expand icon. Work, education, project and airdrop marks are the same 36px circle with the logo centered. Launch hardening lives in supabase/launch_hardening.sql. It adds cv_notes, a shared rate_limit_hit function, owner-only profile updates, and public reads only for public profiles and visible proof rows. The media proxy blocks private and metadata hosts. Wallet login burns the nonce on every attempt. About always stays. The others can be hidden from the dashboard.
+Public tabs: About, Projects / Collab, Technical Writing / Research, Trading Record, Onchain Stats, Airdrops. About longer than 435 characters collapses with an ellipsis and a small expand icon on the public page only. The downloaded CV prints the full About text. Work, education, project and airdrop marks are the same 36px circle with the logo centered. About always stays. The others can be hidden from the dashboard.
 Work, education, writing, projects, and airdrops show the pulled logo. The logo and the title both link when a URL was saved.
 Mobile section tabs scroll. They do not clip off the screen.
 
 ## CV
 Download is dashboard only, at /dashboard/resume. Visitors cannot download it from the public page. The file name is {username} PowFolio.pdf.
 Two designs: Editorial, the original sheet, and Classic, one column with a serif name and black rules. The role line and short bio are left aligned and stretch across the width. Profile stays left aligned.
-Watermark is POWFOLIO.XYZ in site bronze, behind the text, centered, on every printed page.
+Watermark is a site mark behind the text, centered by default, on every printed page. The About text on the CV is the full write-up, not the collapsed public preview.
 Contacts sit at the bottom as real links. Company names, project titles, Built by me, education, writing, and credential files link to the saved URL or uploaded file. A project or collaboration cannot be saved without a link.
 Pow3Bot is hidden on the CV page.
 

@@ -33,6 +33,7 @@ import { createClient } from "@/lib/supabase/client";
 import OnboardingTour, { resetOnboarding } from "@/components/onboarding/OnboardingTour";
 import { savePendingAutofill, type AutofillPayload } from "@/lib/autofill-store";
 import { SITE_URL } from "@/lib/site";
+import { SiteLogo } from "@/components/ui/BrandMark";
 
 type SectionKey =
   | "show_writing"
@@ -275,7 +276,7 @@ export default function DashboardHome({
       <OnboardingTour key={tourKey} force={tourKey > 0} />
       <header className="d-topbar">
         <Link href="/" className="d-brand" aria-label="Powfolio home">
-          <span className="d-mark">P</span>
+          <SiteLogo />
           <span className="d-title">Powfolio</span>
         </Link>
         <div className="d-actions">

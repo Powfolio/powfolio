@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/ops/appeals", label: "Appeals" },
   { href: "/ops/deleted", label: "Deleted" },
   { href: "/ops/audit", label: "Audit log" },
+  { href: "/ops/branding", label: "Site mark" },
 ];
 
 function isActive(href: string, pathname: string) {

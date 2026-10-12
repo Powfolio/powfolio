@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { SiteLogo } from "@/components/ui/BrandMark";
 
 export type WorkspaceTab = { id: string; short: string; icon: string };
 
@@ -59,7 +60,7 @@ export default function WorkspaceShell({
     <div className="profile-identity" data-theme={theme} data-collapsed={sideCollapsed ? "1" : "0"}>
       <header className="topbar">
         <Link className="back" href="/dashboard" aria-label="Back to dashboard"><Icon d="M15 5 8 12l7 7" size={18} /></Link>
-        <Link className="brand" href="/" aria-label="Powfolio home"><span className="brand-mark">P</span><span className="brand-name">Powfolio</span></Link>
+        <Link className="brand" href="/" aria-label="Powfolio home"><SiteLogo /><span className="brand-name">Powfolio</span></Link>
       </header>
       <aside className={`side${sideCollapsed ? " collapsed" : ""}`}>
         <nav className="side-nav" aria-label={`${title} sections`}>
