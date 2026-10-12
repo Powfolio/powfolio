@@ -19,14 +19,22 @@ const PRESETS = [
   { id: "v", label: "Center vertical", x: 50, y: 50, rotate: 90 },
 ];
 
+const btn = "rounded-full border border-border px-3 py-1.5 text-xs transition active:scale-95 active:bg-primary/15";
+const accent = "rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-zinc-950 transition active:scale-95 disabled:opacity-40";
+
 export default function BrandStudio() {
   const [brand, setBrand] = useState<Brand | null>(null);
   const [msg, setMsg] = useState("");
   const [logoSrc, setLogoSrc] = useState("");
   const [logoPreview, setLogoPreview] = useState("");
   const [zoom, setZoom] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const drag = useRef<{ x: number; y: number } | null>(null);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [crop, setCrop] = useState({ x: 40, y: 40, size: 220 });
+  const stageRef = useRef<HTMLDivElement>(null);
+  const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinch = useRef<{ dist: number; zoom: number } | null>(null);
+  const drag = useRef<{ kind: "pan" | "move" | "resize"; x: number; y: number; crop: { x: number; y: number; size: number }; pan: { x: number; y: number }; corner?: string } | null>(null);
+
   const [wmText, setWmText] = useState("POWFOLIO.XYZ");
   const [wmMode, setWmMode] = useState<"text" | "image">("text");
   const [wmUrl, setWmUrl] = useState("");
@@ -34,6 +42,12 @@ export default function BrandStudio() {
   const [wmY, setWmY] = useState(50);
   const [wmRotate, setWmRotate] = useState(-24);
   const [wmOpacity, setWmOpacity] = useState(0.2);
+  const [wmScale, setWmScale] = useState(1);
+  const [wmFile, setWmFile] = useState<File | null>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const wmPointers = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const wmPinch = useRef<{ dist: number; scale: number } | null>(null);
+  const wmDrag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
 
   useEffect(() => {
     fetch("/api/branding").then((r) => r.json()).then((d: Brand) => {
@@ -49,30 +63,88 @@ export default function BrandStudio() {
   }, []);
 
   function onLogoFile(file: File) {
-    const url = URL.createObjectURL(file);
-    setLogoSrc(url);
+    setLogoSrc(URL.createObjectURL(file));
     setLogoPreview("");
     setZoom(1);
-    setOffset({ x: 0, y: 0 });
+    setPan({ x: 0, y: 0 });
+    const box = stageRef.current?.getBoundingClientRect();
+    const size = Math.min(220, (box?.width || 280) * 0.62);
+    setCrop({ x: ((box?.width || 280) - size) / 2, y: ((box?.height || 320) - size) / 2, size });
+  }
+
+  function onStageDown(e: React.PointerEvent) {
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size === 2) {
+      const [a, b] = [...pointers.current.values()];
+      pinch.current = { dist: Math.hypot(a.x - b.x, a.y - b.y), zoom };
+      drag.current = null;
+      return;
+    }
+    const target = (e.target as HTMLElement).dataset.handle;
+    if (target) {
+      drag.current = { kind: "resize", x: e.clientX, y: e.clientY, crop: { ...crop }, pan: { ...pan }, corner: target };
+    } else if ((e.target as HTMLElement).dataset.crop) {
+      drag.current = { kind: "move", x: e.clientX, y: e.clientY, crop: { ...crop }, pan: { ...pan } };
+    } else {
+      drag.current = { kind: "pan", x: e.clientX, y: e.clientY, crop: { ...crop }, pan: { ...pan } };
+    }
+  }
+
+  function onStageMove(e: React.PointerEvent) {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size === 2 && pinch.current) {
+      const [a, b] = [...pointers.current.values()];
+      const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      setZoom(Math.min(4, Math.max(0.6, pinch.current.zoom * (dist / pinch.current.dist))));
+      return;
+    }
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    const box = stageRef.current?.getBoundingClientRect();
+    const maxW = box?.width || 320;
+    const maxH = box?.height || 360;
+    if (d.kind === "pan") setPan({ x: d.pan.x + dx, y: d.pan.y + dy });
+    if (d.kind === "move") {
+      setCrop({ ...d.crop, x: Math.max(8, Math.min(maxW - d.crop.size - 8, d.crop.x + dx)), y: Math.max(8, Math.min(maxH - d.crop.size - 8, d.crop.y + dy)) });
+    }
+    if (d.kind === "resize") {
+      const delta = d.corner === "se" ? Math.max(dx, dy) : d.corner === "nw" ? Math.max(-dx, -dy) : d.corner === "ne" ? Math.max(dx, -dy) : Math.max(-dx, dy);
+      const size = Math.max(90, Math.min(Math.min(maxW, maxH) - 16, d.crop.size + delta));
+      const ratio = d.crop.size / size;
+      setCrop({ x: d.crop.x, y: d.crop.y, size });
+      if (ratio > 1) setZoom((z) => Math.min(4, z * (1 + (ratio - 1) * 0.35)));
+    }
+  }
+
+  function onStageUp(e: React.PointerEvent) {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) pinch.current = null;
+    if (pointers.current.size === 0) drag.current = null;
   }
 
   function cropLogo() {
-    const img = new Image();
-    img.onload = () => {
-      const size = 512;
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      const scale = Math.max(size / img.width, size / img.height) * zoom;
-      const w = img.width * scale;
-      const h = img.height * scale;
-      ctx.clearRect(0, 0, size, size);
-      ctx.drawImage(img, (size - w) / 2 + offset.x, (size - h) / 2 + offset.y, w, h);
-      setLogoPreview(canvas.toDataURL("image/png"));
-    };
-    img.src = logoSrc;
+    const stage = stageRef.current;
+    const img = stage?.querySelector("img");
+    if (!stage || !img) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const stageBox = stage.getBoundingClientRect();
+    const imgBox = img.getBoundingClientRect();
+    const sx = ((crop.x + stageBox.left - imgBox.left) / imgBox.width) * img.naturalWidth;
+    const sy = ((crop.y + stageBox.top - imgBox.top) / imgBox.height) * img.naturalHeight;
+    const sw = (crop.size / imgBox.width) * img.naturalWidth;
+    const sh = (crop.size / imgBox.height) * img.naturalHeight;
+    ctx.clearRect(0, 0, 512, 512);
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 512, 512);
+    setLogoPreview(canvas.toDataURL("image/png"));
+    setMsg("Crop ready. Confirm to publish.");
   }
 
   async function publishLogo() {
@@ -85,6 +157,40 @@ export default function BrandStudio() {
     const data = await res.json().catch(() => ({}));
     setMsg(res.ok ? "Logo is public." : data.error || "Could not save logo.");
     if (res.ok) setBrand((b) => b ? { ...b, logo_url: data.url } : b);
+  }
+
+  function onSheetDown(e: React.PointerEvent) {
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    wmPointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (wmPointers.current.size === 2) {
+      const [a, b] = [...wmPointers.current.values()];
+      wmPinch.current = { dist: Math.hypot(a.x - b.x, a.y - b.y), scale: wmScale };
+      wmDrag.current = null;
+      return;
+    }
+    wmDrag.current = { x: e.clientX, y: e.clientY, ox: wmX, oy: wmY };
+  }
+
+  function onSheetMove(e: React.PointerEvent) {
+    if (!wmPointers.current.has(e.pointerId)) return;
+    wmPointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (wmPointers.current.size === 2 && wmPinch.current) {
+      const [a, b] = [...wmPointers.current.values()];
+      const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      setWmScale(Math.min(3, Math.max(0.4, wmPinch.current.scale * (dist / wmPinch.current.dist))));
+      return;
+    }
+    const d = wmDrag.current;
+    const box = sheetRef.current?.getBoundingClientRect();
+    if (!d || !box) return;
+    setWmX(Math.max(8, Math.min(92, d.ox + ((e.clientX - d.x) / box.width) * 100)));
+    setWmY(Math.max(8, Math.min(92, d.oy + ((e.clientY - d.y) / box.height) * 100)));
+  }
+
+  function onSheetUp(e: React.PointerEvent) {
+    wmPointers.current.delete(e.pointerId);
+    if (wmPointers.current.size < 2) wmPinch.current = null;
+    if (wmPointers.current.size === 0) wmDrag.current = null;
   }
 
   async function publishWatermark(file?: File) {
@@ -105,10 +211,13 @@ export default function BrandStudio() {
     if (!res.ok) { setMsg(data.error || "Could not save watermark."); return; }
     if (file && data.url) { setWmUrl(data.url); setWmMode("image"); }
     else setWmMode("text");
-    await fetch("/api/admin/branding", {
-      method: "POST",
-      body: (() => { const f = new FormData(); f.set("kind", "watermark-place"); f.set("x", String(wmX)); f.set("y", String(wmY)); f.set("rotate", String(wmRotate)); f.set("opacity", String(wmOpacity)); return f; })(),
-    });
+    const place = new FormData();
+    place.set("kind", "watermark-place");
+    place.set("x", String(wmX));
+    place.set("y", String(wmY));
+    place.set("rotate", String(wmRotate));
+    place.set("opacity", String(wmOpacity));
+    await fetch("/api/admin/branding", { method: "POST", body: place });
     setMsg("Watermark is public.");
   }
 
@@ -116,89 +225,110 @@ export default function BrandStudio() {
     <div className="space-y-8">
       <div>
         <h1 className="text-xl font-semibold">Site mark</h1>
-        <p className="mt-1 text-sm text-foreground-muted">Upload a logo or a CV watermark. Nothing goes public until you confirm.</p>
+        <p className="mt-1 text-sm text-foreground-muted">Drag the frame, pinch to zoom, then confirm. Nothing goes public until you confirm.</p>
         {msg && <p className="mt-2 text-sm text-primary">{msg}</p>}
       </div>
 
       <section className="rounded-2xl border border-border p-4">
         <h2 className="text-sm font-semibold">Logo</h2>
-        <p className="mt-1 text-xs text-foreground-muted">The mark used in the nav, dashboard, and CV. No extra background is added.</p>
+        <p className="mt-1 text-xs text-foreground-muted">Drag the image or the frame. Shrink the frame and the image zooms in. Pinch with two fingers.</p>
         <input className="mt-3 text-sm" type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) onLogoFile(f); }} />
         {logoSrc && (
           <div className="mt-4">
             <div
-              className="relative mx-auto h-56 w-56 overflow-hidden rounded-xl border border-border bg-[linear-gradient(45deg,#eee_25%,transparent_25%),linear-gradient(-45deg,#eee_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#eee_75%),linear-gradient(-45deg,transparent_75%,#eee_75%)] bg-[length:16px_16px] bg-[position:0_0,0_8px,8px_-8px,-8px_0]"
-              onPointerDown={(e) => { drag.current = { x: e.clientX - offset.x, y: e.clientY - offset.y }; }}
-              onPointerMove={(e) => { if (!drag.current) return; setOffset({ x: e.clientX - drag.current.x, y: e.clientY - drag.current.y }); }}
-              onPointerUp={() => { drag.current = null; }}
-              onPointerLeave={() => { drag.current = null; }}
+              ref={stageRef}
+              className="relative mx-auto h-[360px] w-full max-w-[420px] overflow-hidden rounded-2xl bg-black touch-none"
+              onPointerDown={onStageDown}
+              onPointerMove={onStageMove}
+              onPointerUp={onStageUp}
+              onPointerCancel={onStageUp}
             >
-              <img src={logoSrc} alt="" className="absolute left-1/2 top-1/2 max-w-none select-none" style={{ width: `${160 * zoom}px`, transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))` }} />
+              <img src={logoSrc} alt="" className="absolute left-1/2 top-1/2 max-w-none select-none" style={{ width: `${220 * zoom}px`, transform: `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px))` }} />
+              <div className="pointer-events-none absolute inset-x-0 top-0 bg-black/55" style={{ height: crop.y }} />
+              <div className="pointer-events-none absolute inset-x-0 bg-black/55" style={{ top: crop.y + crop.size, bottom: 0 }} />
+              <div className="pointer-events-none absolute bg-black/55" style={{ top: crop.y, height: crop.size, left: 0, width: crop.x }} />
+              <div className="pointer-events-none absolute bg-black/55" style={{ top: crop.y, height: crop.size, left: crop.x + crop.size, right: 0 }} />
+              <div data-crop="1" className="absolute border border-white/90" style={{ left: crop.x, top: crop.y, width: crop.size, height: crop.size }}>
+                <div className="pointer-events-none absolute inset-0 grid grid-cols-3 grid-rows-3">
+                  {Array.from({ length: 9 }).map((_, i) => <span key={i} className="border border-white/30" />)}
+                </div>
+                {["nw", "ne", "sw", "se"].map((h) => (
+                  <span key={h} data-handle={h} className={`absolute h-4 w-4 border-white ${h.includes("n") ? "-top-1 border-t-2" : "-bottom-1 border-b-2"} ${h.includes("w") ? "-left-1 border-l-2" : "-right-1 border-r-2"}`} />
+                ))}
+              </div>
             </div>
-            <label className="mt-3 block text-xs text-foreground-muted">Zoom
-              <input className="mt-1 w-full" type="range" min="0.6" max="3" step="0.05" value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
-            </label>
             <div className="mt-3 flex gap-2">
-              <button type="button" className="rounded-full border border-border px-3 py-1.5 text-xs" onClick={cropLogo}>Crop</button>
-              <button type="button" className="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-zinc-950" onClick={() => void publishLogo()} disabled={!logoPreview}>Confirm logo</button>
+              <button type="button" className={btn} onClick={() => { setLogoSrc(""); setLogoPreview(""); }}>Cancel</button>
+              <button type="button" className={accent} onClick={cropLogo}>Done</button>
             </div>
           </div>
         )}
         {(logoPreview || brand?.logo_url) && (
           <div className="mt-4">
             <p className="text-xs text-foreground-muted">Public preview</p>
-            <div className="mt-2 flex items-center gap-2 rounded-xl border border-border px-3 py-2">
-              <img src={logoPreview || brand?.logo_url || ""} alt="" className="h-7 w-7 object-contain" />
-              <span className="text-sm font-semibold">Powfolio</span>
+            <div className="mt-2 flex items-center gap-4">
+              <img src={logoPreview || brand?.logo_url || ""} alt="" className="h-24 w-24 rounded-xl object-contain" />
+              <div className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
+                <img src={logoPreview || brand?.logo_url || ""} alt="" className="h-8 w-8 object-contain" />
+                <span className="text-sm font-semibold">Powfolio</span>
+              </div>
             </div>
+            <button type="button" className={`${accent} mt-3`} onClick={() => void publishLogo()} disabled={!logoPreview}>Confirm logo</button>
           </div>
         )}
       </section>
 
       <section className="rounded-2xl border border-border p-4">
         <h2 className="text-sm font-semibold">CV watermark</h2>
+        <p className="mt-1 text-xs text-foreground-muted">This is a full A4 sheet. Drag the mark, pinch to resize, then confirm.</p>
         <div className="mt-3 flex gap-2">
-          <button type="button" className={`rounded-full px-3 py-1 text-xs ${wmMode === "text" ? "bg-primary text-zinc-950" : "border border-border"}`} onClick={() => setWmMode("text")}>Text</button>
-          <button type="button" className={`rounded-full px-3 py-1 text-xs ${wmMode === "image" ? "bg-primary text-zinc-950" : "border border-border"}`} onClick={() => setWmMode("image")}>Image</button>
+          <button type="button" className={`${btn} ${wmMode === "text" ? "bg-primary text-zinc-950" : ""}`} onClick={() => setWmMode("text")}>Text</button>
+          <button type="button" className={`${btn} ${wmMode === "image" ? "bg-primary text-zinc-950" : ""}`} onClick={() => setWmMode("image")}>Image</button>
         </div>
         {wmMode === "text" ? (
           <input className="mt-3 w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm" value={wmText} onChange={(e) => setWmText(e.target.value)} />
         ) : (
-          <input className="mt-3 text-sm" type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void publishWatermark(f); }} />
+          <input className="mt-3 text-sm" type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setWmFile(f); setWmUrl(URL.createObjectURL(f)); setWmMode("image"); } }} />
         )}
         <div className="mt-3 flex flex-wrap gap-2">
           {PRESETS.map((p) => (
-            <button key={p.id} type="button" className="rounded-full border border-border px-3 py-1 text-xs" onClick={() => { setWmX(p.x); setWmY(p.y); setWmRotate(p.rotate); }}>{p.label}</button>
+            <button key={p.id} type="button" className={btn} onClick={() => { setWmX(p.x); setWmY(p.y); setWmRotate(p.rotate); }}>{p.label}</button>
           ))}
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-2 max-w-[180px]">
-          <span />
-          <button type="button" className="rounded-lg border border-border py-1 text-xs" onClick={() => setWmY((v) => Math.max(10, v - 4))}>Up</button>
-          <span />
-          <button type="button" className="rounded-lg border border-border py-1 text-xs" onClick={() => setWmX((v) => Math.max(10, v - 4))}>Left</button>
-          <button type="button" className="rounded-lg border border-border py-1 text-xs" onClick={() => { setWmX(50); setWmY(50); }}>Center</button>
-          <button type="button" className="rounded-lg border border-border py-1 text-xs" onClick={() => setWmX((v) => Math.min(90, v + 4))}>Right</button>
-          <span />
-          <button type="button" className="rounded-lg border border-border py-1 text-xs" onClick={() => setWmY((v) => Math.min(90, v + 4))}>Down</button>
-          <span />
-        </div>
-        <label className="mt-3 block text-xs text-foreground-muted">Rotate {wmRotate}°
+        <label className="mt-3 block text-xs text-foreground-muted">Size
+          <input className="mt-1 w-full" type="range" min="0.4" max="3" step="0.05" value={wmScale} onChange={(e) => setWmScale(Number(e.target.value))} />
+        </label>
+        <label className="mt-2 block text-xs text-foreground-muted">Rotate {wmRotate}°
           <input className="mt-1 w-full" type="range" min="-90" max="90" value={wmRotate} onChange={(e) => setWmRotate(Number(e.target.value))} />
         </label>
         <label className="mt-2 block text-xs text-foreground-muted">Opacity
           <input className="mt-1 w-full" type="range" min="0.05" max="0.5" step="0.01" value={wmOpacity} onChange={(e) => setWmOpacity(Number(e.target.value))} />
         </label>
-        <div className="relative mt-4 h-56 overflow-hidden rounded-xl border border-border bg-white text-zinc-900">
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ left: `${wmX}%`, top: `${wmY}%`, transform: `translate(-50%, -50%) rotate(${wmRotate}deg)`, opacity: wmOpacity }}>
+        <div
+          ref={sheetRef}
+          className="relative mx-auto mt-4 w-full max-w-[320px] overflow-hidden rounded-sm border border-border bg-white text-zinc-900 touch-none"
+          style={{ aspectRatio: "210 / 297" }}
+          onPointerDown={onSheetDown}
+          onPointerMove={onSheetMove}
+          onPointerUp={onSheetUp}
+          onPointerCancel={onSheetUp}
+        >
+          <div className="absolute left-4 right-4 top-6 h-2 rounded bg-emerald-200" />
+          <div className="absolute left-4 top-12 h-3 w-24 rounded bg-zinc-200" />
+          <div className="absolute left-4 right-4 top-20 space-y-2">
+            <div className="h-2 w-full rounded bg-zinc-100" />
+            <div className="h-2 w-5/6 rounded bg-zinc-100" />
+            <div className="h-2 w-4/6 rounded bg-zinc-100" />
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center" style={{ left: `${wmX}%`, top: `${wmY}%`, transform: `translate(-50%, -50%) rotate(${wmRotate}deg) scale(${wmScale})`, opacity: wmOpacity }}>
             {wmMode === "image" && (wmUrl || brand?.watermark_url) ? (
-              <img src={wmUrl || brand?.watermark_url || ""} alt="" className="max-h-24 max-w-[180px] object-contain" />
+              <img src={wmUrl || brand?.watermark_url || ""} alt="" className="max-h-24 max-w-[140px] object-contain" />
             ) : (
-              <span className="text-3xl font-extrabold tracking-widest text-[#b8863b]">{wmText || "POWFOLIO.XYZ"}</span>
+              <span className="whitespace-nowrap text-2xl font-extrabold tracking-widest text-[#b8863b]">{wmText || "POWFOLIO.XYZ"}</span>
             )}
           </div>
-          <div className="p-4 text-xs text-zinc-500">Preview of the CV sheet. Confirm to publish this placement.</div>
         </div>
-        <button type="button" className="mt-3 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-zinc-950" onClick={() => void publishWatermark()}>Confirm watermark</button>
+        <button type="button" className={`${accent} mt-3`} onClick={() => void publishWatermark(wmMode === "image" ? wmFile || undefined : undefined)}>Confirm watermark</button>
       </section>
     </div>
   );
