@@ -12,7 +12,7 @@ import type {
 import ResumeStudio from "@/components/profile/ResumeStudio";
 import ResumeExtras from "@/components/profile/ResumeExtras";
 import { normalizeSkills, cleanPlainText } from "@/lib/skills";
-import { loadSiteBrand } from "@/app/api/branding/route";
+import { loadSiteBrand } from "@/lib/site-brand";
 
 function categoryOf(item: CommunityItem): string {
   const tags = item.tags ?? [];
