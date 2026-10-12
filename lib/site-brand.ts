@@ -9,6 +9,7 @@ export type SiteBrand = {
   watermark_y: number;
   watermark_rotate: number;
   watermark_opacity: number;
+  watermark_scale: number;
 };
 
 const FALLBACK: SiteBrand = {
@@ -20,6 +21,7 @@ const FALLBACK: SiteBrand = {
   watermark_y: 50,
   watermark_rotate: -24,
   watermark_opacity: 0.2,
+  watermark_scale: 1,
 };
 
 export async function loadSiteBrand(): Promise<SiteBrand> {
@@ -37,6 +39,7 @@ export async function loadSiteBrand(): Promise<SiteBrand> {
       watermark_y: Number(data.watermark_y ?? 50),
       watermark_rotate: Number(data.watermark_rotate ?? -24),
       watermark_opacity: Number(data.watermark_opacity ?? 0.2),
+      watermark_scale: Number(data.watermark_scale ?? 1),
     };
   } catch {
     return FALLBACK;

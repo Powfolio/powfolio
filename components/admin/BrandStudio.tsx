@@ -29,7 +29,7 @@ export default function BrandStudio() {
   const [logoPreview, setLogoPreview] = useState("");
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [crop, setCrop] = useState({ x: 40, y: 40, size: 220 });
+  const [crop, setCrop] = useState({ x: 24, y: 120, w: 280, h: 88 });
   const stageRef = useRef<HTMLDivElement>(null);
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinch = useRef<{ dist: number; zoom: number } | null>(null);
@@ -68,8 +68,9 @@ export default function BrandStudio() {
     setZoom(1);
     setPan({ x: 0, y: 0 });
     const box = stageRef.current?.getBoundingClientRect();
-    const size = Math.min(220, (box?.width || 280) * 0.62);
-    setCrop({ x: ((box?.width || 280) - size) / 2, y: ((box?.height || 320) - size) / 2, size });
+    const w = Math.min(300, (box?.width || 320) * 0.86);
+    const h = Math.round(w / 3.2);
+    setCrop({ x: ((box?.width || 320) - w) / 2, y: ((box?.height || 280) - h) / 2, w, h });
   }
 
   function onStageDown(e: React.PointerEvent) {
@@ -97,7 +98,7 @@ export default function BrandStudio() {
     if (pointers.current.size === 2 && pinch.current) {
       const [a, b] = [...pointers.current.values()];
       const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-      setZoom(Math.min(4, Math.max(0.6, pinch.current.zoom * (dist / pinch.current.dist))));
+      setZoom(Math.min(100, Math.max(0.4, pinch.current.zoom * (dist / pinch.current.dist))));
       return;
     }
     const d = drag.current;
@@ -109,14 +110,15 @@ export default function BrandStudio() {
     const maxH = box?.height || 360;
     if (d.kind === "pan") setPan({ x: d.pan.x + dx, y: d.pan.y + dy });
     if (d.kind === "move") {
-      setCrop({ ...d.crop, x: Math.max(8, Math.min(maxW - d.crop.size - 8, d.crop.x + dx)), y: Math.max(8, Math.min(maxH - d.crop.size - 8, d.crop.y + dy)) });
+      setCrop({ ...d.crop, x: Math.max(8, Math.min(maxW - d.crop.w - 8, d.crop.x + dx)), y: Math.max(8, Math.min(maxH - d.crop.h - 8, d.crop.y + dy)) });
     }
     if (d.kind === "resize") {
-      const delta = d.corner === "se" ? Math.max(dx, dy) : d.corner === "nw" ? Math.max(-dx, -dy) : d.corner === "ne" ? Math.max(dx, -dy) : Math.max(-dx, dy);
-      const size = Math.max(90, Math.min(Math.min(maxW, maxH) - 16, d.crop.size + delta));
-      const ratio = d.crop.size / size;
-      setCrop({ x: d.crop.x, y: d.crop.y, size });
-      if (ratio > 1) setZoom((z) => Math.min(4, z * (1 + (ratio - 1) * 0.35)));
+      const grow = d.corner === "se" || d.corner === "ne" ? dx : -dx;
+      const w = Math.max(140, Math.min(maxW - 16, d.crop.w + grow));
+      const h = Math.max(44, Math.round(w / 3.2));
+      const ratio = d.crop.w / w;
+      setCrop({ x: d.crop.x, y: d.crop.y, w, h });
+      if (ratio > 1) setZoom((z) => Math.min(100, z * (1 + (ratio - 1) * 0.35)));
     }
   }
 
@@ -131,18 +133,18 @@ export default function BrandStudio() {
     const img = stage?.querySelector("img");
     if (!stage || !img) return;
     const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = 960;
+    canvas.height = 300;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const stageBox = stage.getBoundingClientRect();
     const imgBox = img.getBoundingClientRect();
     const sx = ((crop.x + stageBox.left - imgBox.left) / imgBox.width) * img.naturalWidth;
     const sy = ((crop.y + stageBox.top - imgBox.top) / imgBox.height) * img.naturalHeight;
-    const sw = (crop.size / imgBox.width) * img.naturalWidth;
-    const sh = (crop.size / imgBox.height) * img.naturalHeight;
-    ctx.clearRect(0, 0, 512, 512);
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 512, 512);
+    const sw = (crop.w / imgBox.width) * img.naturalWidth;
+    const sh = (crop.h / imgBox.height) * img.naturalHeight;
+    ctx.clearRect(0, 0, 960, 300);
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 960, 300);
     setLogoPreview(canvas.toDataURL("image/png"));
     setMsg("Crop ready. Confirm to publish.");
   }
@@ -177,7 +179,7 @@ export default function BrandStudio() {
     if (wmPointers.current.size === 2 && wmPinch.current) {
       const [a, b] = [...wmPointers.current.values()];
       const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-      setWmScale(Math.min(3, Math.max(0.4, wmPinch.current.scale * (dist / wmPinch.current.dist))));
+      setWmScale(Math.min(100, Math.max(0.2, wmPinch.current.scale * (dist / wmPinch.current.dist))));
       return;
     }
     const d = wmDrag.current;
@@ -194,6 +196,20 @@ export default function BrandStudio() {
   }
 
   async function publishWatermark(file?: File) {
+    if (wmMode === "image" && !file && wmUrl && !wmUrl.startsWith("blob:")) {
+      const placeOnly = new FormData();
+      placeOnly.set("kind", "watermark-place");
+      placeOnly.set("x", String(wmX));
+      placeOnly.set("y", String(wmY));
+      placeOnly.set("rotate", String(wmRotate));
+      placeOnly.set("opacity", String(wmOpacity));
+      placeOnly.set("scale", String(wmScale));
+      placeOnly.set("mode", "image");
+      const kept = await fetch("/api/admin/branding", { method: "POST", body: placeOnly });
+      const keptData = await kept.json().catch(() => ({}));
+      setMsg(kept.ok ? "Watermark is public." : keptData.error || "Could not save watermark.");
+      return;
+    }
     const form = new FormData();
     if (file) {
       form.set("kind", "watermark");
@@ -206,17 +222,21 @@ export default function BrandStudio() {
     form.set("y", String(wmY));
     form.set("rotate", String(wmRotate));
     form.set("opacity", String(wmOpacity));
+    form.set("scale", String(wmScale));
+    form.set("mode", wmMode);
     const res = await fetch("/api/admin/branding", { method: "POST", body: form });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) { setMsg(data.error || "Could not save watermark."); return; }
-    if (file && data.url) { setWmUrl(data.url); setWmMode("image"); }
-    else setWmMode("text");
+    if (file && data.url) setWmUrl(data.url);
+    setWmMode(wmMode);
     const place = new FormData();
     place.set("kind", "watermark-place");
     place.set("x", String(wmX));
     place.set("y", String(wmY));
     place.set("rotate", String(wmRotate));
     place.set("opacity", String(wmOpacity));
+    place.set("scale", String(wmScale));
+    place.set("mode", wmMode);
     await fetch("/api/admin/branding", { method: "POST", body: place });
     setMsg("Watermark is public.");
   }
@@ -245,10 +265,10 @@ export default function BrandStudio() {
             >
               <img src={logoSrc} alt="" className="absolute left-1/2 top-1/2 max-w-none select-none" style={{ width: `${220 * zoom}px`, transform: `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px))` }} />
               <div className="pointer-events-none absolute inset-x-0 top-0 bg-black/55" style={{ height: crop.y }} />
-              <div className="pointer-events-none absolute inset-x-0 bg-black/55" style={{ top: crop.y + crop.size, bottom: 0 }} />
-              <div className="pointer-events-none absolute bg-black/55" style={{ top: crop.y, height: crop.size, left: 0, width: crop.x }} />
-              <div className="pointer-events-none absolute bg-black/55" style={{ top: crop.y, height: crop.size, left: crop.x + crop.size, right: 0 }} />
-              <div data-crop="1" className="absolute border border-white/90" style={{ left: crop.x, top: crop.y, width: crop.size, height: crop.size }}>
+              <div className="pointer-events-none absolute inset-x-0 bg-black/55" style={{ top: crop.y + crop.h, bottom: 0 }} />
+              <div className="pointer-events-none absolute bg-black/55" style={{ top: crop.y, height: crop.h, left: 0, width: crop.x }} />
+              <div className="pointer-events-none absolute bg-black/55" style={{ top: crop.y, height: crop.h, left: crop.x + crop.w, right: 0 }} />
+              <div data-crop="1" className="absolute border border-white/90" style={{ left: crop.x, top: crop.y, width: crop.w, height: crop.h }}>
                 <div className="pointer-events-none absolute inset-0 grid grid-cols-3 grid-rows-3">
                   {Array.from({ length: 9 }).map((_, i) => <span key={i} className="border border-white/30" />)}
                 </div>
@@ -257,6 +277,7 @@ export default function BrandStudio() {
                 ))}
               </div>
             </div>
+            <div className="mt-2 text-xs text-foreground-muted">Zoom {Math.round(zoom * 100)}%</div>
             <div className="mt-3 flex gap-2">
               <button type="button" className={btn} onClick={() => { setLogoSrc(""); setLogoPreview(""); }}>Cancel</button>
               <button type="button" className={accent} onClick={cropLogo}>Done</button>
@@ -266,11 +287,13 @@ export default function BrandStudio() {
         {(logoPreview || brand?.logo_url) && (
           <div className="mt-4">
             <p className="text-xs text-foreground-muted">Public preview</p>
-            <div className="mt-2 flex items-center gap-4">
-              <img src={logoPreview || brand?.logo_url || ""} alt="" className="h-24 w-24 rounded-xl object-contain" />
-              <div className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
-                <img src={logoPreview || brand?.logo_url || ""} alt="" className="h-8 w-8 object-contain" />
-                <span className="text-sm font-semibold">Powfolio</span>
+            <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-background">
+              <div className="flex h-14 items-center justify-between px-3">
+                <img src={logoPreview || brand?.logo_url || ""} alt="" className="h-8 max-w-[150px] object-contain" />
+                <span className="rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-zinc-950">Dashboard</span>
+              </div>
+              <div className="flex h-9 items-center justify-center gap-4 border-t border-border/40 text-[12px] text-foreground-muted">
+                <span>Features</span><span>How it works</span><span>FAQ</span>
               </div>
             </div>
             <button type="button" className={`${accent} mt-3`} onClick={() => void publishLogo()} disabled={!logoPreview}>Confirm logo</button>
@@ -295,8 +318,8 @@ export default function BrandStudio() {
             <button key={p.id} type="button" className={btn} onClick={() => { setWmX(p.x); setWmY(p.y); setWmRotate(p.rotate); }}>{p.label}</button>
           ))}
         </div>
-        <label className="mt-3 block text-xs text-foreground-muted">Size
-          <input className="mt-1 w-full" type="range" min="0.4" max="3" step="0.05" value={wmScale} onChange={(e) => setWmScale(Number(e.target.value))} />
+        <label className="mt-3 block text-xs text-foreground-muted">Size {Math.round(wmScale * 100)}%
+          <input className="mt-1 w-full" type="range" min="0.2" max="100" step="0.1" value={wmScale} onChange={(e) => setWmScale(Number(e.target.value))} />
         </label>
         <label className="mt-2 block text-xs text-foreground-muted">Rotate {wmRotate}°
           <input className="mt-1 w-full" type="range" min="-90" max="90" value={wmRotate} onChange={(e) => setWmRotate(Number(e.target.value))} />

@@ -101,7 +101,7 @@ export default async function DashboardResumePage() {
   const markStyle = {
     left: `${brand.watermark_x}%`,
     top: `${brand.watermark_y}%`,
-    transform: `translate(-50%, -50%) rotate(${brand.watermark_rotate}deg)`,
+    transform: `translate(-50%, -50%) rotate(${brand.watermark_rotate}deg) scale(${brand.watermark_scale || 1})`,
     opacity: brand.watermark_opacity,
   };
 

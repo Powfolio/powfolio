@@ -318,9 +318,8 @@
 .crop-actions { display: flex; justify-content: flex-end; gap: 16px; }
 .crop-actions .accent { color: #b8863b; text-decoration: underline; text-underline-offset: 3px; }
 
-.site-logo, .site-logo-fallback { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; }
-.site-logo { object-fit: contain; background: transparent; }
-.site-logo-fallback { background: #B8863B; color: #0D0D0C; font-size: 13px; font-weight: 700; }
+.site-logo, .site-logo-fallback { height: 34px; width: auto; max-width: 168px; object-fit: contain; display: block; background: transparent; }
+.site-logo-fallback { width: 34px; border-radius: 8px; display: grid; place-items: center; background: #B8863B; color: #0D0D0C; font-size: 13px; font-weight: 700; }
 .brand-mark { width: 36px; height: 36px; border-radius: 999px; overflow: hidden; background: #fff; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .brand-mark img { width: 72%; height: 72%; object-fit: contain; object-position: center; }
 .brand-mark span { font-size: 11px; font-weight: 650; color: #12201a; }

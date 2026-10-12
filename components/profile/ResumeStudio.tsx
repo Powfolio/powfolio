@@ -17,10 +17,9 @@ export default function ResumeStudio({ username, children }: { username: string;
         .resume-page { background: #e8ece8; color: #12201a; --cv-accent: #0f766e; --cv-link: #9a6b24; --cv-rule: #d1fae5; --cv-bar: linear-gradient(90deg,#059669,#5eead4); --cv-chip: #a7f3d0; --cv-side: #f4faf6; }
         .resume-sheet { position: relative; background: #fff; color: #12201a; }
         .resume-mark {
-          position: absolute; left: 50%; top: 52%; z-index: 0; pointer-events: none;
-          transform: translate(-50%, -50%) rotate(-24deg);
+          position: absolute; z-index: 0; pointer-events: none;
           font-size: clamp(34px, 8vw, 78px); font-weight: 800; letter-spacing: 0.12em;
-          color: rgba(184, 134, 59, 0.2); white-space: nowrap;
+          color: rgba(184, 134, 59, 0.85); white-space: nowrap;
         }
         .resume-inner { position: relative; z-index: 1; }
         .resume-link { color: var(--cv-link); text-decoration: underline; text-underline-offset: 2px; }

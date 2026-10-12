@@ -35,9 +35,9 @@ export default function BrandMark({
   return (
     <Link href={href} prefetch={false} className="flex items-center gap-2 min-w-0 group">
       <SiteLogo />
-      {!markOnly && (
+      {wordmark && wordmark !== SITE_NAME && (
         <span className={`truncate font-semibold tracking-tight ${compact ? "text-sm" : "text-base"}`}>
-          {name}
+          {wordmark}
         </span>
       )}
       <span className="sr-only">{name}</span>

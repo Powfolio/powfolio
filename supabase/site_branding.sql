@@ -11,6 +11,7 @@ create table if not exists public.site_branding (
   watermark_y numeric not null default 50,
   watermark_rotate numeric not null default -24,
   watermark_opacity numeric not null default 0.2,
+  watermark_scale numeric not null default 1,
   updated_at timestamptz not null default now(),
   constraint site_branding_one check (id = 1)
 );
@@ -23,3 +24,5 @@ create policy site_branding_public_read on public.site_branding
 revoke insert, update, delete on public.site_branding from anon, authenticated;
 
 insert into public.site_branding (id) values (1) on conflict (id) do nothing;
+
+alter table public.site_branding add column if not exists watermark_scale numeric not null default 1;

@@ -31,7 +31,15 @@ export async function POST(req: NextRequest) {
     const url = admin.storage.from("avatars").getPublicUrl(path).data.publicUrl;
     const patch = kind === "logo"
       ? { logo_url: url }
-      : { watermark_mode: "image", watermark_url: url };
+      : {
+          watermark_mode: "image",
+          watermark_url: url,
+          watermark_x: Number(form.get("x") || 50),
+          watermark_y: Number(form.get("y") || 50),
+          watermark_rotate: Number(form.get("rotate") || -24),
+          watermark_opacity: Number(form.get("opacity") || 0.2),
+          watermark_scale: Number(form.get("scale") || 1),
+        };
     const { error } = await admin.from("site_branding").upsert({ id: 1, ...patch, updated_at: new Date().toISOString() });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true, url });
@@ -51,6 +59,7 @@ export async function POST(req: NextRequest) {
       watermark_y: y,
       watermark_rotate: rotate,
       watermark_opacity: opacity,
+      watermark_scale: Number(form.get("scale") || 1),
       updated_at: new Date().toISOString(),
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -58,17 +67,17 @@ export async function POST(req: NextRequest) {
   }
 
   if (kind === "watermark-place") {
-    const x = Number(form.get("x") || 50);
-    const y = Number(form.get("y") || 50);
-    const rotate = Number(form.get("rotate") || -24);
-    const opacity = Number(form.get("opacity") || 0.2);
-    const { error } = await admin.from("site_branding").update({
-      watermark_x: x,
-      watermark_y: y,
-      watermark_rotate: rotate,
-      watermark_opacity: opacity,
+    const mode = String(form.get("mode") || "");
+    const patch: Record<string, string | number> = {
+      watermark_x: Number(form.get("x") || 50),
+      watermark_y: Number(form.get("y") || 50),
+      watermark_rotate: Number(form.get("rotate") || -24),
+      watermark_opacity: Number(form.get("opacity") || 0.2),
+      watermark_scale: Number(form.get("scale") || 1),
       updated_at: new Date().toISOString(),
-    }).eq("id", 1);
+    };
+    if (mode === "image" || mode === "text") patch.watermark_mode = mode;
+    const { error } = await admin.from("site_branding").update(patch).eq("id", 1);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true });
   }

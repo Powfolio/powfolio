@@ -23,16 +23,9 @@ export default function LandingNav({
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/25 bg-background/78 backdrop-blur-xl">
-      <div className="container-app flex h-14 items-center justify-between gap-3">
-        <BrandMark compact href="/" />
-        <nav className="hidden items-center gap-0.5 md:flex" aria-label="Landing">
-          {LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className={linkClass(link.href)}>
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+    <header className="sticky top-0 z-30 bg-background/78 backdrop-blur-xl">
+      <div className="container-app flex h-16 items-center justify-between gap-3">
+        <BrandMark compact href="/" markOnly />
         <div className="flex items-center gap-1">
           <ThemeToggle />
           {signedIn ? (
@@ -51,13 +44,15 @@ export default function LandingNav({
           )}
         </div>
       </div>
-      <nav className="container-app flex h-10 items-center gap-1 overflow-x-auto md:hidden" aria-label="Landing sections">
-        {LINKS.map((link) => (
-          <Link key={link.href} href={link.href} className={linkClass(link.href)}>
-            {link.label}
-          </Link>
-        ))}
-      </nav>
+      <div className="border-t border-border/40">
+        <nav className="container-app flex h-10 items-center justify-center gap-1 overflow-x-auto" aria-label="Landing">
+          {LINKS.map((link) => (
+            <Link key={link.href} href={link.href} className={linkClass(link.href)}>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
     </header>
   );
 }
