@@ -33,7 +33,7 @@ export default function BrandStudio() {
   const stageRef = useRef<HTMLDivElement>(null);
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinch = useRef<{ dist: number; zoom: number } | null>(null);
-  const drag = useRef<{ kind: "pan" | "move" | "resize"; x: number; y: number; crop: { x: number; y: number; size: number }; pan: { x: number; y: number }; corner?: string } | null>(null);
+  const drag = useRef<{ kind: "pan" | "move" | "resize"; x: number; y: number; crop: { x: number; y: number; w: number; h: number }; pan: { x: number; y: number }; corner?: string } | null>(null);
 
   const [wmText, setWmText] = useState("POWFOLIO.XYZ");
   const [wmMode, setWmMode] = useState<"text" | "image">("text");
