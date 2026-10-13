@@ -108,7 +108,7 @@ export default async function DashboardResumePage() {
   return (
     <ResumeStudio username={p.username}>
       <article className="resume-sheet mx-auto mb-10 max-w-[860px] shadow-[0_18px_50px_rgba(16,24,20,0.08)] print:mb-0 print:max-w-none print:shadow-none">
-        <div className="resume-mark" aria-hidden="true" style={markStyle}>
+        <div className="resume-mark" aria-hidden="true" style={{ ...markStyle, ["--wm-rotate" as string]: `${brand.watermark_rotate}deg`, ["--wm-scale" as string]: String(brand.watermark_scale || 1) }}>
           {brand.watermark_mode === "image" && brand.watermark_url ? (
             <img src={brand.watermark_url} alt="" style={{ maxWidth: 280, maxHeight: 160, objectFit: "contain" }} />
           ) : brand.watermark_text}
@@ -122,13 +122,16 @@ export default async function DashboardResumePage() {
                 <h1 className="resume-name mt-1 text-[30px] font-bold leading-tight tracking-tight">{p.display_name || p.username}</h1>
               </div>
               <a href={`https://pow3folio.vercel.app/${p.username}`} className="shrink-0 text-right no-underline">
-                {brand.logo_url ? (
-                  <img src={brand.logo_url} alt="" className="ml-auto h-11 w-11 object-contain" />
-                ) : (
-                  <span className="ml-auto flex h-11 w-11 items-center justify-center rounded-md bg-[#12201a] text-sm font-bold text-white">P</span>
-                )}
-                <p className="resume-kicker mt-2 text-[10px] font-semibold tracking-wide">Powfolio</p>
-                <p className="resume-muted text-[10px] text-zinc-500">pow3folio.vercel.app/{p.username}</p>
+                <span className="ml-auto block h-12 w-12 overflow-hidden rounded-full" style={{ boxShadow: "0 0 0 2px #B8863B" }}>
+                  {p.avatar_url ? (
+                    <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
+                  ) : brand.mark_url ? (
+                    <img src={brand.mark_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center bg-[#12201a] text-sm font-bold text-white">P</span>
+                  )}
+                </span>
+                <p className="resume-muted mt-1.5 text-[10px] text-zinc-500">pow3folio.vercel.app/{p.username}</p>
               </a>
             </div>
             <div className="resume-lead-block mt-3">

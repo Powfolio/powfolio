@@ -2,6 +2,7 @@ import { createServiceClient, hasServiceRole } from "@/lib/supabase/admin";
 
 export type SiteBrand = {
   logo_url: string | null;
+  mark_url: string | null;
   watermark_mode: "text" | "image";
   watermark_text: string;
   watermark_url: string | null;
@@ -14,6 +15,7 @@ export type SiteBrand = {
 
 const FALLBACK: SiteBrand = {
   logo_url: null,
+  mark_url: null,
   watermark_mode: "text",
   watermark_text: "POWFOLIO.XYZ",
   watermark_url: null,
@@ -32,6 +34,7 @@ export async function loadSiteBrand(): Promise<SiteBrand> {
     if (!data) return FALLBACK;
     return {
       logo_url: data.logo_url || null,
+      mark_url: data.mark_url || null,
       watermark_mode: data.watermark_mode === "image" ? "image" : "text",
       watermark_text: data.watermark_text || FALLBACK.watermark_text,
       watermark_url: data.watermark_url || null,

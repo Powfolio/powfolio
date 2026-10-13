@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 type Brand = {
   logo_url: string | null;
+  mark_url: string | null;
   watermark_mode: "text" | "image";
   watermark_text: string;
   watermark_url: string | null;
@@ -241,6 +242,16 @@ export default function BrandStudio() {
     setMsg("Watermark is public.");
   }
 
+  async function publishMark(file: File) {
+    const form = new FormData();
+    form.set("kind", "mark");
+    form.set("file", file);
+    const res = await fetch("/api/admin/branding", { method: "POST", body: form });
+    const data = await res.json().catch(() => ({}));
+    setMsg(res.ok ? "Standalone mark is public." : data.error || "Could not save mark.");
+    if (res.ok) setBrand((b) => b ? { ...b, mark_url: data.url } : b);
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -297,6 +308,18 @@ export default function BrandStudio() {
               </div>
             </div>
             <button type="button" className={`${accent} mt-3`} onClick={() => void publishLogo()} disabled={!logoPreview}>Confirm logo</button>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-border p-4">
+        <h2 className="text-sm font-semibold">Standalone mark</h2>
+        <p className="mt-1 text-xs text-foreground-muted">Used when a talent has no profile photo. Square image, circular preview.</p>
+        <input className="mt-3 text-sm" type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void publishMark(f); }} />
+        {brand?.mark_url && (
+          <div className="mt-3 flex items-center gap-3">
+            <img src={brand.mark_url} alt="" className="h-12 w-12 rounded-full object-cover" style={{ boxShadow: "0 0 0 2px #B8863B" }} />
+            <span className="text-xs text-foreground-muted">Public fallback preview</span>
           </div>
         )}
       </section>

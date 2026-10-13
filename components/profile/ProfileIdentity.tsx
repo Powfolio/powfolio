@@ -124,8 +124,8 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
   const [bio, setBio] = useState(profile.bio || "");
   const [about, setAbout] = useState(profile.long_bio || "");
   const [openWork, setOpenWork] = useState(profile.open_to_work ?? false);
+  const [mediaSheet, setMediaSheet] = useState<null | "avatar" | "banner">(null);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
-  const [bannerUrl, setBannerUrl] = useState(profile.banner_url);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
 
@@ -719,7 +719,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
       <OnboardingTour key={tourKey} force={tourKey > 0} />
       <header className="topbar">
         <Link className="back" href="/dashboard" aria-label="Back to dashboard"><Icon d="M15 5 8 12l7 7" size={18} /></Link>
-        <Link className="brand" href="/" aria-label="Powfolio home"><SiteLogo /><span className="brand-name">Powfolio</span></Link>
+        <Link className="brand" href="/" aria-label="Powfolio home"><SiteLogo /></Link>
       </header>
       <aside className={`side${sideCollapsed ? " collapsed" : ""}`}>
         <nav className="side-nav" aria-label="Profile sections">
@@ -751,11 +751,11 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
               <div className="banner" style={bannerUrl ? { backgroundImage: `url(${bannerUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}>
                 {!bannerUrl && <div className="banner-label"><div className="banner-name">{displayName || "Your profile"}</div><div className="banner-role">WEB3 / CRYPTO PROFESSIONAL</div></div>}
               </div>
-              <label className="banner-edit-badge" title="Change banner"><Icon d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /><input type="file" accept="image/*" hidden onChange={(e) => void onBanner(e.target.files?.[0])} /></label>
+              <button className="banner-edit-badge" type="button" title="Change banner" onClick={() => setMediaSheet("banner")}><Icon d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /></button>
               <div className="avatar-center">
                 <div className="avatar-preview-wrap">
                   <div className="avatar">{avatarUrl ? <img src={avatarUrl} alt="" /> : initials}</div>
-                  <label className="avatar-edit-badge" title="Change avatar"><Icon d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /><input type="file" accept="image/*" hidden onChange={(e) => void onAvatar(e.target.files?.[0])} /></label>
+                  <button className="avatar-edit-badge" type="button" title="Change avatar" onClick={() => setMediaSheet("avatar")}><Icon d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /></button>
                 </div>
               </div>
             </div>
@@ -944,6 +944,20 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
       </div>
       {dock !== "closed" && <button className="dock-backdrop" type="button" aria-label="Close sections" onClick={() => { setDock("closing"); window.setTimeout(() => setDock("closed"), 380); }} />}
       <div className={`toast${toastOn ? " show" : ""}`}>{toast}</div>
+      {mediaSheet && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => setMediaSheet(null)}>
+          <div className="w-full max-w-md rounded-t-2xl bg-background p-4 pb-8" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border" />
+            <label className="flex w-full items-center gap-3 rounded-xl px-2 py-3 text-sm">
+              <span>Choose photo</span>
+              <input type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) { if (mediaSheet === "avatar") void onAvatar(f); else void onBanner(f); } setMediaSheet(null); }} />
+            </label>
+            <button type="button" className="flex w-full items-center gap-3 rounded-xl px-2 py-3 text-sm text-red-400" onClick={() => { if (mediaSheet === "avatar") setAvatarUrl(null); else setBannerUrl(null); setMediaSheet(null); notify(mediaSheet === "avatar" ? "Profile photo removed" : "Banner removed"); }}>
+              {mediaSheet === "avatar" ? "Remove profile picture" : "Remove banner"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

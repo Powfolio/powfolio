@@ -277,7 +277,6 @@ export default function DashboardHome({
       <header className="d-topbar">
         <Link href="/" className="d-brand" aria-label="Powfolio home">
           <SiteLogo />
-          <span className="d-title">Powfolio</span>
         </Link>
         <div className="d-actions">
           <button type="button" className="nav-icon-btn" title="Switch theme" aria-label="Switch theme" onClick={() => setThemeValue(theme === "dark" ? "light" : "dark")}>

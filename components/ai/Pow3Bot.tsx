@@ -37,7 +37,7 @@ export default function Pow3Bot({ context }: Props) {
     {
       role: "assistant",
       content:
-        "Hey. I'm Pow3Bot, here for Powfolio only. Ask about your profile, scores, proof sections, or paste rough text and I'll clean it up. If you're logged in, I can see your profile and be honest about the gaps.",
+        "Hey. I'm Powbot, here for Powfolio only. Ask about your profile, scores, proof sections, or paste rough text and I'll clean it up. If you're logged in, I can see your profile and be honest about the gaps.",
     },
   ]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -122,7 +122,7 @@ export default function Pow3Bot({ context }: Props) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || "Could not reach Pow3Bot");
+        setError(data.error || "Could not reach Powbot");
         setMessages([
           ...next,
           {
@@ -180,12 +180,12 @@ export default function Pow3Bot({ context }: Props) {
         className={`fixed z-[80] flex h-12 w-12 touch-none items-center justify-center rounded-full border-2 border-primary/50 bg-surface shadow-lg shadow-primary/25 ring-2 ring-primary/30 ring-offset-2 ring-offset-background transition hover:border-primary hover:shadow-primary/40 ${
           pos ? "" : "bottom-4 right-4 sm:bottom-6 sm:right-6"
         }`}
-        aria-label={open ? "Close Pow3Bot" : "Open Pow3Bot"}
+        aria-label={open ? "Close Powbot" : "Open Powbot"}
       >
         {open ? (
           <span className="text-lg leading-none">×</span>
         ) : (
-          <span className="text-xs font-bold text-primary">AI</span>
+          <img src="/powbot.png" alt="" className="h-8 w-8 rounded-full object-cover" />
         )}
       </button>
 
@@ -199,7 +199,7 @@ export default function Pow3Bot({ context }: Props) {
         >
           <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
             <div>
-              <p className="text-sm font-semibold">Pow3Bot</p>
+              <p className="text-sm font-semibold">Powbot</p>
               <p className="text-[10px] text-foreground-subtle">Drag the button to move · tap outside to close</p>
             </div>
             <div className="flex items-center gap-1">

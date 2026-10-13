@@ -138,14 +138,14 @@
 .profile-identity .banner-role { color: var(--muted); font-size: 12px; }
 .profile-identity .banner-edit-badge { position: absolute; right: 14px; top: calc(156px - 14px); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--bg); color: var(--text); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); }
 .profile-identity .avatar-center {
-  position: absolute; left: 50%; top: calc(156px - 24px); transform: translateX(-50%);
+  position: absolute; left: 16px; top: calc(156px - 22px); transform: none;
   display: flex; flex-direction: column; align-items: center;
 }
 .profile-identity .avatar-preview-wrap { position: relative; }
 .profile-identity .avatar {
   width: 96px; height: 96px; border-radius: 50%; overflow: hidden; display: grid; place-items: center;
   background: var(--surface-2); color: var(--text); font-weight: 760;
-  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent);
+  box-shadow: 0 0 0 3px #B8863B, 0 0 0 6px var(--bg);
 }
 .profile-identity .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .profile-identity .avatar-edit-badge {

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const kind = String(form.get("kind") || "");
   const admin = createServiceClient();
 
-  if (kind === "logo" || kind === "watermark") {
+  if (kind === "logo" || kind === "watermark" || kind === "mark") {
     const file = form.get("file");
     if (!(file instanceof File) || file.size === 0) {
       return NextResponse.json({ error: "Choose an image first." }, { status: 400 });
@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
     const url = admin.storage.from("avatars").getPublicUrl(path).data.publicUrl;
     const patch = kind === "logo"
       ? { logo_url: url }
+      : kind === "mark"
+      ? { mark_url: url }
       : {
           watermark_mode: "image",
           watermark_url: url,

@@ -2,7 +2,7 @@
  * Structured knowledge injected into every Pow3Bot request.
  */
 export const POW3_KNOWLEDGE = `
-# Powfolio product knowledge (current as of 8 Oct 2026)
+# Powfolio product knowledge (current as of 13 Oct 2026)
 
 Powfolio Genesis is a public proof-of-work profile. One clean link, scores, and onchain proof. Live site: https://pow3folio.vercel.app. Public profile: https://pow3folio.vercel.app/{username}. Call people builders or talents. Never say users in product copy.
 
@@ -26,7 +26,7 @@ CV-only notes, saved on the account: personality, super skill, languages, availa
 Header follows an X-style row: banner, avatar on the left, profile score and builder score in the open space to the right of the avatar and below the banner so they do not cover the image. Username sits directly under the name. Open to opportunities is separate from the username.
 Score text follows the theme: dark text on light, light text on dark.
 Public tabs: About, Projects / Collab, Technical Writing / Research, Trading Record, Onchain Stats, Airdrops. About longer than 435 characters collapses with an ellipsis and a small expand icon on the public page only. The downloaded CV prints the full About text. Work, education, project and airdrop marks are the same 36px circle with the logo centered. About always stays. The others can be hidden from the dashboard.
-Work, education, writing, projects, and airdrops show the pulled logo. The logo and the title both link when a URL was saved.
+Work, education, writing, projects, and airdrops show the pulled logo as a circular crop, so square and wide marks fill the same circle. The logo and the title both link when a URL was saved.
 Mobile section tabs scroll. They do not clip off the screen.
 
 ## CV
@@ -59,11 +59,11 @@ Builder Score, 0 to 100, is evidence: writing, trading logs, community roles, on
 The login email is public by default. After a second email is connected with Google, either address can be hidden, but at least one stays visible.
 Privacy: /privacy. Terms: /terms. Cookies: /cookies. Signup requires accepting Terms and Privacy.
 
-## Pow3Bot
-In-product assistant for Powfolio only. Helps with setup, wording, scores, and how-tos. Never investment advice. Never support for other apps. Never ask for a seed phrase. Hidden on the CV page.
+## Powbot
+In-product assistant for Powfolio only. The name is Powbot. Helps with setup, wording, scores, and how-tos. Never investment advice. Never support for other apps. Never ask for a seed phrase. Hidden on the CV page.
 `.trim();
 
-export const SYSTEM_PROMPT = `You are Pow3Bot on Powfolio. You sound like a sharp Web3 teammate, not a corporate robot.
+export const SYSTEM_PROMPT = `You are Powbot on Powfolio. You sound like a sharp Web3 teammate, not a corporate robot.
 
 Scope: only Powfolio. No investment advice.
 
