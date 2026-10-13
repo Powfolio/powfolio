@@ -345,9 +345,14 @@ export default function BrandStudio() {
 
       <section className="rounded-2xl border border-border p-4">
         <h2 className="text-sm font-semibold">Favicon</h2>
-        <p className="mt-1 text-xs text-foreground-muted">Browser tab icon. Square image works best.</p>
+        <p className="mt-1 text-xs text-foreground-muted">Browser tab icon. It is cropped into a circle, same as the site marks. After saving, hard-refresh or close every Powfolio tab — Chrome keeps the old icon until the tab is fully closed.</p>
         <input className="mt-3 text-sm" type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void publishAsset(f, "favicon"); }} />
-        {brand?.favicon_url && <img src={brand.favicon_url} alt="" className="mt-3 h-8 w-8 rounded object-cover" />}
+        {brand?.favicon_url && (
+          <div className="mt-4 flex items-center gap-4">
+            <img src={brand.favicon_url} alt="" className="h-16 w-16 rounded-full object-cover" style={{ boxShadow: "0 0 0 2px #B8863B" }} />
+            <span className="text-xs text-foreground-muted">Circular preview</span>
+          </div>
+        )}
       </section>
 
       <section className="rounded-2xl border border-border p-4">

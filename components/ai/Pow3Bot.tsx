@@ -165,6 +165,22 @@ export default function Pow3Bot({ context }: Props) {
   if (path?.includes("/resume")) return null;
   return (
     <>
+      <style>{`
+        .powbot-face { transform-origin: 50% 60%; }
+        .powbot-img { animation: powbot-look 7.4s ease-in-out infinite, powbot-blink 5.8s linear infinite; transform-origin: 50% 45%; }
+        @keyframes powbot-look {
+          0%, 100% { transform: translateX(0) rotate(0deg); }
+          18% { transform: translateX(-1.5px) rotate(-6deg); }
+          42% { transform: translateX(1.5px) rotate(5deg); }
+          68% { transform: translateX(-0.5px) rotate(-2deg); }
+        }
+        @keyframes powbot-blink {
+          0%, 38%, 42%, 78%, 82%, 100% { transform: scaleY(1); }
+          40%, 80% { transform: scaleY(0.08); }
+        }
+        .powbot-face:active { animation: powbot-pop 0.28s ease; }
+        @keyframes powbot-pop { 50% { transform: scale(0.86) rotate(-8deg); } }
+      `}</style>
       {open && (
         <div
           className="fixed inset-0 z-[75] bg-black/50 backdrop-blur-[2px]"
@@ -187,7 +203,9 @@ export default function Pow3Bot({ context }: Props) {
         {open ? (
           <span className="text-lg leading-none">×</span>
         ) : (
-          <img src={brand.powbot_url || "/powbot.png"} alt="" className="h-9 w-9 rounded-full object-cover" />
+          <span className="powbot-face block h-9 w-9 overflow-hidden rounded-full">
+            <img src={brand.powbot_url || "/powbot.png"} alt="" className="powbot-img h-full w-full object-cover" />
+          </span>
         )}
       </button>
 

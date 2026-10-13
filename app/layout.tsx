@@ -53,7 +53,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const brand = await loadSiteBrand();
-  const favicon = brand.favicon_url || "/folio-mark.png?v=20260924";
+  const favicon = brand.favicon_url ? `${brand.favicon_url}${brand.favicon_url.includes("?") ? "&" : "?"}v=${Date.now()}` : "/folio-mark.png?v=20260924";
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>

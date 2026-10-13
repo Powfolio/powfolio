@@ -107,7 +107,7 @@ export default async function DashboardResumePage() {
 
   return (
     <ResumeStudio username={p.username}>
-      <article className="resume-sheet mx-auto mb-10 max-w-[860px] shadow-[0_18px_50px_rgba(16,24,20,0.08)] print:mb-0 print:max-w-none print:shadow-none">
+      <article className="resume-sheet mx-auto mb-10 max-w-[860px] overflow-hidden shadow-[0_18px_50px_rgba(16,24,20,0.08)] print:mb-0 print:max-w-none print:shadow-none">
         <div className="resume-mark" aria-hidden="true" style={{ ...markStyle, ["--wm-rotate" as string]: `${brand.watermark_rotate}deg`, ["--wm-scale" as string]: String(brand.watermark_scale || 1) }}>
           {brand.watermark_mode === "image" && brand.watermark_url ? (
             <img src={brand.watermark_url} alt="" style={{ width: "100%", height: "auto", objectFit: "contain" }} />
@@ -200,7 +200,7 @@ export default async function DashboardResumePage() {
             </div>
             <aside className="min-w-0 space-y-6">
               {skillList.length > 0 && (
-                <section className="resume-side">
+                <section>
                   <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Skills</h2>
                   <div className="flex flex-wrap gap-1.5">
                     {skillList.map((s) => <span key={s.name} className="resume-chip rounded-full px-2 py-0.5 text-[11px] font-medium">{s.name}</span>)}
