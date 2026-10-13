@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useBrand } from "@/components/ui/BrandProvider";
 import { usePathname } from "next/navigation";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -28,6 +29,7 @@ type Props = {
 };
 
 export default function Pow3Bot({ context }: Props) {
+  const brand = useBrand();
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -185,7 +187,7 @@ export default function Pow3Bot({ context }: Props) {
         {open ? (
           <span className="text-lg leading-none">×</span>
         ) : (
-          <img src="/powbot.png" alt="" className="h-9 w-9 object-contain" />
+          <img src={brand.powbot_url || "/powbot.png"} alt="" className="h-9 w-9 rounded-full object-cover" />
         )}
       </button>
 

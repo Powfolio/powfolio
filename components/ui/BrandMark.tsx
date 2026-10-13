@@ -1,21 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useBrand } from "@/components/ui/BrandProvider";
 import { SITE_NAME } from "@/lib/site";
 
 export function SiteLogo({ className = "" }: { className?: string }) {
-  const [src, setSrc] = useState<string | null>(null);
-  useEffect(() => {
-    let on = true;
-    fetch("/api/branding")
-      .then((r) => r.json())
-      .then((d) => { if (on) setSrc(d.logo_url || null); })
-      .catch(() => undefined);
-    return () => { on = false; };
-  }, []);
-  if (!src) return <span className="site-logo" aria-hidden />;
-  return <img src={src} alt="" className={`site-logo ${className}`} />;
+  const seed = useBrand();
+  if (!seed.logo_url) return <span className="site-logo" aria-hidden />;
+  return <img src={seed.logo_url} alt="" className={`site-logo ${className}`} />;
 }
 
 export default function BrandMark({

@@ -335,13 +335,15 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
                 {p.display_name || p.username}
               </h1>
             </div>
-            <p className="text-sm text-foreground-muted">@{p.username}</p>
-            {p.open_to_work && (
-              <span className="badge-open mt-1">
-                <span className="badge-open-dot" aria-hidden />
-                Open to opportunities
-              </span>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm text-foreground-muted">@{p.username}</p>
+              {p.open_to_work && (
+                <span className="badge-open">
+                  <span className="badge-open-dot" aria-hidden />
+                  Open to opportunities
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

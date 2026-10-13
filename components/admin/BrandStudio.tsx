@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 type Brand = {
   logo_url: string | null;
   mark_url: string | null;
+  powbot_url: string | null;
+  favicon_url: string | null;
   watermark_mode: "text" | "image";
   watermark_text: string;
   watermark_url: string | null;
@@ -252,6 +254,16 @@ export default function BrandStudio() {
     if (res.ok) setBrand((b) => b ? { ...b, mark_url: data.url } : b);
   }
 
+  async function publishAsset(file: File, kind: "powbot" | "favicon") {
+    const form = new FormData();
+    form.set("kind", kind);
+    form.set("file", file);
+    const res = await fetch("/api/admin/branding", { method: "POST", body: form });
+    const data = await res.json().catch(() => ({}));
+    setMsg(res.ok ? `${kind === "powbot" ? "Powbot" : "Favicon"} is public.` : data.error || "Could not save image.");
+    if (res.ok) setBrand((b) => b ? { ...b, [`${kind}_url`]: data.url } : b);
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -322,6 +334,20 @@ export default function BrandStudio() {
             <span className="text-xs text-foreground-muted">Public fallback preview</span>
           </div>
         )}
+      </section>
+
+      <section className="rounded-2xl border border-border p-4">
+        <h2 className="text-sm font-semibold">Powbot icon</h2>
+        <p className="mt-1 text-xs text-foreground-muted">Circular icon for the floating assistant. Use a square image.</p>
+        <input className="mt-3 text-sm" type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void publishAsset(f, "powbot"); }} />
+        {brand?.powbot_url && <img src={brand.powbot_url} alt="" className="mt-3 h-12 w-12 rounded-full object-cover" />}
+      </section>
+
+      <section className="rounded-2xl border border-border p-4">
+        <h2 className="text-sm font-semibold">Favicon</h2>
+        <p className="mt-1 text-xs text-foreground-muted">Browser tab icon. Square image works best.</p>
+        <input className="mt-3 text-sm" type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void publishAsset(f, "favicon"); }} />
+        {brand?.favicon_url && <img src={brand.favicon_url} alt="" className="mt-3 h-8 w-8 rounded object-cover" />}
       </section>
 
       <section className="rounded-2xl border border-border p-4">

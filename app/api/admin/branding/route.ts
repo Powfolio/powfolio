@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const kind = String(form.get("kind") || "");
   const admin = createServiceClient();
 
-  if (kind === "logo" || kind === "watermark" || kind === "mark") {
+  if (kind === "logo" || kind === "watermark" || kind === "mark" || kind === "powbot" || kind === "favicon") {
     const file = form.get("file");
     if (!(file instanceof File) || file.size === 0) {
       return NextResponse.json({ error: "Choose an image first." }, { status: 400 });
@@ -33,6 +33,10 @@ export async function POST(req: NextRequest) {
       ? { logo_url: url }
       : kind === "mark"
       ? { mark_url: url }
+      : kind === "powbot"
+      ? { powbot_url: url }
+      : kind === "favicon"
+      ? { favicon_url: url }
       : {
           watermark_mode: "image",
           watermark_url: url,

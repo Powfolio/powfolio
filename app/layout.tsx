@@ -9,6 +9,8 @@ import "./ux-refine.css";
 import "./auth-ui-preloader.css";
 import "./route-loader.css";
 import Pow3Bot from "@/components/ai/Pow3Bot";
+import { BrandProvider } from "@/components/ui/BrandProvider";
+import { loadSiteBrand } from "@/lib/site-brand";
 import SkipToContent from "@/components/ui/SkipToContent";
 import CookieConsent from "@/components/legal/CookieConsent";
 import AppRouteLoader from "@/components/ui/AppRouteLoader";
@@ -49,21 +51,26 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const brand = await loadSiteBrand();
+  const favicon = brand.favicon_url || "/folio-mark.png?v=20260924";
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        <link rel="icon" href={FAVICON} type="image/png" sizes="32x32" />
-        <link rel="shortcut icon" href={FAVICON} />
-        <link rel="apple-touch-icon" href={FAVICON} />
+        <link rel="icon" href={favicon} type="image/png" sizes="32x32" />
+        <link rel="shortcut icon" href={favicon} />
+        <link rel="apple-touch-icon" href={favicon} />
+        {brand.logo_url && <link rel="preload" as="image" href={brand.logo_url} />}
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('pow3folio-theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){}})();` }} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans`}>
-        <SkipToContent />
-        <AppRouteLoader />
-        {children}
-        <Pow3Bot />
-        <CookieConsent />
+        <BrandProvider value={{ logo_url: brand.logo_url, powbot_url: brand.powbot_url, favicon_url: brand.favicon_url }}>
+          <SkipToContent />
+          <AppRouteLoader />
+          {children}
+          <Pow3Bot />
+          <CookieConsent />
+        </BrandProvider>
       </body>
     </html>
   );

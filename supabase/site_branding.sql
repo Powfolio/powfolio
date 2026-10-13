@@ -27,3 +27,5 @@ insert into public.site_branding (id) values (1) on conflict (id) do nothing;
 
 alter table public.site_branding add column if not exists watermark_scale numeric not null default 1;
 alter table public.site_branding add column if not exists mark_url text;
+alter table public.site_branding add column if not exists powbot_url text;
+alter table public.site_branding add column if not exists favicon_url text;
