@@ -48,7 +48,7 @@ export default function ResumeStudio({ username, children }: { username: string;
           .no-print { display: none !important; }
           html, body, .resume-page { background: white !important; }
           .resume-sheet { box-shadow: none !important; margin: 0 !important; max-width: none !important; }
-          .resume-mark { position: fixed; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) rotate(var(--wm-rotate, -24deg)) scale(var(--wm-scale, 1)) !important; }
+          .resume-mark { position: fixed; }
           .resume-inner, .resume-inner p, .resume-inner h1, .resume-inner h2, .resume-inner li { position: relative; z-index: 1; }
           a { color: var(--cv-link) !important; }
         }

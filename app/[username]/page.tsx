@@ -302,8 +302,8 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
             )}
           </div>
 
-          <div className="flex items-end justify-between gap-3 px-1 sm:px-2">
-            <div className="-mt-6 h-20 w-20 sm:-mt-8 sm:h-32 sm:w-32 shrink-0 overflow-hidden rounded-full bg-surface-elevated shadow-[0_0_0_3px_#B8863B,0_0_0_6px_var(--background)]">
+          <div className="relative -mt-8 flex items-end justify-between gap-3 px-1 sm:-mt-12 sm:px-2">
+            <div className="h-20 w-20 sm:h-32 sm:w-32 shrink-0 overflow-hidden rounded-full bg-surface-elevated shadow-[0_0_0_3px_#B8863B,0_0_0_6px_var(--background)]">
               {p.avatar_url ? (
                 <ImageLightbox
                   src={p.avatar_url}

@@ -368,7 +368,7 @@ export default function BrandStudio() {
           </div>
           <div className="absolute inset-0 flex items-center justify-center" style={{ left: `${wmX}%`, top: `${wmY}%`, transform: `translate(-50%, -50%) rotate(${wmRotate}deg) scale(${wmScale})`, opacity: wmOpacity }}>
             {wmMode === "image" && (wmUrl || brand?.watermark_url) ? (
-              <img src={wmUrl || brand?.watermark_url || ""} alt="" className="max-h-24 max-w-[140px] object-contain" />
+              <img src={wmUrl || brand?.watermark_url || ""} alt="" style={{ width: "42%" }} className="object-contain" />
             ) : (
               <span className="whitespace-nowrap text-2xl font-extrabold tracking-widest text-[#b8863b]">{wmText || "POWFOLIO.XYZ"}</span>
             )}

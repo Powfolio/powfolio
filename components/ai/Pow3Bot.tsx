@@ -185,7 +185,7 @@ export default function Pow3Bot({ context }: Props) {
         {open ? (
           <span className="text-lg leading-none">×</span>
         ) : (
-          <img src="/powbot.png" alt="" className="h-8 w-8 rounded-full object-cover" />
+          <img src="/powbot.png" alt="" className="h-9 w-9 object-contain" />
         )}
       </button>
 

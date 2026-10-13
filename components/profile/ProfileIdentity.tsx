@@ -254,21 +254,25 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     if (!file) return;
     setUploadingAvatar(true);
     const url = await uploadImage(file, "avatar");
-    if (url) {
-      setAvatarUrl(url);
-      notify("Avatar uploaded. Save identity to keep it.");
-    }
+    if (!url) { setUploadingAvatar(false); return; }
+    setAvatarUrl(url);
+    const supabase = createClient();
+    const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", profile.id);
     setUploadingAvatar(false);
+    notify(error ? error.message : "Profile photo saved");
+    if (!error) router.refresh();
   }
   async function onBanner(file?: File) {
     if (!file) return;
     setUploadingBanner(true);
     const url = await uploadImage(file, "banner");
-    if (url) {
-      setBannerUrl(url);
-      notify("Banner uploaded. Save identity to keep it.");
-    }
+    if (!url) { setUploadingBanner(false); return; }
+    setBannerUrl(url);
+    const supabase = createClient();
+    const { error } = await supabase.from("profiles").update({ banner_url: url }).eq("id", profile.id);
     setUploadingBanner(false);
+    notify(error ? error.message : "Banner saved");
+    if (!error) router.refresh();
   }
 
   async function detectLocation() {
@@ -953,7 +957,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
               <span>Choose photo</span>
               <input type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) { if (mediaSheet === "avatar") void onAvatar(f); else void onBanner(f); } setMediaSheet(null); }} />
             </label>
-            <button type="button" className="flex w-full items-center gap-3 rounded-xl px-2 py-3 text-sm text-red-400" onClick={() => { if (mediaSheet === "avatar") setAvatarUrl(null); else setBannerUrl(null); setMediaSheet(null); notify(mediaSheet === "avatar" ? "Profile photo removed" : "Banner removed"); }}>
+            <button type="button" className="flex w-full items-center gap-3 rounded-xl px-2 py-3 text-sm text-red-400" onClick={() => { if (mediaSheet === "avatar") { setAvatarUrl(null); void createClient().from("profiles").update({ avatar_url: null }).eq("id", profile.id); } else { setBannerUrl(null); void createClient().from("profiles").update({ banner_url: null }).eq("id", profile.id); } setMediaSheet(null); notify(mediaSheet === "avatar" ? "Profile photo removed" : "Banner removed"); }}>
               {mediaSheet === "avatar" ? "Remove profile picture" : "Remove banner"}
             </button>
           </div>

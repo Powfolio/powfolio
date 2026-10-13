@@ -14,10 +14,8 @@ export function SiteLogo({ className = "" }: { className?: string }) {
       .catch(() => undefined);
     return () => { on = false; };
   }, []);
-  if (src) {
-    return <img src={src} alt="" className={`site-logo ${className}`} />;
-  }
-  return <span className={`site-logo-fallback ${className}`} aria-hidden>P</span>;
+  if (!src) return <span className="site-logo" aria-hidden />;
+  return <img src={src} alt="" className={`site-logo ${className}`} />;
 }
 
 export default function BrandMark({
