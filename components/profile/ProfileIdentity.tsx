@@ -126,6 +126,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
   const [openWork, setOpenWork] = useState(profile.open_to_work ?? false);
   const [mediaSheet, setMediaSheet] = useState<null | "avatar" | "banner">(null);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
+  const [bannerUrl, setBannerUrl] = useState(profile.banner_url);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
 
