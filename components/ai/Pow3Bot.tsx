@@ -166,20 +166,27 @@ export default function Pow3Bot({ context }: Props) {
   return (
     <>
       <style>{`
-        .powbot-face { transform-origin: 50% 60%; }
-        .powbot-img { animation: powbot-look 7.4s ease-in-out infinite, powbot-blink 5.8s linear infinite; transform-origin: 50% 45%; }
+        .powbot-face { position: relative; transform-origin: 50% 60%; }
+        .powbot-img { animation: powbot-look 8.6s ease-in-out infinite; transform-origin: 50% 55%; }
+        .powbot-lid {
+          position: absolute; width: 18%; height: 16%; border-radius: 999px;
+          background: #1a1408; transform: scaleY(0); transform-origin: 50% 50%;
+          animation: powbot-blink 6.4s linear infinite; pointer-events: none;
+        }
+        .powbot-lid.left { left: 31%; top: 38%; }
+        .powbot-lid.right { left: 51%; top: 38%; animation-delay: 0.04s; }
         @keyframes powbot-look {
           0%, 100% { transform: translateX(0) rotate(0deg); }
-          18% { transform: translateX(-1.5px) rotate(-6deg); }
-          42% { transform: translateX(1.5px) rotate(5deg); }
-          68% { transform: translateX(-0.5px) rotate(-2deg); }
+          22% { transform: translateX(-1px) rotate(-4deg); }
+          48% { transform: translateX(1px) rotate(4deg); }
+          72% { transform: translateX(-0.4px) rotate(-2deg); }
         }
         @keyframes powbot-blink {
-          0%, 38%, 42%, 78%, 82%, 100% { transform: scaleY(1); }
-          40%, 80% { transform: scaleY(0.08); }
+          0%, 34%, 40%, 72%, 78%, 100% { transform: scaleY(0); }
+          37%, 75% { transform: scaleY(1); }
         }
-        .powbot-face:active { animation: powbot-pop 0.28s ease; }
-        @keyframes powbot-pop { 50% { transform: scale(0.86) rotate(-8deg); } }
+        .powbot-face:active { animation: powbot-pop 0.32s ease; }
+        @keyframes powbot-pop { 50% { transform: scale(0.9) rotate(-8deg); } }
       `}</style>
       {open && (
         <div
@@ -205,6 +212,8 @@ export default function Pow3Bot({ context }: Props) {
         ) : (
           <span className="powbot-face block h-9 w-9 overflow-hidden rounded-full">
             <img src={brand.powbot_url || "/powbot.png"} alt="" className="powbot-img h-full w-full object-cover" />
+            <span className="powbot-lid left" />
+            <span className="powbot-lid right" />
           </span>
         )}
       </button>
