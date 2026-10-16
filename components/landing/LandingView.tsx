@@ -48,7 +48,7 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
               <span className="mt-1 block hero-gradient-text font-semibold">Verified. Visible.</span>
             </h1>
             <p className="landing-reveal landing-delay-3 mx-auto mt-6 max-w-xl text-[15px] leading-relaxed text-foreground-muted sm:text-base">
-              Stop scattering trades, threads, and roles across ten apps. One public Powfolio with scores that reflect evidence.
+              Trades, threads, roles, and onchain activity in one public page. Scores that move with evidence, not slogans.
             </p>
             <div className="landing-reveal landing-delay-4 mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               {signedIn ? (
@@ -56,7 +56,7 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
               ) : (
                 <a href="/signup" className="btn-primary w-full max-w-xs px-5 py-2.5 text-sm sm:w-auto">Create free profile</a>
               )}
-              <a href="/faq" className="btn-ghost px-4 py-2 text-sm">Read the FAQ</a>
+              <a href="/#features" className="btn-ghost px-4 py-2 text-sm">See the proof sections</a>
             </div>
             <dl className="landing-reveal landing-delay-5 mx-auto mt-14 grid max-w-lg grid-cols-2 gap-y-7 sm:grid-cols-4">
               {STATS.map((s) => (

@@ -24,15 +24,15 @@ const DEFAULT: FeatureCard[] = [
   },
   {
     title: "Collectibles",
-    desc: "NFTs you actually hold. Paste a marketplace link and put the art on your page.",
-    image: "https://images.unsplash.com/photo-1620321023374-9dca1e2d11e6?auto=format&fit=crop&w=900&q=80",
-    imageAlt: "Digital collectible NFT artwork",
+    desc: "The NFTs you hold, on your page. Art, badges, and proof that you were early.",
+    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=900&q=80",
+    imageAlt: "Abstract digital art and collectible pieces",
   },
   {
     title: "Multi-wallet",
-    desc: "Named extra wallets. Viewers switch between them on your public onchain section.",
-    image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=900&q=80",
-    imageAlt: "Multiple payment cards and wallets",
+    desc: "Name extra wallets and let viewers switch between them. One profile, every chain you touch.",
+    image: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=900&q=80",
+    imageAlt: "Multiple crypto wallets and devices",
   },
   {
     title: "Technical Writing",
@@ -48,9 +48,9 @@ const DEFAULT: FeatureCard[] = [
   },
   {
     title: "Airdrops & Testnets",
-    desc: "Campaigns farmed and chains touched. One list builders respect.",
-    image: "https://images.unsplash.com/photo-1642104704074-907c0698cbd9?auto=format&fit=crop&w=900&q=80",
-    imageAlt: "Network nodes visualization",
+    desc: "Campaigns farmed, chains touched, points earned. A clean list that shows you show up.",
+    image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=900&q=80",
+    imageAlt: "Tokens and network activity",
   },
   {
     title: "Skill pillars",
@@ -156,20 +156,41 @@ export default function FeatureScroller({ items = DEFAULT }: { items?: FeatureCa
   return (
     <section id="features" ref={sectionRef} className="pb-20 sm:pb-28">
       <div className="container-app">
-        <div className="mb-8 flex items-end justify-between gap-4">
+        <div className="mb-8">
           <div className="max-w-xl">
             <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-foreground-subtle">What Powfolio does</p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Proof sections that move with you</h2>
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-foreground-muted">Each block on your public page is a piece of work someone can review. Scroll the page and the reel moves with you.</p>
-          </div>
-          <div className="mb-1 flex items-center gap-3 shrink-0">
-            <button type="button" onClick={() => nudge(-1)} className="text-foreground-muted transition hover:text-primary" aria-label="Previous section"><Arrow dir="left" /></button>
-            <button type="button" onClick={() => nudge(1)} className="text-foreground-muted transition hover:text-primary" aria-label="Next section"><Arrow dir="right" /></button>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-foreground-muted">Each block on your public page is a piece of work someone can review. Swipe the reel or let the page scroll it.</p>
           </div>
         </div>
       </div>
-      <div ref={viewportRef} className="overflow-hidden px-[max(1rem,calc((100vw-72rem)/2+1rem))]">
-        <div ref={trackRef} className="flex gap-4 will-change-transform" style={{ transform: "translate3d(0,0,0)" }}>
+      <div ref={viewportRef} className="relative overflow-hidden px-[max(1rem,calc((100vw-72rem)/2+1rem))]"
+        onPointerDown={(e) => {
+          if (e.pointerType === "mouse" && e.button !== 0) return;
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          (e.currentTarget as HTMLElement).dataset.sx = String(e.clientX);
+          (e.currentTarget as HTMLElement).dataset.ox = String(targetRef.current);
+        }}
+        onPointerMove={(e) => {
+          const el = e.currentTarget as HTMLElement;
+          if (!el.hasPointerCapture(e.pointerId)) return;
+          const sx = Number(el.dataset.sx || 0);
+          const ox = Number(el.dataset.ox || 0);
+          const dx = sx - e.clientX;
+          targetRef.current = Math.min(maxOffset(), Math.max(0, ox + dx));
+          pauseUntil.current = Date.now() + 800;
+        }}
+        onPointerUp={(e) => {
+          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        }}
+      >
+        <button type="button" onClick={() => nudge(-1)} className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white/90 backdrop-blur-sm transition hover:bg-black/60 sm:left-6" aria-label="Previous">
+          <Arrow dir="left" />
+        </button>
+        <button type="button" onClick={() => nudge(1)} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white/90 backdrop-blur-sm transition hover:bg-black/60 sm:right-6" aria-label="Next">
+          <Arrow dir="right" />
+        </button>
+        <div ref={trackRef} className="flex gap-4 will-change-transform touch-pan-y" style={{ transform: "translate3d(0,0,0)" }}>
           {items.map((card) => (
             <article key={card.title} className="group relative h-[22rem] w-[min(86vw,22rem)] shrink-0 overflow-hidden rounded-2xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
