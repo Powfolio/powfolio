@@ -54,5 +54,6 @@ export async function GET() {
     last30,
     byDay: Object.entries(byDay).map(([date, count]) => ({ date, count })),
     topCountries,
+    snapshot: new Date().toISOString(),
   });
 }
