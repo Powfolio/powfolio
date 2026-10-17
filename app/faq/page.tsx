@@ -19,7 +19,7 @@ const FAQS: { q: string; a: string }[] = [
   { q: "Can people download my CV from my public page?", a: "No. Download CV lives in the dashboard at the resume page. It prints as {username} PowFolio.pdf in Editorial or Classic. Visitors cannot download it from the public page." },
   { q: "What is work experience limited to?", a: "There is no five-entry cap. Each role needs a company or project, a role, full-time or part-time, dates, and a company link. Achievement lines are optional and print on the CV." },
   { q: "Where is my public link?", a: "Once you've set a username and made your profile public, your public Powfolio is your username on this site. That's the one link you can drop in a bio or a DM." },
-  { q: "What is Pow3Bot?", a: "Pow3Bot is your in-product assistant, built specifically for Powfolio. It helps with setup, wording, understanding your scores, and general how-tos. It won't give investment advice, and it doesn't know anything about other apps." },
+  { q: "What is Powbot?", a: "Powbot is your in-product assistant, built specifically for Powfolio. It helps with setup, wording, understanding your scores, and general how-tos. It won't give investment advice, and it doesn't know anything about other apps." },
   { q: "Can I hide my email?", a: "You can hide any of your email addresses, but at least one email address must remain visible on your public profile." },
 ];
 
