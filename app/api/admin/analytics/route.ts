@@ -11,7 +11,7 @@ export async function GET() {
   const supabase = createServiceClient();
   const { data: profiles, error } = await supabase
     .from("profiles")
-    .select("id, created_at, updated_at, status")
+    .select("id, created_at, updated_at, account_status, location_country")
     .order("created_at", { ascending: false })
     .limit(5000);
 
@@ -33,11 +33,15 @@ export async function GET() {
   }
 
   const total = rows.length;
-  const active = rows.filter((r: { status?: string | null }) => r.status === "active" || !r.status).length;
+  const active = rows.filter((r: { account_status?: string | null }) => (r.account_status || "active") === "active").length;
   const last7 = rows.filter((r: { created_at?: string | null }) => r.created_at && now - new Date(r.created_at).getTime() < 7 * day).length;
   const last30 = rows.filter((r: { created_at?: string | null }) => r.created_at && now - new Date(r.created_at).getTime() < 30 * day).length;
 
-  const countries: Record<string, number> = { Unknown: rows.length };
+  const countries: Record<string, number> = {};
+  for (const r of rows as { location_country?: string | null }[]) {
+    const loc = (r.location_country || "Unknown").trim() || "Unknown";
+    countries[loc] = (countries[loc] || 0) + 1;
+  }
   const topCountries = Object.entries(countries)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 12)

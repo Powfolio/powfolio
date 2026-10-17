@@ -40,7 +40,7 @@ export default function MfaSetup({ enrolled }: { enrolled: boolean }) {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
-  const [existingName, setExistingName] = useState("Pow3Folio ops");
+  const [existingName, setExistingName] = useState("Powfolio ops");
   const bootstrapped = useRef(false);
 
   const groupedSecret = useMemo(() => {
@@ -60,11 +60,11 @@ export default function MfaSetup({ enrolled }: { enrolled: boolean }) {
 
   const startEnroll = useCallback(async () => {
     const supabase = createClient();
-    const friendlyName = "Pow3Folio ops";
+    const friendlyName = "Powfolio ops";
     const first = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName });
     if (!first.error && first.data) return first.data;
 
-    const retryName = `Pow3Folio ops ${Date.now().toString().slice(-6)}`;
+    const retryName = `Powfolio ops ${Date.now().toString().slice(-6)}`;
     const second = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: retryName });
     if (second.error) throw new Error(second.error.message);
     return second.data;
@@ -109,7 +109,7 @@ export default function MfaSetup({ enrolled }: { enrolled: boolean }) {
         const message = err instanceof Error ? err.message : "Could not start authenticator setup";
         if (message.toLowerCase().includes("already exists")) {
           setError(
-            "An authenticator named \u201cPow3Folio ops\u201d is already on this account. Enter the current 6-digit code from that app."
+            "An authenticator named \u201cPowfolio ops\u201d is already on this account. Enter the current 6-digit code from that app."
           );
           setMode("verify");
         } else {
@@ -236,7 +236,7 @@ export default function MfaSetup({ enrolled }: { enrolled: boolean }) {
               <div className="mx-auto w-fit rounded-2xl bg-white p-3 shadow-sm">
                 {qr ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={qr} alt="Pow3Folio ops authenticator QR code" className="h-44 w-44" />
+                  <img src={qr} alt="Powfolio ops authenticator QR code" className="h-44 w-44" />
                 ) : (
                   <div className="flex h-44 w-44 items-center justify-center text-xs text-zinc-500">Preparing QR\u2026</div>
                 )}
@@ -250,7 +250,7 @@ export default function MfaSetup({ enrolled }: { enrolled: boolean }) {
                   </button>
                 </div>
                 <p className="mt-1 text-[11px] leading-5 text-foreground-subtle">
-                  Add account \u2192 Enter a setup key \u2192 account name <span className="text-foreground">Pow3Folio ops</span> \u2192 type Time-based.
+                  Add account \u2192 Enter a setup key \u2192 account name <span className="text-foreground">Powfolio ops</span> \u2192 type Time-based.
                 </p>
                 <code className="mt-3 block break-all rounded-lg border border-border bg-background px-3 py-2.5 font-mono text-xs tracking-wide">
                   {secret ? (showSecret ? groupedSecret : "\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022") : "Generating key\u2026"}
