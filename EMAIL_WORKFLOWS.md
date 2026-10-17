@@ -33,7 +33,7 @@ Do not email Super Admin internal events (snapshot views, legal hold, exports) t
 ## 5. Talent deleted their own account
 - Function: `accountDeletedEmail`
 - Subject: Your Powfolio account "{username}" has been deleted
-- Message: public profile gone, sign-in disabled, restricted archive until {purgeAt}, then permanent removal. If unexpected, contact support@pow3folio.com.
+- Message: public profile gone, sign-in disabled, restricted archive until {purgeAt}, then permanent removal. If unexpected, contact support@powfolio.com.
 
 ## 6. Super Admin deleted / archived an account
 - Same template as #5, plus one line that Trust & Safety took the action.
