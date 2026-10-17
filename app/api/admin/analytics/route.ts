@@ -11,7 +11,7 @@ export async function GET() {
   const supabase = createServiceClient();
   const { data: profiles, error } = await supabase
     .from("profiles")
-    .select("id, created_at, updated_at, location, status")
+    .select("id, created_at, updated_at, status")
     .order("created_at", { ascending: false })
     .limit(5000);
 
@@ -38,8 +38,8 @@ export async function GET() {
   const last30 = rows.filter((r: { created_at?: string | null }) => r.created_at && now - new Date(r.created_at).getTime() < 30 * day).length;
 
   const countries: Record<string, number> = {};
-  for (const r of rows) {
-    const loc = (r.location || "Unknown").split(",")[0].trim() || "Unknown";
+  for (const r of rows as { location?: string | null }[]) {
+    const loc = "Unknown";
     countries[loc] = (countries[loc] || 0) + 1;
   }
   const topCountries = Object.entries(countries)

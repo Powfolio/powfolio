@@ -109,7 +109,7 @@ export default function MfaSetup({ enrolled }: { enrolled: boolean }) {
         const message = err instanceof Error ? err.message : "Could not start authenticator setup";
         if (message.toLowerCase().includes("already exists")) {
           setError(
-            "An authenticator named \u201cPow3Folio ops\u201d is already on this account. Enter the current 6-digit code, or tap \u201cI don\u2019t have that app\u201d to issue a new QR and setup key."
+            "An authenticator named \u201cPow3Folio ops\u201d is already on this account. Enter the current 6-digit code from that app."
           );
           setMode("verify");
         } else {
@@ -271,11 +271,6 @@ export default function MfaSetup({ enrolled }: { enrolled: boolean }) {
           <p className="mt-2 text-sm leading-6 text-foreground-muted">
             Look for <span className="font-medium text-foreground">{existingName}</span> in your authenticator and type the current 6-digit code below.
           </p>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <button type="button" className="btn-secondary text-xs" disabled={busy} onClick={() => void bootstrap(true)}>
-              I don\u2019t have that app \u2014 show a new QR and key
-            </button>
-          </div>
         </section>
       )}
 
