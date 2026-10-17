@@ -96,7 +96,7 @@ Do not email Super Admin internal events (snapshot views, legal hold, exports) t
 - Function: `welcomeEmail`
 - Status: Template ready. Wire `sendTransactionalEmail(welcomeEmail(...))` when mail work is turned on. Do not send on every later login.
 - Subject: Welcome to Powfolio
-- Message: account is ready; dashboard link; they can connect wallet / GitHub / X; support@pow3folio.com.
+- Message: account is ready; dashboard link; they can connect wallet / GitHub / X; support@powfolio.com.
 
 ## Implementation notes when mail work starts
 1. Set `RESEND_API_KEY` and `MAIL_FROM` on Vercel.
