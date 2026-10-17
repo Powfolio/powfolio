@@ -37,11 +37,7 @@ export async function GET() {
   const last7 = rows.filter((r: { created_at?: string | null }) => r.created_at && now - new Date(r.created_at).getTime() < 7 * day).length;
   const last30 = rows.filter((r: { created_at?: string | null }) => r.created_at && now - new Date(r.created_at).getTime() < 30 * day).length;
 
-  const countries: Record<string, number> = {};
-  for (const r of rows as { location?: string | null }[]) {
-    const loc = "Unknown";
-    countries[loc] = (countries[loc] || 0) + 1;
-  }
+  const countries: Record<string, number> = { Unknown: rows.length };
   const topCountries = Object.entries(countries)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 12)

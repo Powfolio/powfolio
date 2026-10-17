@@ -1,4 +1,5 @@
 import { redirect, notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { getAdminSession } from "@/lib/admin/auth";
 import OpsShell from "@/components/admin/OpsShell";
 
@@ -10,9 +11,17 @@ const FOUNDER = (process.env.ADMIN_BOOTSTRAP_EMAILS || "divineemmanuel461@gmail.
   .filter(Boolean);
 
 export default async function OpsLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const email = (user?.email || "").toLowerCase();
+  if (!user || !FOUNDER.includes(email)) {
+    notFound();
+  }
+
   const session = await getAdminSession();
-  if (!session) redirect("/login?next=/ops");
-  const email = (session.email || "").toLowerCase();
-  if (!FOUNDER.includes(email)) notFound();
+  if (!session) notFound();
   return <OpsShell email={session.email}>{children}</OpsShell>;
 }
