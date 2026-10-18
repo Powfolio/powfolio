@@ -49,10 +49,10 @@ export default function AnalyticsView() {
   if (!data) return <p className="text-sm text-foreground-muted">Loading analytics…</p>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Usage</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
           <p className="mt-1 text-sm text-foreground-muted">
             Snapshot · {new Date(data.snapshot).toLocaleString()} UTC
           </p>
@@ -62,61 +62,65 @@ export default function AnalyticsView() {
         </button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi label="Daily active" value={data.dau} hint="Updated in last 24h" />
-        <Kpi label="Weekly active" value={data.wau} hint="Updated in last 7d" />
-        <Kpi label="Monthly active" value={data.mau} hint="Updated in last 30d" />
-        <Kpi label="DAU / MAU" value={`${stickiness}%`} hint="Stickiness" />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Kpi label="Daily active" value={data.dau} sub="Last 24 hours" />
+        <Kpi label="Weekly active" value={data.wau} sub="Last 7 days" />
+        <Kpi label="Monthly active" value={data.mau} sub="Last 30 days" />
+        <Kpi label="Stickiness" value={`${stickiness}%`} sub="DAU / MAU" />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi label="Total accounts" value={data.total} />
-        <Kpi label="Active status" value={data.active} />
-        <Kpi label="New · 7 days" value={data.last7} />
-        <Kpi label="New · 30 days" value={data.last30} />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Kpi label="Total accounts" value={data.total} sub="All time" />
+        <Kpi label="Active status" value={data.active} sub="Not suspended" />
+        <Kpi label="New this week" value={data.last7} sub="Last 7 days" />
+        <Kpi label="New this month" value={data.last30} sub="Last 30 days" />
       </div>
 
-      <div className="rounded-2xl border border-border/40 bg-surface p-4">
-        <div className="mb-3 flex items-baseline justify-between">
-          <div>
-            <h2 className="text-sm font-medium">New accounts</h2>
-            <p className="text-[11px] text-foreground-subtle">Last 30 days · click a bar for details</p>
-          </div>
-          {selected && (
-            <p className="text-xs text-foreground-muted">
-              {selected.date}: <span className="font-medium text-foreground">{selected.count}</span> new
-            </p>
-          )}
-        </div>
-        <BarChart points={data.byDay} onSelect={setSelected} selected={selected?.date} />
-      </div>
-
-      <div className="rounded-2xl border border-border/40 bg-surface p-4">
-        <h2 className="text-sm font-medium">Top locations</h2>
-        <div className="mt-3 space-y-2">
-          {data.topCountries.length === 0 && <p className="text-sm text-foreground-muted">No location data yet.</p>}
-          {data.topCountries.map((c) => (
-            <div key={c.name} className="flex items-center gap-3 text-sm">
-              <span className="w-28 truncate text-foreground-muted">{c.name}</span>
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border/40">
-                <div className="h-full bg-primary" style={{ width: `${Math.min(100, c.share)}%` }} />
-              </div>
-              <span className="w-16 text-right tabular-nums">{c.count}</span>
-              <span className="w-12 text-right text-foreground-muted">{c.share}%</span>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2 rounded-2xl border border-border/40 bg-surface p-4">
+          <div className="mb-3 flex items-baseline justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-medium">New accounts</h2>
+              <p className="text-[11px] text-foreground-subtle">Last 30 days · click a bar</p>
             </div>
-          ))}
+            {selected && (
+              <div className="text-right text-xs">
+                <p className="font-medium">{selected.date}</p>
+                <p className="text-foreground-muted">{selected.count} new</p>
+              </div>
+            )}
+          </div>
+          <BarChart points={data.byDay} onSelect={setSelected} selected={selected?.date} />
+        </div>
+
+        <div className="rounded-2xl border border-border/40 bg-surface p-4">
+          <h2 className="text-sm font-medium">Top locations</h2>
+          <div className="mt-3 space-y-2.5">
+            {data.topCountries.length === 0 && (
+              <p className="text-sm text-foreground-muted">No location data yet.</p>
+            )}
+            {data.topCountries.map((c) => (
+              <div key={c.name} className="flex items-center gap-3 text-sm">
+                <span className="w-24 truncate text-foreground-muted">{c.name}</span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border/40">
+                  <div className="h-full bg-primary" style={{ width: `${Math.min(100, c.share)}%` }} />
+                </div>
+                <span className="w-10 text-right tabular-nums text-xs">{c.count}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function Kpi({ label, value, hint }: { label: string; value: number | string; hint?: string }) {
+function Kpi({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
   return (
     <div className="rounded-2xl border border-border/40 bg-surface p-4">
       <p className="text-[11px] uppercase tracking-[0.14em] text-foreground-subtle">{label}</p>
       <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">{value}</p>
-      {hint && <p className="mt-1 text-[11px] text-foreground-muted">{hint}</p>}
+      {sub && <p className="mt-1 text-[11px] text-foreground-muted">{sub}</p>}
     </div>
   );
 }
@@ -132,20 +136,24 @@ function BarChart({
 }) {
   const max = Math.max(1, ...points.map((p) => p.count));
   return (
-    <div className="flex h-40 items-end gap-[3px] pt-2">
+    <div className="flex h-44 items-end gap-[4px] pt-2">
       {points.map((p) => {
-        const h = Math.max(2, (p.count / max) * 100);
+        const h = Math.max(3, (p.count / max) * 100);
         const active = selected === p.date;
         return (
           <button
             key={p.date}
             type="button"
             onClick={() => onSelect(p)}
-            className={`flex-1 rounded-t transition-all ${active ? "bg-primary" : "bg-primary/70 hover:bg-primary"}`}
+            className={`group relative flex-1 rounded-t transition-all ${active ? "bg-primary" : "bg-primary/75 hover:bg-primary"}`}
             style={{ height: `${h}%` }}
-            title={`${p.date}: ${p.count} new accounts`}
-            aria-label={`${p.date}: ${p.count} new accounts`}
-          />
+            title={`${p.date}: ${p.count}`}
+            aria-label={`${p.date}: ${p.count} new`}
+          >
+            <span className="pointer-events-none absolute -top-7 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-foreground px-1.5 py-0.5 text-[10px] text-background group-hover:block">
+              {p.count}
+            </span>
+          </button>
         );
       })}
     </div>
