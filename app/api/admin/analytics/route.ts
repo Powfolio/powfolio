@@ -17,7 +17,14 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const rows = profiles || [];
+  const rows = (profiles || []) as {
+    id: string;
+    created_at?: string | null;
+    updated_at?: string | null;
+    account_status?: string | null;
+    location_country?: string | null;
+  }[];
+
   const now = Date.now();
   const day = 86400000;
 
@@ -33,12 +40,17 @@ export async function GET() {
   }
 
   const total = rows.length;
-  const active = rows.filter((r: { account_status?: string | null }) => (r.account_status || "active") === "active").length;
-  const last7 = rows.filter((r: { created_at?: string | null }) => r.created_at && now - new Date(r.created_at).getTime() < 7 * day).length;
-  const last30 = rows.filter((r: { created_at?: string | null }) => r.created_at && now - new Date(r.created_at).getTime() < 30 * day).length;
+  const active = rows.filter((r) => (r.account_status || "active") === "active").length;
+  const last7 = rows.filter((r) => r.created_at && now - new Date(r.created_at).getTime() < 7 * day).length;
+  const last30 = rows.filter((r) => r.created_at && now - new Date(r.created_at).getTime() < 30 * day).length;
+
+  // Approximate activity from updated_at (login / profile edit / dashboard visit proxy)
+  const dau = rows.filter((r) => r.updated_at && now - new Date(r.updated_at).getTime() < 1 * day).length;
+  const wau = rows.filter((r) => r.updated_at && now - new Date(r.updated_at).getTime() < 7 * day).length;
+  const mau = rows.filter((r) => r.updated_at && now - new Date(r.updated_at).getTime() < 30 * day).length;
 
   const countries: Record<string, number> = {};
-  for (const r of rows as { location_country?: string | null }[]) {
+  for (const r of rows) {
     const loc = (r.location_country || "Unknown").trim() || "Unknown";
     countries[loc] = (countries[loc] || 0) + 1;
   }
@@ -47,12 +59,17 @@ export async function GET() {
     .slice(0, 12)
     .map(([name, count]) => ({ name, count, share: total ? Math.round((count / total) * 1000) / 10 : 0 }));
 
+  const series = Object.entries(byDay).map(([date, count]) => ({ date, count }));
+
   return NextResponse.json({
     total,
     active,
     last7,
     last30,
-    byDay: Object.entries(byDay).map(([date, count]) => ({ date, count })),
+    dau,
+    wau,
+    mau,
+    byDay: series,
     topCountries,
     snapshot: new Date().toISOString(),
   });
