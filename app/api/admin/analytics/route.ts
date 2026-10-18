@@ -9,21 +9,29 @@ export async function GET() {
   if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
 
   const supabase = createServiceClient();
-  const { data: profiles, error } = await supabase
-    .from("profiles")
-    .select("id, created_at, updated_at, account_status, location_country")
-    .order("created_at", { ascending: false })
-    .limit(5000);
+
+  const [{ data: profiles, error }, authUsers] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, created_at, account_status, location_country")
+      .order("created_at", { ascending: false })
+      .limit(5000),
+    supabase.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+  ]);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const rows = (profiles || []) as {
     id: string;
     created_at?: string | null;
-    updated_at?: string | null;
     account_status?: string | null;
     location_country?: string | null;
   }[];
+
+  const signInById = new Map<string, string>();
+  for (const u of authUsers.data?.users || []) {
+    if (u.last_sign_in_at) signInById.set(u.id, u.last_sign_in_at);
+  }
 
   const now = Date.now();
   const day = 86400000;
@@ -44,10 +52,16 @@ export async function GET() {
   const last7 = rows.filter((r) => r.created_at && now - new Date(r.created_at).getTime() < 7 * day).length;
   const last30 = rows.filter((r) => r.created_at && now - new Date(r.created_at).getTime() < 30 * day).length;
 
-  // Approximate activity from updated_at (login / profile edit / dashboard visit proxy)
-  const dau = rows.filter((r) => r.updated_at && now - new Date(r.updated_at).getTime() < 1 * day).length;
-  const wau = rows.filter((r) => r.updated_at && now - new Date(r.updated_at).getTime() < 7 * day).length;
-  const mau = rows.filter((r) => r.updated_at && now - new Date(r.updated_at).getTime() < 30 * day).length;
+  // Real activity from auth last_sign_in_at, not profile updated_at
+  let dau = 0, wau = 0, mau = 0;
+  for (const r of rows) {
+    const ts = signInById.get(r.id);
+    if (!ts) continue;
+    const age = now - new Date(ts).getTime();
+    if (age < 1 * day) dau++;
+    if (age < 7 * day) wau++;
+    if (age < 30 * day) mau++;
+  }
 
   const countries: Record<string, number> = {};
   for (const r of rows) {
@@ -56,10 +70,8 @@ export async function GET() {
   }
   const topCountries = Object.entries(countries)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 12)
+    .slice(0, 8)
     .map(([name, count]) => ({ name, count, share: total ? Math.round((count / total) * 1000) / 10 : 0 }));
-
-  const series = Object.entries(byDay).map(([date, count]) => ({ date, count }));
 
   return NextResponse.json({
     total,
@@ -69,7 +81,7 @@ export async function GET() {
     dau,
     wau,
     mau,
-    byDay: series,
+    byDay: Object.entries(byDay).map(([date, count]) => ({ date, count })),
     topCountries,
     snapshot: new Date().toISOString(),
   });
