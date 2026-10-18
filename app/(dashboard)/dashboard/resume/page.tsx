@@ -13,6 +13,7 @@ import ResumeStudio from "@/components/profile/ResumeStudio";
 import ResumeExtras from "@/components/profile/ResumeExtras";
 import { normalizeSkills, cleanPlainText } from "@/lib/skills";
 import { loadSiteBrand } from "@/lib/site-brand";
+import { SITE_URL } from "@/lib/site";
 
 function categoryOf(item: CommunityItem): string {
   const tags = item.tags ?? [];
@@ -89,7 +90,7 @@ export default async function DashboardResumePage() {
     location,
     p.show_primary_email && p.primary_email ? p.primary_email : null,
     p.show_secondary_email && p.secondary_email ? p.secondary_email : null,
-    p.website_url && !/pow3folio/i.test(p.website_url) ? p.website_url : null,
+    p.website_url && !/pow3folio|powfolio\.xyz/i.test(p.website_url) ? p.website_url : null,
     p.github_url,
     p.x_url,
     p.telegram_url,
@@ -104,6 +105,8 @@ export default async function DashboardResumePage() {
     transform: `translate(-50%, -50%) rotate(${brand.watermark_rotate}deg) scale(${brand.watermark_scale || 1})`,
     opacity: brand.watermark_opacity,
   };
+
+  const publicUrl = `${SITE_URL}/${p.username}`;
 
   return (
     <ResumeStudio username={p.username}>
@@ -121,7 +124,7 @@ export default async function DashboardResumePage() {
                 <p className="resume-kicker text-[10px] font-semibold uppercase tracking-[0.22em]">Curriculum vitae</p>
                 <h1 className="resume-name mt-1 text-[30px] font-bold leading-tight tracking-tight">{p.display_name || p.username}</h1>
               </div>
-              <a href={`https://pow3folio.vercel.app/${p.username}`} className="mt-7 shrink-0 text-right no-underline">
+              <a href={publicUrl} className="mt-7 shrink-0 text-right no-underline">
                 <span className="ml-auto block h-12 w-12 overflow-hidden rounded-full" style={{ boxShadow: "0 0 0 2px #B8863B" }}>
                   {p.avatar_url ? (
                     <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -129,7 +132,7 @@ export default async function DashboardResumePage() {
                     <img src={brand.mark_url} alt="" className="h-full w-full object-cover" />
                   ) : null}
                 </span>
-                <p className="resume-muted mt-1 text-[10px] text-zinc-500">pow3folio.vercel.app/{p.username}</p>
+                <p className="resume-muted mt-1 text-[10px] text-zinc-500">powfolio.xyz/{p.username}</p>
               </a>
             </div>
             <div className="resume-lead-block mt-3">
