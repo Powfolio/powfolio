@@ -16,10 +16,10 @@ function bootstrapEmails() {
     .filter(Boolean);
 }
 
+/** Server-controlled claim only. Never trust user_metadata for privileges. */
 function claimRole(user: User): string | null {
   const app = (user.app_metadata || {}) as Record<string, unknown>;
-  const meta = (user.user_metadata || {}) as Record<string, unknown>;
-  const raw = app.role ?? app.user_role ?? meta.role ?? meta.user_role;
+  const raw = app.role ?? app.user_role;
   return typeof raw === "string" ? raw.toLowerCase() : null;
 }
 
@@ -100,14 +100,15 @@ export async function requireAdmin() {
   return { ok: true as const, status: 200, error: null, session };
 }
 
+/** Sensitive admin operations require a completed MFA session (AAL2), not merely enrollment. */
 export async function requireAdminMfa() {
   const gate = await requireAdmin();
   if (!gate.ok || !gate.session) return gate;
-  if (!gate.session.mfaEnrolled) {
+  if (gate.session.aal !== "aal2") {
     return {
       ok: false as const,
       status: 403,
-      error: "Admin 2FA required",
+      error: "Admin 2FA required for this action",
       session: gate.session,
     };
   }
