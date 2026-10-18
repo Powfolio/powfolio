@@ -1,13 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+type Point = { date: string; count: number };
 type Data = {
   total: number;
   active: number;
   last7: number;
   last30: number;
-  byDay: { date: string; count: number }[];
+  dau: number;
+  wau: number;
+  mau: number;
+  byDay: Point[];
   topCountries: { name: string; count: number; share: number }[];
   snapshot: string;
 };
@@ -16,18 +20,30 @@ export default function AnalyticsView() {
   const [data, setData] = useState<Data | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<Point | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     setErr(null);
     fetch("/api/admin/analytics?t=" + Date.now())
       .then((r) => r.json())
-      .then((d) => (d.error ? setErr(d.error) : setData(d)))
+      .then((d) => {
+        if (d.error) setErr(d.error);
+        else {
+          setData(d);
+          setSelected(null);
+        }
+      })
       .catch(() => setErr("Failed to load"))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const stickiness = useMemo(() => {
+    if (!data || !data.mau) return 0;
+    return Math.round((data.dau / data.mau) * 1000) / 10;
+  }, [data]);
 
   if (err) return <p className="text-sm text-red-400">{err}</p>;
   if (!data) return <p className="text-sm text-foreground-muted">Loading analytics…</p>;
@@ -36,7 +52,7 @@ export default function AnalyticsView() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Usage metrics</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Usage</h1>
           <p className="mt-1 text-sm text-foreground-muted">
             Snapshot · {new Date(data.snapshot).toLocaleString()} UTC
           </p>
@@ -47,35 +63,38 @@ export default function AnalyticsView() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          ["Registered accounts", data.total],
-          ["Active", data.active],
-          ["New · last 7 days", data.last7],
-          ["New · last 30 days", data.last30],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-2xl border border-border/40 bg-surface p-4">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-foreground-subtle">{label}</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{value}</p>
+        <Kpi label="Daily active" value={data.dau} hint="Updated in last 24h" />
+        <Kpi label="Weekly active" value={data.wau} hint="Updated in last 7d" />
+        <Kpi label="Monthly active" value={data.mau} hint="Updated in last 30d" />
+        <Kpi label="DAU / MAU" value={`${stickiness}%`} hint="Stickiness" />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Kpi label="Total accounts" value={data.total} />
+        <Kpi label="Active status" value={data.active} />
+        <Kpi label="New · 7 days" value={data.last7} />
+        <Kpi label="New · 30 days" value={data.last30} />
+      </div>
+
+      <div className="rounded-2xl border border-border/40 bg-surface p-4">
+        <div className="mb-3 flex items-baseline justify-between">
+          <div>
+            <h2 className="text-sm font-medium">New accounts</h2>
+            <p className="text-[11px] text-foreground-subtle">Last 30 days · click a bar for details</p>
           </div>
-        ))}
+          {selected && (
+            <p className="text-xs text-foreground-muted">
+              {selected.date}: <span className="font-medium text-foreground">{selected.count}</span> new
+            </p>
+          )}
+        </div>
+        <BarChart points={data.byDay} onSelect={setSelected} selected={selected?.date} />
       </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="New accounts" subtitle="Bar · last 30 days">
-          <BarChart points={data.byDay} />
-        </ChartCard>
-        <ChartCard title="Cumulative accounts" subtitle="Area · running total">
-          <AreaChart points={data.byDay} />
-        </ChartCard>
-      </div>
-
-      <ChartCard title="Daily active trend" subtitle="Line · new accounts smoothed">
-        <LineChart points={data.byDay} />
-      </ChartCard>
 
       <div className="rounded-2xl border border-border/40 bg-surface p-4">
         <h2 className="text-sm font-medium">Top locations</h2>
         <div className="mt-3 space-y-2">
+          {data.topCountries.length === 0 && <p className="text-sm text-foreground-muted">No location data yet.</p>}
           {data.topCountries.map((c) => (
             <div key={c.name} className="flex items-center gap-3 text-sm">
               <span className="w-28 truncate text-foreground-muted">{c.name}</span>
@@ -92,51 +111,43 @@ export default function AnalyticsView() {
   );
 }
 
-function ChartCard({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+function Kpi({ label, value, hint }: { label: string; value: number | string; hint?: string }) {
   return (
     <div className="rounded-2xl border border-border/40 bg-surface p-4">
-      <h2 className="text-sm font-medium">{title}</h2>
-      <p className="text-[11px] text-foreground-subtle">{subtitle}</p>
-      <div className="mt-3">{children}</div>
+      <p className="text-[11px] uppercase tracking-[0.14em] text-foreground-subtle">{label}</p>
+      <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">{value}</p>
+      {hint && <p className="mt-1 text-[11px] text-foreground-muted">{hint}</p>}
     </div>
   );
 }
 
-function BarChart({ points }: { points: { date: string; count: number }[] }) {
+function BarChart({
+  points,
+  onSelect,
+  selected,
+}: {
+  points: Point[];
+  onSelect: (p: Point) => void;
+  selected?: string;
+}) {
   const max = Math.max(1, ...points.map((p) => p.count));
   return (
-    <div className="flex h-36 items-end gap-[2px]">
-      {points.map((p) => (
-        <div key={p.date} className="flex-1 rounded-t bg-primary/80 transition-all hover:bg-primary" style={{ height: `${(p.count / max) * 100}%` }} title={`${p.date}: ${p.count}`} />
-      ))}
+    <div className="flex h-40 items-end gap-[3px] pt-2">
+      {points.map((p) => {
+        const h = Math.max(2, (p.count / max) * 100);
+        const active = selected === p.date;
+        return (
+          <button
+            key={p.date}
+            type="button"
+            onClick={() => onSelect(p)}
+            className={`flex-1 rounded-t transition-all ${active ? "bg-primary" : "bg-primary/70 hover:bg-primary"}`}
+            style={{ height: `${h}%` }}
+            title={`${p.date}: ${p.count} new accounts`}
+            aria-label={`${p.date}: ${p.count} new accounts`}
+          />
+        );
+      })}
     </div>
-  );
-}
-
-function AreaChart({ points }: { points: { date: string; count: number }[] }) {
-  let acc = 0;
-  const series = points.map((p) => { acc += p.count; return acc; });
-  const max = Math.max(1, ...series);
-  const w = 300, h = 120;
-  const step = w / Math.max(1, series.length - 1);
-  const path = series.map((v, i) => `${i === 0 ? "M" : "L"}${i * step},${h - (v / max) * h}`).join(" ");
-  const fill = `${path} L${(series.length - 1) * step},${h} L0,${h} Z`;
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-36 w-full">
-      <path d={fill} fill="currentColor" className="text-primary/20" />
-      <path d={path} fill="none" stroke="currentColor" strokeWidth="2" className="text-primary" />
-    </svg>
-  );
-}
-
-function LineChart({ points }: { points: { date: string; count: number }[] }) {
-  const max = Math.max(1, ...points.map((p) => p.count));
-  const w = 600, h = 140;
-  const step = w / Math.max(1, points.length - 1);
-  const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${i * step},${h - (p.count / max) * (h - 8) - 4}`).join(" ");
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-40 w-full">
-      <path d={path} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-primary" />
-    </svg>
   );
 }
