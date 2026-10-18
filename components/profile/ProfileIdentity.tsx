@@ -93,6 +93,68 @@ function isImageFile(name: string | null, type: string | null) {
   return (type || "").startsWith("image/") || /\.(png|jpe?g|webp|gif|svg)$/i.test(name || "");
 }
 
+type WorkForm = {
+  company: string;
+  role: string;
+  url: string;
+  desc: string;
+  achievements: string;
+  type: string;
+  mode: string;
+  hours: string;
+  start: string;
+  end: string;
+  logo: string;
+};
+
+type AchieveEditor = { index: number; draft: string; original: string };
+
+const BLANK_WORK: WorkForm = {
+  company: "",
+  role: "",
+  url: "",
+  desc: "",
+  achievements: "",
+  type: "Full-time",
+  mode: "remote",
+  hours: "",
+  start: "",
+  end: "",
+  logo: "",
+};
+
+function achievementLines(raw: string | null | undefined) {
+  return (raw || "").split("\n").map((line) => line.trim()).filter(Boolean);
+}
+
+function workFromItem(item: WorkExperience): WorkForm {
+  return {
+    company: item.company,
+    role: item.role,
+    url: item.url || "",
+    desc: item.description || "",
+    achievements: achievementLines(item.achievements).join("\n"),
+    type: item.employment_type === "part-time" ? "Part-time" : "Full-time",
+    mode: item.work_mode === "onsite" ? "onsite" : "remote",
+    hours: item.hours_per_day ? String(item.hours_per_day) : "",
+    start: item.start_date || "",
+    end: item.end_date || "",
+    logo: item.logo_url || "",
+  };
+}
+
+function withPendingAchievement(form: WorkForm, editor: AchieveEditor | null) {
+  const lines = achievementLines(form.achievements);
+  if (!editor) return lines.join("\n");
+  const text = editor.draft.trim();
+  if (editor.index >= 0) {
+    if (text) lines[editor.index] = text;
+  } else if (text) {
+    lines.push(text);
+  }
+  return lines.join("\n");
+}
+
 function Icon({ d, size = 17 }: { d: string; size?: number }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" width={size} height={size} aria-hidden>
@@ -150,7 +212,11 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
   const [eduOpen, setEduOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<string | null>(null);
   const [editingEdu, setEditingEdu] = useState<string | null>(null);
-  const [wForm, setWForm] = useState({ company: "", role: "", url: "", desc: "", achievements: "", type: "Full-time", mode: "remote", hours: "", start: "", end: "", logo: "" });
+  const [wForm, setWForm] = useState<WorkForm>(BLANK_WORK);
+  const [achieveEditor, setAchieveEditor] = useState<AchieveEditor | null>(null);
+  const [discardScope, setDiscardScope] = useState<null | "work" | "achievement">(null);
+  const [workBusy, setWorkBusy] = useState(false);
+  const workBaseline = useRef(JSON.stringify(BLANK_WORK));
   const [eForm, setEForm] = useState({ institution: "", degree: "", field: "", country: "", start: "", end: "", url: "", desc: "", logo: "" });
   const [expError, setExpError] = useState("");
   const [eduError, setEduError] = useState("");
@@ -192,6 +258,32 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     if (["identity", "skills", "experience", "docs", "cv"].includes(hash)) setTab(hash);
     if (googleEmail && !profile.secondary_email) setSecondaryEmail(googleEmail);
   }, [profile.id, googleEmail, profile.secondary_email]);
+
+  useEffect(() => {
+    if (!workOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      if (discardScope) {
+        setDiscardScope(null);
+        return;
+      }
+      if (achieveEditor) {
+        if (achieveEditor.draft.trim() !== achieveEditor.original.trim()) setDiscardScope("achievement");
+        else setAchieveEditor(null);
+        return;
+      }
+      if (JSON.stringify(wForm) !== workBaseline.current) setDiscardScope("work");
+      else resetWork();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [workOpen, discardScope, achieveEditor, wForm]);
 
 
 
@@ -504,54 +596,128 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
   }
 
   function resetWork() {
-    setWForm({ company: "", role: "", url: "", desc: "", achievements: "", type: "Full-time", mode: "remote", hours: "", start: "", end: "", logo: "" });
+    setWForm(BLANK_WORK);
     setEditingWork(null);
     setExpError("");
+    setAchieveEditor(null);
+    setDiscardScope(null);
     setWorkOpen(false);
   }
+  function workDirty(editor = achieveEditor) {
+    const pending = editor ? editor.draft.trim() !== editor.original.trim() : false;
+    return JSON.stringify(wForm) !== workBaseline.current || pending;
+  }
+  function beginWork(form: WorkForm, id: string | null, focusIndex?: number) {
+    setWForm(form);
+    setEditingWork(id);
+    setExpError("");
+    setDiscardScope(null);
+    workBaseline.current = JSON.stringify(form);
+    setWorkOpen(true);
+    if (typeof focusIndex === "number") {
+      const lines = achievementLines(form.achievements);
+      const text = lines[focusIndex] || "";
+      setAchieveEditor({ index: focusIndex, draft: text, original: text });
+    } else {
+      setAchieveEditor(null);
+    }
+  }
+  function requestCloseWork() {
+    if (discardScope) return;
+    if (achieveEditor && achieveEditor.draft.trim() !== achieveEditor.original.trim()) {
+      setDiscardScope("achievement");
+      return;
+    }
+    if (workDirty(null)) {
+      setDiscardScope("work");
+      return;
+    }
+    resetWork();
+  }
+  function requestCloseAchievement() {
+    if (!achieveEditor) return;
+    if (achieveEditor.draft.trim() !== achieveEditor.original.trim()) setDiscardScope("achievement");
+    else setAchieveEditor(null);
+  }
+  function confirmDiscard() {
+    if (discardScope === "achievement") {
+      setAchieveEditor(null);
+      setDiscardScope(null);
+      return;
+    }
+    resetWork();
+  }
+  function openAchievement(index: number) {
+    const lines = achievementLines(wForm.achievements);
+    const text = index >= 0 ? lines[index] || "" : "";
+    setAchieveEditor({ index, draft: text, original: text });
+  }
+  async function commitAchievementLines(lines: string[], message?: string) {
+    const achievements = lines.join("\n");
+    const nextForm = { ...wForm, achievements };
+    setWForm(nextForm);
+    setAchieveEditor(null);
+    if (!editingWork) return;
+    const next = work.map((item) => item.id === editingWork ? { ...item, achievements: achievements.trim() || null } : item);
+    const ok = await persistExperience(next, education);
+    if (!ok) return;
+    try {
+      const baseline = JSON.parse(workBaseline.current) as WorkForm;
+      baseline.achievements = achievements;
+      workBaseline.current = JSON.stringify(baseline);
+    } catch {
+      workBaseline.current = JSON.stringify(nextForm);
+    }
+    if (message) notify(message);
+  }
+  function saveAchievement() {
+    if (!achieveEditor) return;
+    const text = achieveEditor.draft.trim();
+    if (!text) return;
+    const lines = achievementLines(wForm.achievements);
+    const editingLine = achieveEditor.index >= 0;
+    if (editingLine) lines[achieveEditor.index] = text;
+    else lines.push(text);
+    void commitAchievementLines(lines, editingWork ? (editingLine ? "Achievement updated" : "Achievement added") : undefined);
+  }
+  function removeAchievement(index: number) {
+    const lines = achievementLines(wForm.achievements).filter((_, i) => i !== index);
+    void commitAchievementLines(lines, editingWork ? "Achievement removed" : undefined);
+  }
   async function saveWorkItem() {
-    if (!wForm.company.trim() || !wForm.role.trim() || !wForm.url.trim() || !wForm.start) {
+    const achievements = withPendingAchievement(wForm, achieveEditor);
+    const form = { ...wForm, achievements };
+    if (!form.company.trim() || !form.role.trim() || !form.url.trim() || !form.start) {
       setExpError("Company, role, company link and start date are required.");
       return;
     }
-    const url = absoluteUrl(wForm.url);
+    setWorkBusy(true);
+    const url = absoluteUrl(form.url);
     const item: WorkExperience = {
       id: editingWork || uid(),
-      company: wForm.company.trim(),
-      role: wForm.role.trim(),
+      company: form.company.trim(),
+      role: form.role.trim(),
       url,
-      description: wForm.desc.trim() || null,
-      employment_type: wForm.type === "Part-time" ? "part-time" : "full-time",
-      start_date: wForm.start,
-      end_date: wForm.end || null,
-      logo_url: wForm.logo || siteLogo(url),
-      achievements: wForm.achievements.trim() || null,
-      work_mode: wForm.mode === "onsite" ? "onsite" : "remote",
-      hours_per_day: wForm.hours ? Number(wForm.hours) : null,
+      description: form.desc.trim() || null,
+      employment_type: form.type === "Part-time" ? "part-time" : "full-time",
+      start_date: form.start,
+      end_date: form.end || null,
+      logo_url: form.logo || siteLogo(url),
+      achievements: achievements.trim() || null,
+      work_mode: form.mode === "onsite" ? "onsite" : "remote",
+      hours_per_day: form.hours ? Number(form.hours) : null,
     };
     const next = editingWork ? work.map((w) => (w.id === editingWork ? item : w)) : [...work, item];
     const ok = await persistExperience(next, education);
+    setWorkBusy(false);
     if (ok) {
+      const wasEditing = Boolean(editingWork);
       resetWork();
-      notify(editingWork ? "Experience updated" : "Experience added");
+      notify(wasEditing ? "Experience updated" : "Experience added");
     }
   }
-  function editWork(item: WorkExperience) {
-    setEditingWork(item.id);
-    setWForm({
-      company: item.company,
-      role: item.role,
-      url: item.url || "",
-      desc: item.description || "",
-      type: item.employment_type === "part-time" ? "Part-time" : "Full-time",
-      mode: item.work_mode === "onsite" ? "onsite" : "remote",
-      hours: item.hours_per_day ? String(item.hours_per_day) : "",
-      start: item.start_date || "",
-      end: item.end_date || "",
-      logo: item.logo_url || "",
-      achievements: item.achievements || "",
-    });
-    setWorkOpen(true);
+  function editWork(item: WorkExperience, focusIndex?: number) {
+    beginWork(workFromItem(item), item.id, focusIndex);
   }
 
   function resetEdu() {
@@ -834,34 +1000,37 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
         <section className={`panel${tab === "experience" ? " active" : ""}`} role="tabpanel">
           <div className="section-intro"><h2>Experience &amp; Education</h2><p>Use the same clean entry flow as the existing live manager. Add real roles and education, edit them later, or remove entries you no longer want to publish.</p></div>
           <div className="block">
-            <div className="block-head"><div><div className="block-title">Work experience</div><div className="block-desc">Add as many roles as needed. Company or project link is required by the existing profile logic.</div></div><button className="action accent" type="button" onClick={() => { resetWork(); setWorkOpen(true); }}>Add experience</button></div>
+            <div className="block-head"><div><div className="block-title">Work experience</div><div className="block-desc">Add as many roles as needed. Company or project link is required. Achievements show on your public page under each role.</div></div><button className="action accent" type="button" onClick={() => beginWork({ ...BLANK_WORK }, null)}>Add experience</button></div>
             <div className="entry-list">
               {work.length === 0 && <div className="empty">No work experience added yet.</div>}
-              {work.map((item, i) => (
+              {work.map((item, i) => {
+                const lines = achievementLines(item.achievements);
+                return (
                 <div key={item.id} className="entry" draggable onDragStart={() => setDragWork(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragWork === null || dragWork === i) return; setWork(moveItem(work, dragWork, i)); setDragWork(null); notify("Experience order updated"); }}>
-                  <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder experience"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><span className="logo-preview sm">{item.logo_url ? <img src={item.logo_url} alt="" /> : item.company.slice(0,1)}</span><div><div className="entry-title">{item.company}</div><div className="entry-meta">{item.role} · {item.employment_type === "part-time" ? "Part-time" : "Full-time"} · {item.work_mode === "onsite" ? "Onsite" : "Remote"}{item.hours_per_day ? ` · ${item.hours_per_day}h/day` : ""} · {item.start_date}{item.end_date ? ` to ${item.end_date}` : " to Present"}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}{item.achievements && <div className="entry-meta">{item.achievements}</div>}</div></div>
+                  <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder experience"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><span className="logo-preview sm">{item.logo_url ? <img src={item.logo_url} alt="" /> : item.company.slice(0,1)}</span><div><div className="entry-title">{item.company}</div><div className="entry-meta">{item.role} · {item.employment_type === "part-time" ? "Part-time" : "Full-time"} · {item.work_mode === "onsite" ? "Onsite" : "Remote"}{item.hours_per_day ? ` · ${item.hours_per_day}h/day` : ""} · {item.start_date}{item.end_date ? ` to ${item.end_date}` : " to Present"}</div>{item.url && <div className="entry-meta">{item.url}</div>}{item.description && <div className="entry-meta">{item.description}</div>}</div></div>
                   <div className="entry-actions">
                     <button className="small-action" type="button" onClick={() => editWork(item)}>Edit</button>
                     <button className="small-action danger-action" type="button" onClick={() => void persistExperience(work.filter((w) => w.id !== item.id), education)}>Remove</button>
                   </div>
+                  {lines.length > 0 && (
+                    <div className="entry-ach">
+                      <div className="entry-ach-rule" />
+                      <div className="entry-ach-label">Achievements</div>
+                      <ul className="entry-ach-list">
+                        {lines.map((line, ai) => (
+                          <li key={`${item.id}-ach-${ai}`}>
+                            <button type="button" className="entry-ach-btn" onClick={() => editWork(item, ai)}>
+                              <span aria-hidden>•</span>
+                              <span>{line}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-            <div className={`entry-form${workOpen ? " open" : ""}`}>
-              <div className="form-grid">
-                <div className="field"><label className="label">Company / project *</label><input className="input" value={wForm.company} onChange={(e) => setWForm({ ...wForm, company: e.target.value })} placeholder="Company or project name" /></div>
-                <div className="field"><label className="label">Role *</label><input className="input" value={wForm.role} onChange={(e) => setWForm({ ...wForm, role: e.target.value })} placeholder="Your role" /></div>
-                <div className="field full"><label className="label">Company / project link *</label><input className="input" value={wForm.url} onChange={(e) => setWForm({ ...wForm, url: e.target.value, logo: "" })} placeholder="https://project.com" /></div>
-                <div className="field full logo-field"><span className="logo-preview">{wForm.logo || siteLogo(absoluteUrl(wForm.url)) ? <img src={wForm.logo || siteLogo(absoluteUrl(wForm.url)) || ""} alt="" /> : "Logo"}</span><label className="text-action">Replace logo<input type="file" accept="image/*" hidden onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadLogo(file); if (url) setWForm((f) => ({ ...f, logo: url })); }} /></label><span className="logo-note">The site logo is pulled from the link. Replace it if the image is wrong.</span></div>
-                <div className="field full"><label className="label">Description</label><textarea className="textarea" value={wForm.desc} onChange={(e) => setWForm({ ...wForm, desc: e.target.value })} placeholder="What did you work on and what was your responsibility?" /></div><div className="field full"><label className="label">Achievement lines</label><textarea className="textarea" value={wForm.achievements} onChange={(e) => setWForm({ ...wForm, achievements: e.target.value })} placeholder={"One result per line.\nIncreased Discord engagement by 45% through structured campaigns."} /></div>
-                <div className="field"><label className="label">Employment type</label><select className="input" value={wForm.type} onChange={(e) => setWForm({ ...wForm, type: e.target.value })}><option>Full-time</option><option>Part-time</option></select></div>
-                <div className="field"><label className="label">Workplace</label><div className="flex gap-2"><button type="button" className={`action ${wForm.mode === "remote" ? "accent" : ""}`} onClick={() => setWForm({ ...wForm, mode: "remote" })}>Remote</button><button type="button" className={`action ${wForm.mode === "onsite" ? "accent" : ""}`} onClick={() => setWForm({ ...wForm, mode: "onsite" })}>Onsite</button></div></div>
-                <div className="field"><label className="label">Hours per day</label><input className="input" inputMode="decimal" value={wForm.hours} onChange={(e) => setWForm({ ...wForm, hours: e.target.value.replace(/[^0-9.]/g, "").slice(0, 4) })} placeholder="8" /></div>
-                <div className="field"><label className="label">Start date *</label><input className="input" type="month" value={wForm.start} onChange={(e) => setWForm({ ...wForm, start: e.target.value })} /></div>
-                <div className="field"><label className="label">End date</label><input className="input" type="month" value={wForm.end} onChange={(e) => setWForm({ ...wForm, end: e.target.value })} /></div>
-              </div>
-              {expError && <div className="error">{expError}</div>}
-              <div className="form-actions"><button className="action accent" type="button" onClick={() => void saveWorkItem()}>{editingWork ? "Update experience" : "Add experience"}</button><button className="action" type="button" onClick={resetWork}>Cancel</button></div>
+                );
+              })}
             </div>
           </div>
           <div className="block">
@@ -949,6 +1118,86 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
       </div>
       {dock !== "closed" && <button className="dock-backdrop" type="button" aria-label="Close sections" onClick={() => { setDock("closing"); window.setTimeout(() => setDock("closed"), 380); }} />}
       <div className={`toast${toastOn ? " show" : ""}`}>{toast}</div>
+      {workOpen && (
+        <div className="exp-modal" role="dialog" aria-modal="true" aria-labelledby="exp-modal-title">
+          <button className="exp-modal-backdrop" type="button" aria-label="Close experience form" onClick={requestCloseWork} />
+          <div className="exp-sheet">
+            <header className="exp-sheet-head">
+              <h3 id="exp-modal-title">{editingWork ? "Edit experience" : "Add experience"}</h3>
+              <button className="exp-close" type="button" aria-label="Close" onClick={requestCloseWork}>×</button>
+            </header>
+            <div className="exp-sheet-body">
+              <div className="form-grid">
+                <div className="field"><label className="label">Company / project *</label><input className="input" value={wForm.company} onChange={(e) => setWForm({ ...wForm, company: e.target.value })} placeholder="Company or project name" /></div>
+                <div className="field"><label className="label">Role *</label><input className="input" value={wForm.role} onChange={(e) => setWForm({ ...wForm, role: e.target.value })} placeholder="Your role" /></div>
+                <div className="field full"><label className="label">Company / project link *</label><input className="input" value={wForm.url} onChange={(e) => setWForm({ ...wForm, url: e.target.value, logo: "" })} placeholder="https://project.com" /></div>
+                <div className="field full logo-field"><span className="logo-preview">{wForm.logo || siteLogo(absoluteUrl(wForm.url)) ? <img src={wForm.logo || siteLogo(absoluteUrl(wForm.url)) || ""} alt="" /> : "Logo"}</span><label className="text-action">Replace logo<input type="file" accept="image/*" hidden onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadLogo(file); if (url) setWForm((f) => ({ ...f, logo: url })); }} /></label><span className="logo-note">The site logo is pulled from the link. Replace it if the image is wrong.</span></div>
+                <div className="field full"><label className="label">Description</label><textarea className="textarea" value={wForm.desc} onChange={(e) => setWForm({ ...wForm, desc: e.target.value })} placeholder="What did you work on and what was your responsibility?" /></div>
+                <div className="field"><label className="label">Employment type</label><select className="input" value={wForm.type} onChange={(e) => setWForm({ ...wForm, type: e.target.value })}><option>Full-time</option><option>Part-time</option></select></div>
+                <div className="field"><label className="label">Workplace</label><div className="flex gap-2"><button type="button" className={`action ${wForm.mode === "remote" ? "accent" : ""}`} onClick={() => setWForm({ ...wForm, mode: "remote" })}>Remote</button><button type="button" className={`action ${wForm.mode === "onsite" ? "accent" : ""}`} onClick={() => setWForm({ ...wForm, mode: "onsite" })}>Onsite</button></div></div>
+                <div className="field"><label className="label">Hours per day</label><input className="input" inputMode="decimal" value={wForm.hours} onChange={(e) => setWForm({ ...wForm, hours: e.target.value.replace(/[^0-9.]/g, "").slice(0, 4) })} placeholder="8" /></div>
+                <div className="field"><label className="label">Start date *</label><input className="input" type="month" value={wForm.start} onChange={(e) => setWForm({ ...wForm, start: e.target.value })} /></div>
+                <div className="field"><label className="label">End date</label><input className="input" type="month" value={wForm.end} onChange={(e) => setWForm({ ...wForm, end: e.target.value })} /></div>
+                <div className="field full ach-field">
+                  <div className="ach-head">
+                    <label className="label">Achievements</label>
+                    <button className="action accent" type="button" onClick={() => openAchievement(-1)}>+ Add achievement</button>
+                  </div>
+                  {achievementLines(wForm.achievements).length === 0 ? (
+                    <p className="ach-empty">No achievements yet. Add one result at a time.</p>
+                  ) : (
+                    <ul className="ach-list">
+                      {achievementLines(wForm.achievements).map((line, index) => (
+                        <li key={`draft-ach-${index}`} className="ach-row">
+                          <button type="button" className="ach-item" onClick={() => openAchievement(index)}>
+                            <span className="ach-dot" aria-hidden>•</span>
+                            <span>{line}</span>
+                          </button>
+                          <button type="button" className="ach-x" aria-label="Remove achievement" onClick={() => removeAchievement(index)}>×</button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+              {expError && <div className="error">{expError}</div>}
+            </div>
+            <footer className="exp-sheet-foot">
+              <button className="exp-submit" type="button" disabled={workBusy} onClick={() => void saveWorkItem()}>{workBusy ? "Saving..." : editingWork ? "Save changes" : "Add experience"}</button>
+            </footer>
+          </div>
+          {achieveEditor && (
+            <div className="ach-editor" role="dialog" aria-modal="true" aria-labelledby="ach-editor-title">
+              <button className="exp-modal-backdrop" type="button" aria-label="Close achievement editor" onClick={requestCloseAchievement} />
+              <div className="ach-card">
+                <header className="exp-sheet-head">
+                  <h3 id="ach-editor-title">{achieveEditor.index >= 0 ? "Edit achievement" : "Add achievement"}</h3>
+                  <button className="exp-close" type="button" aria-label="Close" onClick={requestCloseAchievement}>×</button>
+                </header>
+                <div className="ach-card-body">
+                  <label className="label" htmlFor="achievement-draft">Achievement</label>
+                  <textarea id="achievement-draft" className="textarea" value={achieveEditor.draft} onChange={(e) => setAchieveEditor({ ...achieveEditor, draft: e.target.value })} placeholder="Increased Discord engagement by 45% through structured campaigns." autoFocus />
+                </div>
+                <footer className="exp-sheet-foot">
+                  <button className="exp-submit" type="button" onClick={saveAchievement} disabled={!achieveEditor.draft.trim()}>Save achievement</button>
+                </footer>
+              </div>
+            </div>
+          )}
+          {discardScope && (
+            <div className="discard-layer" role="dialog" aria-modal="true" aria-labelledby="discard-title">
+              <div className="discard-card">
+                <h3 id="discard-title">Discard changes?</h3>
+                <p>You have unsaved changes. Are you sure you want to close?</p>
+                <div className="discard-actions">
+                  <button className="action" type="button" onClick={() => setDiscardScope(null)}>Keep editing</button>
+                  <button className="action danger-action" type="button" onClick={confirmDiscard}>Discard</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       {mediaSheet && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => setMediaSheet(null)}>
           <div className="w-full max-w-md rounded-t-2xl bg-background p-4 pb-8" onClick={(e) => e.stopPropagation()}>

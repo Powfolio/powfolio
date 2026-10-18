@@ -43,6 +43,13 @@ function Mark({ src, fallback }: { src?: string | null; fallback: string }) {
   );
 }
 
+function achievementLines(raw: string | null | undefined) {
+  return (raw || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 function siteLogo(url: string | null | undefined) {
   if (!url) return null;
   try {
@@ -150,16 +157,33 @@ export default function PublicProfileTabs({
               <div>
                 <h3 className={HEADING}>Work experience</h3>
                 <div className="space-y-4">
-                  {workExperience.map((w, i) => (
+                  {workExperience.map((w, i) => {
+                    const achievements = achievementLines(w.achievements);
+                    return (
                     <div key={w.id} className={i > 0 ? "pt-3 border-t border-border/50" : ""}>
                       <div className="min-w-0">
                         {w.url ? <a href={w.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center font-medium text-sm hover:text-primary"><span className="mr-2"><Mark src={w.logo_url || siteLogo(w.url)} fallback={w.company} /></span>{w.company}</a> : <span className="inline-flex items-center font-medium text-sm"><span className="mr-2"><Mark fallback={w.company} /></span>{w.company}</span>}
                         <p className="text-xs text-foreground-muted mt-0.5">{w.role} · {w.employment_type === "full-time" ? "Full-time" : "Part-time"}</p>
                         <p className="text-xs text-foreground-subtle mt-0.5">{w.start_date}{w.end_date ? ` → ${w.end_date}` : " → Present"}</p>
                         {w.description && <p className="mt-1 text-xs text-foreground-muted leading-relaxed">{w.description}</p>}
+                        {achievements.length > 0 && (
+                          <div className="mt-2.5">
+                            <div className="h-px bg-border/80" aria-hidden />
+                            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground-subtle">Achievements</p>
+                            <ul className="mt-1.5 space-y-1.5">
+                              {achievements.map((line, index) => (
+                                <li key={`${w.id}-ach-${index}`} className="flex items-start gap-2 text-xs leading-relaxed text-foreground">
+                                  <span className="mt-px shrink-0 text-primary" aria-hidden>•</span>
+                                  <span className="min-w-0">{line}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
