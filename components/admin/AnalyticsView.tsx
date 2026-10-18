@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Point = { date: string; count: number };
+type Country = { name: string; count: number; share: number };
 type Data = {
   total: number;
   active: number;
@@ -12,7 +13,7 @@ type Data = {
   wau: number;
   mau: number;
   byDay: Point[];
-  topCountries: { name: string; count: number; share: number }[];
+  topCountries: Country[];
   snapshot: string;
 };
 
@@ -20,20 +21,14 @@ export default function AnalyticsView() {
   const [data, setData] = useState<Data | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selected, setSelected] = useState<Point | null>(null);
+  const [hover, setHover] = useState<{ date: string; count: number; x: number } | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     setErr(null);
     fetch("/api/admin/analytics?t=" + Date.now())
       .then((r) => r.json())
-      .then((d) => {
-        if (d.error) setErr(d.error);
-        else {
-          setData(d);
-          setSelected(null);
-        }
-      })
+      .then((d) => (d.error ? setErr(d.error) : setData(d)))
       .catch(() => setErr("Failed to load"))
       .finally(() => setLoading(false));
   }, []);
@@ -49,12 +44,12 @@ export default function AnalyticsView() {
   if (!data) return <p className="text-sm text-foreground-muted">Loading analytics…</p>;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
           <p className="mt-1 text-sm text-foreground-muted">
-            Snapshot · {new Date(data.snapshot).toLocaleString()} UTC
+            Activity is based on real sign-ins, not profile edits. Snapshot · {new Date(data.snapshot).toLocaleString()} UTC
           </p>
         </div>
         <button type="button" onClick={load} disabled={loading} className="btn-secondary text-xs">
@@ -63,99 +58,132 @@ export default function AnalyticsView() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="Daily active" value={data.dau} sub="Last 24 hours" />
-        <Kpi label="Weekly active" value={data.wau} sub="Last 7 days" />
-        <Kpi label="Monthly active" value={data.mau} sub="Last 30 days" />
-        <Kpi label="Stickiness" value={`${stickiness}%`} sub="DAU / MAU" />
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="Total accounts" value={data.total} sub="All time" />
-        <Kpi label="Active status" value={data.active} sub="Not suspended" />
-        <Kpi label="New this week" value={data.last7} sub="Last 7 days" />
-        <Kpi label="New this month" value={data.last30} sub="Last 30 days" />
+        <Kpi label="Daily active" value={data.dau} note="Signed in last 24h" />
+        <Kpi label="Weekly active" value={data.wau} note="Signed in last 7d" />
+        <Kpi label="Monthly active" value={data.mau} note="Signed in last 30d" />
+        <Kpi label="Stickiness" value={`${stickiness}%`} note="DAU / MAU" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-2xl border border-border/40 bg-surface p-4">
-          <div className="mb-3 flex items-baseline justify-between gap-3">
+        <div className="lg:col-span-2 rounded-2xl border border-border/50 bg-surface p-5">
+          <div className="mb-4 flex items-baseline justify-between">
             <div>
               <h2 className="text-sm font-medium">New accounts</h2>
-              <p className="text-[11px] text-foreground-subtle">Last 30 days · click a bar</p>
+              <p className="text-[11px] text-foreground-subtle">Last 30 days</p>
             </div>
-            {selected && (
+            {hover && (
               <div className="text-right text-xs">
-                <p className="font-medium">{selected.date}</p>
-                <p className="text-foreground-muted">{selected.count} new</p>
+                <p className="font-medium">{hover.date}</p>
+                <p className="text-foreground-muted">{hover.count} new</p>
               </div>
             )}
           </div>
-          <BarChart points={data.byDay} onSelect={setSelected} selected={selected?.date} />
+          <LineChart points={data.byDay} onHover={setHover} />
         </div>
 
-        <div className="rounded-2xl border border-border/40 bg-surface p-4">
-          <h2 className="text-sm font-medium">Top locations</h2>
-          <div className="mt-3 space-y-2.5">
-            {data.topCountries.length === 0 && (
-              <p className="text-sm text-foreground-muted">No location data yet.</p>
-            )}
-            {data.topCountries.map((c) => (
-              <div key={c.name} className="flex items-center gap-3 text-sm">
-                <span className="w-24 truncate text-foreground-muted">{c.name}</span>
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border/40">
-                  <div className="h-full bg-primary" style={{ width: `${Math.min(100, c.share)}%` }} />
+        <div className="rounded-2xl border border-border/50 bg-surface p-5">
+          <h2 className="text-sm font-medium">Locations</h2>
+          <p className="text-[11px] text-foreground-subtle">Share of accounts</p>
+          <div className="mt-4 flex items-center gap-4">
+            <Donut items={data.topCountries} />
+            <div className="min-w-0 flex-1 space-y-1.5 text-xs">
+              {data.topCountries.slice(0, 5).map((c, i) => (
+                <div key={c.name} className="flex items-center justify-between gap-2">
+                  <span className="truncate text-foreground-muted">{c.name}</span>
+                  <span className="tabular-nums">{c.share}%</span>
                 </div>
-                <span className="w-10 text-right tabular-nums text-xs">{c.count}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Kpi label="Total accounts" value={data.total} note="All time" />
+        <Kpi label="Active status" value={data.active} note="Not suspended" />
+        <Kpi label="New this week" value={data.last7} note="Created last 7d" />
+        <Kpi label="New this month" value={data.last30} note="Created last 30d" />
       </div>
     </div>
   );
 }
 
-function Kpi({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
+function Kpi({ label, value, note }: { label: string; value: number | string; note?: string }) {
   return (
-    <div className="rounded-2xl border border-border/40 bg-surface p-4">
+    <div className="rounded-2xl border border-border/50 bg-surface px-4 py-4">
       <p className="text-[11px] uppercase tracking-[0.14em] text-foreground-subtle">{label}</p>
       <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">{value}</p>
-      {sub && <p className="mt-1 text-[11px] text-foreground-muted">{sub}</p>}
+      {note && <p className="mt-1 text-[11px] text-foreground-muted">{note}</p>}
     </div>
   );
 }
 
-function BarChart({
+function LineChart({
   points,
-  onSelect,
-  selected,
+  onHover,
 }: {
   points: Point[];
-  onSelect: (p: Point) => void;
-  selected?: string;
+  onHover: (p: { date: string; count: number; x: number } | null) => void;
 }) {
+  const w = 640, h = 180, pad = 24;
   const max = Math.max(1, ...points.map((p) => p.count));
+  const step = points.length > 1 ? (w - pad * 2) / (points.length - 1) : 0;
+  const coords = points.map((p, i) => {
+    const x = pad + i * step;
+    const y = h - pad - (p.count / max) * (h - pad * 2);
+    return { x, y, ...p };
+  });
+  const path = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x},${c.y}`).join(" ");
+  const fill = `${path} L${coords[coords.length - 1]?.x || pad},${h - pad} L${pad},${h - pad} Z`;
+
   return (
-    <div className="flex h-44 items-end gap-[4px] pt-2">
-      {points.map((p) => {
-        const h = Math.max(3, (p.count / max) * 100);
-        const active = selected === p.date;
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-48 w-full" onMouseLeave={() => onHover(null)}>
+      <path d={fill} fill="currentColor" className="text-primary/15" />
+      <path d={path} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="text-primary" />
+      {coords.map((c) => (
+        <circle
+          key={c.date}
+          cx={c.x}
+          cy={c.y}
+          r={4}
+          className="fill-primary cursor-pointer"
+          onMouseEnter={() => onHover({ date: c.date, count: c.count, x: c.x })}
+        />
+      ))}
+    </svg>
+  );
+}
+
+function Donut({ items }: { items: Country[] }) {
+  const total = items.reduce((s, i) => s + i.count, 0) || 1;
+  const colors = ["#B8863B", "#6B8F71", "#7A8FA8", "#A07A6B", "#8A7A6B"];
+  let acc = 0;
+  const r = 42, c = 50, stroke = 12;
+  const circ = 2 * Math.PI * r;
+
+  return (
+    <svg viewBox="0 0 100 100" className="h-28 w-28 shrink-0 -rotate-90">
+      <circle cx={c} cy={c} r={r} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-border/40" />
+      {items.slice(0, 5).map((item, i) => {
+        const len = (item.count / total) * circ;
+        const dash = `${len} ${circ - len}`;
+        const offset = -acc;
+        acc += len;
         return (
-          <button
-            key={p.date}
-            type="button"
-            onClick={() => onSelect(p)}
-            className={`group relative flex-1 rounded-t transition-all ${active ? "bg-primary" : "bg-primary/75 hover:bg-primary"}`}
-            style={{ height: `${h}%` }}
-            title={`${p.date}: ${p.count}`}
-            aria-label={`${p.date}: ${p.count} new`}
-          >
-            <span className="pointer-events-none absolute -top-7 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-foreground px-1.5 py-0.5 text-[10px] text-background group-hover:block">
-              {p.count}
-            </span>
-          </button>
+          <circle
+            key={item.name}
+            cx={c}
+            cy={c}
+            r={r}
+            fill="none"
+            stroke={colors[i % colors.length]}
+            strokeWidth={stroke}
+            strokeDasharray={dash}
+            strokeDashoffset={offset}
+            strokeLinecap="butt"
+          />
         );
       })}
-    </div>
+    </svg>
   );
 }
