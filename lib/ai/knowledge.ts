@@ -1,10 +1,10 @@
 /**
- * Structured knowledge injected into every Pow3Bot request.
+ * Structured knowledge injected into every Powbot request.
  */
 export const POW3_KNOWLEDGE = `
-# Powfolio product knowledge (current as of 13 Oct 2026)
+# Powfolio product knowledge (current as of 18 Oct 2026)
 
-Powfolio Genesis is a public proof-of-work profile. One clean link, scores, and onchain proof. Live site: https://pow3folio.vercel.app. Public profile: https://pow3folio.vercel.app/{username}. Call people builders or talents. Never say users in product copy.
+Powfolio is a public proof-of-work profile. One clean link, scores, and onchain proof. Live site: https://powfolio.xyz. Public profile: https://powfolio.xyz/{username}. Call people builders or talents. Never say users in product copy.
 
 ## Dashboard
 Sections: Home, Profile & Identity, Writing, Trading, Community, Airdrops, Onchain, and CV at /dashboard/resume.
@@ -34,7 +34,7 @@ Download is dashboard only, at /dashboard/resume. Visitors cannot download it fr
 Two designs: Editorial, the original sheet, and Classic, one column with a serif name and black rules. The role line and short bio are left aligned and stretch across the width. Profile stays left aligned.
 Watermark is a site mark behind the text, centered by default, on every printed page. The About text on the CV is the full write-up, not the collapsed public preview.
 Contacts sit at the bottom as real links. Company names, project titles, Built by me, education, writing, and credential files link to the saved URL or uploaded file. A project or collaboration cannot be saved without a link.
-Pow3Bot is hidden on the CV page.
+Powbot is hidden on the CV page.
 
 ## Writing, trading, community, airdrops
 Writing: articles, threads, Mirror posts, research. A link pulls the publication mark. A cover can replace it.
