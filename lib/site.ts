@@ -1,7 +1,7 @@
 export const SITE_NAME = "Powfolio";
 
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://pow3folio.vercel.app"
+  process.env.NEXT_PUBLIC_SITE_URL || "https://powfolio.xyz"
 ).replace(/\/$/, "");
 
 export const SITE_DESCRIPTION =
