@@ -9,12 +9,12 @@ const SIGNUP_KEY = "pow3folio-just-signed-up";
 
 const STEPS = [
   {
-    title: "Welcome to Pow3Folio",
+    title: "Welcome to Powfolio",
     body: "This short tour shows how to build a public proof of work profile. You can skip anytime and reopen tips from the dashboard.",
   },
   {
     title: "1) Claim your public URL",
-    body: "Open Profile and set a unique username. Your link becomes pow3folio.vercel.app/yourname. Keep the short bio clean and link-free.",
+    body: "Open Profile and set a unique username. Your link becomes powfolio.xyz/yourname. Keep the short bio clean and link-free.",
     href: "/dashboard/profile",
     hrefLabel: "Edit profile",
   },
@@ -24,7 +24,7 @@ const STEPS = [
   },
   {
     title: "3) Skills, work and education",
-    body: "Under Profile, add service pillars (name + short description), work experience (max 5) and education so your public page has real context.",
+    body: "Under Profile, add service pillars (name + short description), work experience and education so your public page has real context.",
     href: "/dashboard/profile",
     hrefLabel: "Open profile",
   },
@@ -35,8 +35,8 @@ const STEPS = [
     hrefLabel: "Open dashboard",
   },
   {
-    title: "5) Pow3Bot is your guide",
-    body: "Tap the AI button anytime for how-tos, bio rewrites, Diff mode and profile gap checks. It only helps inside Pow3Folio.",
+    title: "5) Powbot is your guide",
+    body: "Tap the AI button anytime for how-tos, bio rewrites, Diff mode and profile gap checks. It only helps inside Powfolio.",
   },
 ];
 
