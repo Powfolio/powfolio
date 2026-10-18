@@ -44,8 +44,8 @@ export async function connectEthereumWallet(): Promise<string> {
       metadata: {
         name: "Powfolio",
         description: "Proof of work portfolio for Web3 builders",
-        url: "https://pow3folio.vercel.app",
-        icons: ["https://pow3folio.vercel.app/folio-mark.png"],
+        url: "https://powfolio.xyz",
+        icons: ["https://powfolio.xyz/folio-mark.png"],
       },
     });
 
