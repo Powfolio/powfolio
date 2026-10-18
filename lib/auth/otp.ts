@@ -5,12 +5,11 @@ const MAX_AGE_SEC = 10 * 60;
 const RESEND_SEC = 30;
 
 function secret() {
-  return (
-    process.env.OTP_SIGNING_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    "pow3folio-otp-dev"
-  );
+  const s = process.env.OTP_SIGNING_SECRET;
+  if (!s) {
+    throw new Error("OTP_SIGNING_SECRET is required");
+  }
+  return s;
 }
 
 function sign(value: string) {
