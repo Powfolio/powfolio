@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import BrandMark from "@/components/ui/BrandMark";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { PUBLIC_PROFILE_COLUMNS } from "@/lib/profile/public-columns";
 import type {
   Profile,
   Writing,
@@ -89,13 +90,13 @@ async function loadProfileRow(username: string) {
   const handle = username.toLowerCase();
   try {
     const admin = createServiceClient();
-    const { data } = await admin.from("profiles").select("*").eq("username", handle).maybeSingle();
+    const { data } = await admin.from("profiles").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
     if (data) return data;
   } catch {
     /* fall through to the user-scoped client */
   }
   const supabase = await createClient();
-  const { data } = await supabase.from("profiles").select("*").eq("username", handle).maybeSingle();
+  const { data } = await supabase.from("profiles").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
   return data;
 }
 
@@ -147,7 +148,7 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
 
   if (!profile) notFound();
 
-  const p = profile as Profile & {
+  const p = profile as unknown as Profile & {
     account_status?: string;
     suspension_reason?: string | null;
     suspended_at?: string | null;
