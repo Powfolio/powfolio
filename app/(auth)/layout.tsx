@@ -1,20 +1,17 @@
-import { Inter, JetBrains_Mono } from "next/font/google";
 import "../auth-ui.css";
 import "../auth-ui-preloader.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  display: "swap",
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["500", "700"],
-  display: "swap",
-  variable: "--font-auth-mono",
-});
-
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  return <div className={`${inter.className} ${jetbrains.variable}`}>{children}</div>;
+  return (
+    <div
+      className="auth-shell"
+      style={{
+        fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+        // Used by auth OTP / mono fields
+        ["--font-auth-mono" as string]: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+      }}
+    >
+      {children}
+    </div>
+  );
 }
