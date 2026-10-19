@@ -1,5 +1,5 @@
 /** Columns safe to select on public profile pages and public APIs.
- *  Private fields (ai_chat_history, cv_notes, primary_email raw, etc.) stay out. */
+ *  ai_chat_history and cv_notes stay in profile_private. */
 export const PUBLIC_PROFILE_COLUMNS = [
   "id",
   "username",
@@ -20,6 +20,8 @@ export const PUBLIC_PROFILE_COLUMNS = [
   "telegram_url",
   "github_url",
   "website_url",
+  "primary_email",
+  "secondary_email",
   "show_primary_email",
   "show_secondary_email",
   "location_country",
