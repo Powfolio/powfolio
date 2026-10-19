@@ -216,6 +216,9 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
   const [achieveEditor, setAchieveEditor] = useState<AchieveEditor | null>(null);
   const [discardScope, setDiscardScope] = useState<null | "work" | "achievement">(null);
   const [workBusy, setWorkBusy] = useState(false);
+  const [solo, setSolo] = useState<{ itemId: string; index: number; draft: string; original: string } | null>(null);
+  const [soloDiscard, setSoloDiscard] = useState(false);
+  const [soloBusy, setSoloBusy] = useState(false);
   const workBaseline = useRef(JSON.stringify(BLANK_WORK));
   const [eForm, setEForm] = useState({ institution: "", degree: "", field: "", country: "", start: "", end: "", url: "", desc: "", logo: "" });
   const [expError, setExpError] = useState("");
@@ -284,6 +287,28 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
       window.removeEventListener("keydown", onKey);
     };
   }, [workOpen, discardScope, achieveEditor, wForm]);
+
+  useEffect(() => {
+    if (!solo) return;
+    const current = solo;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      if (soloDiscard) {
+        setSoloDiscard(false);
+        return;
+      }
+      if (current.draft.trim() !== current.original.trim()) setSoloDiscard(true);
+      else setSolo(null);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [solo, soloDiscard]);
 
 
 
@@ -684,6 +709,36 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     const lines = achievementLines(wForm.achievements).filter((_, i) => i !== index);
     void commitAchievementLines(lines, editingWork ? "Achievement removed" : undefined);
   }
+  function openSoloAchievement(item: WorkExperience, index: number) {
+    const text = achievementLines(item.achievements)[index] || "";
+    setSolo({ itemId: item.id, index, draft: text, original: text });
+    setSoloDiscard(false);
+  }
+  function requestCloseSolo() {
+    if (!solo || soloBusy) return;
+    if (solo.draft.trim() !== solo.original.trim()) setSoloDiscard(true);
+    else setSolo(null);
+  }
+  async function saveSoloAchievement() {
+    if (!solo) return;
+    const text = solo.draft.trim();
+    if (!text) return;
+    const current = work.find((item) => item.id === solo.itemId);
+    if (!current) {
+      setSolo(null);
+      return;
+    }
+    const lines = achievementLines(current.achievements);
+    lines[solo.index] = text;
+    setSoloBusy(true);
+    const next = work.map((item) => item.id === current.id ? { ...item, achievements: lines.join("\n") } : item);
+    const ok = await persistExperience(next, education);
+    setSoloBusy(false);
+    if (!ok) return;
+    setSolo(null);
+    setSoloDiscard(false);
+    notify("Achievement updated");
+  }
   async function saveWorkItem() {
     const achievements = withPendingAchievement(wForm, achieveEditor);
     const form = { ...wForm, achievements };
@@ -1019,7 +1074,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
                       <ul className="entry-ach-list">
                         {lines.map((line, ai) => (
                           <li key={`${item.id}-ach-${ai}`}>
-                            <button type="button" className="entry-ach-btn" onClick={() => editWork(item, ai)}>
+                            <button type="button" className="entry-ach-btn" draggable={false} onClick={() => openSoloAchievement(item, ai)}>
                               <span aria-hidden>•</span>
                               <span>{line}</span>
                             </button>
@@ -1192,6 +1247,36 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
                 <div className="discard-actions">
                   <button className="action" type="button" onClick={() => setDiscardScope(null)}>Keep editing</button>
                   <button className="action danger-action" type="button" onClick={confirmDiscard}>Discard</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {solo && (
+        <div className="ach-editor" role="dialog" aria-modal="true" aria-labelledby="solo-ach-title">
+          <button className="exp-modal-backdrop" type="button" aria-label="Close achievement editor" onClick={requestCloseSolo} />
+          <div className="ach-card">
+            <header className="exp-sheet-head">
+              <h3 id="solo-ach-title">Edit achievement</h3>
+              <button className="exp-close" type="button" aria-label="Close" onClick={requestCloseSolo}>×</button>
+            </header>
+            <div className="ach-card-body">
+              <label className="label" htmlFor="solo-achievement-draft">Achievement</label>
+              <textarea id="solo-achievement-draft" className="textarea" value={solo.draft} onChange={(e) => setSolo({ ...solo, draft: e.target.value })} placeholder="What did this role accomplish?" autoFocus />
+            </div>
+            <footer className="exp-sheet-foot">
+              <button className="exp-submit" type="button" onClick={() => void saveSoloAchievement()} disabled={soloBusy || !solo.draft.trim()}>{soloBusy ? "Saving..." : "Save achievement"}</button>
+            </footer>
+          </div>
+          {soloDiscard && (
+            <div className="discard-layer" role="dialog" aria-modal="true" aria-labelledby="solo-discard-title">
+              <div className="discard-card">
+                <h3 id="solo-discard-title">Discard changes?</h3>
+                <p>You have unsaved changes. Are you sure you want to close?</p>
+                <div className="discard-actions">
+                  <button className="action" type="button" onClick={() => setSoloDiscard(false)}>Keep editing</button>
+                  <button className="action danger-action" type="button" onClick={() => { setSolo(null); setSoloDiscard(false); }}>Discard</button>
                 </div>
               </div>
             </div>

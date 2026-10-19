@@ -31,7 +31,7 @@ Mobile section tabs scroll. They do not clip off the screen.
 
 ## CV
 Download is dashboard only, at /dashboard/resume. Visitors cannot download it from the public page. The file name is {username} PowFolio.pdf.
-Two designs: Editorial, the original sheet, and Classic, one column with a serif name and black rules. The role line and short bio are left aligned and stretch across the width. Profile stays left aligned.
+Two original designs plus two alternates: Editorial, the original two-column sheet; Classic, one column with a serif name and black rules; Sidebar, a dark left rail for skills, education and credentials; and Ledger, a black header band with a timeline through each role. The role line and short bio are left aligned and stretch across the width. Profile stays left aligned.
 Watermark is a site mark behind the text, centered by default, on every printed page. The About text on the CV is the full write-up, not the collapsed public preview.
 Contacts sit at the bottom as real links. Company names, project titles, Built by me, education, writing, and credential files link to the saved URL or uploaded file. A project or collaboration cannot be saved without a link.
 Powbot is hidden on the CV page.

@@ -118,13 +118,13 @@ export default async function DashboardResumePage() {
         </div>
         <div className="resume-bar" />
         <div className="resume-inner px-8 py-7 print:px-6 print:py-5">
-          <header>
+          <header className="resume-head">
             <div className="flex items-start justify-between gap-6">
               <div className="min-w-0">
                 <p className="resume-kicker text-[10px] font-semibold uppercase tracking-[0.22em]">Curriculum vitae</p>
                 <h1 className="resume-name mt-1 text-[30px] font-bold leading-tight tracking-tight">{p.display_name || p.username}</h1>
               </div>
-              <a href={publicUrl} className="mt-7 shrink-0 text-right no-underline">
+              <a href={publicUrl} className="resume-avatar mt-7 shrink-0 text-right no-underline">
                 <span className="ml-auto block h-12 w-12 overflow-hidden rounded-full" style={{ boxShadow: "0 0 0 2px #B8863B" }}>
                   {p.avatar_url ? (
                     <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -140,8 +140,7 @@ export default async function DashboardResumePage() {
               {p.bio && <p className="resume-muted mt-2 text-[12.5px] leading-relaxed text-zinc-600">{cleanPlainText(p.bio, 280)}</p>}
             </div>
           </header>
-          <div className="resume-grid mt-6 grid grid-cols-1 gap-8 sm:grid-cols-[1.55fr_0.85fr]">
-            <div className="min-w-0 space-y-6">
+          <div className="resume-main min-w-0 space-y-6">
               {summary && (
                 <section>
                   <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Profile</h2>
@@ -153,9 +152,9 @@ export default async function DashboardResumePage() {
                 <section>
                   <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Experience</h2>
                   <div className="resume-rule mb-3" />
-                  <div className="space-y-4">
+                  <div className="resume-jobs space-y-4">
                     {work.map((w) => (
-                      <div key={w.id}>
+                      <div key={w.id} className="resume-job">
                         <p className="text-[13px] font-semibold">{w.role}</p>
                         <p className="text-[12px]">
                           {w.url ? <a className="resume-link" href={abs(w.url)}>{w.company}</a> : w.company}
@@ -201,7 +200,7 @@ export default async function DashboardResumePage() {
                 </section>
               )}
             </div>
-            <aside className="min-w-0 space-y-6">
+            <aside className="resume-aside min-w-0 space-y-6">
               {skillList.length > 0 && (
                 <section>
                   <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Skills</h2>
@@ -238,10 +237,11 @@ export default async function DashboardResumePage() {
                 </section>
               )}
             </aside>
+          <div className="resume-extras">
+            <ResumeExtras userId={p.id} username={p.username} initial={p.cv_notes || null} />
           </div>
-          <ResumeExtras userId={p.id} username={p.username} initial={p.cv_notes || null} />
           {contacts.length > 0 && (
-            <section className="mt-8 border-t border-current/10 pt-4">
+            <section className="resume-contact mt-8 border-t border-current/10 pt-4">
               <h2 className="resume-h2 mb-2 text-[11px] font-bold uppercase tracking-[0.18em]">Contact</h2>
               <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
                 {contacts.map((c) => (
