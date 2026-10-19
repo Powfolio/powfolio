@@ -46,6 +46,30 @@ export type NftMediaFailure =
 
 const CID_RE = /(?:Qm[1-9A-HJ-NP-Za-km-z]{44,}|bafy[a-z0-9]{20,}|bafk[a-z0-9]{20,}|baf[a-z0-9]{20,})/i;
 
+const TRUSTED_HOST_SUFFIXES = [
+  "alchemy.com",
+  "alchemyapi.com",
+  "cloudinary.com",
+  "seadn.io",
+  "openseauserdata.com",
+  "reservoir.tools",
+  "supabase.co",
+  "supabase.in",
+  "powfolio.xyz",
+  "ipfs.io",
+  "w3s.link",
+  "dweb.link",
+  "cf-ipfs.com",
+  "pinata.cloud",
+  "nftstorage.link",
+  "4everland.io",
+  "arweave.net",
+];
+
+function hostMatches(host: string, suffix: string) {
+  return host === suffix || host.endsWith("." + suffix);
+}
+
 export function extractCid(raw: string | null | undefined): { cid: string; rest: string } | null {
   if (raw == null) return null;
   const value = String(raw).trim();
@@ -119,16 +143,7 @@ export function isTrustedMediaHost(url: string | null | undefined): boolean {
   if (!url) return false;
   try {
     const host = new URL(url).hostname.toLowerCase();
-    return (
-      host.endsWith("alchemy.com") ||
-      host.endsWith("alchemyapi.com") ||
-      host.endsWith("cloudinary.com") ||
-      host.endsWith("seadn.io") ||
-      host.endsWith("openseauserdata.com") ||
-      host.endsWith("reservoir.tools") ||
-      host.includes("supabase.co") ||
-      host.includes("pow3folio")
-    );
+    return TRUSTED_HOST_SUFFIXES.some((suffix) => hostMatches(host, suffix));
   } catch {
     return false;
   }
