@@ -18,7 +18,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-base font-semibold text-foreground">Who we are</h2>
         <p className="mt-2">
-          Powfolio is a public proof-of-work profile product. Contact: privacy@pow3folio.vercel.app (replace with your live contact once a custom domain is live).
+          Powfolio is a public proof-of-work profile product. Contact: privacy@powfolio.xyz
         </p>
       </section>
       <section>
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
           <li>Proof you upload or import: writing, trades, community items, airdrops, credentials, collectibles, and images.</li>
           <li>Reports you submit about another profile, including a required note and optional images.</li>
           <li>Signup IP, used only to rate-limit abuse.</li>
-          <li>Pow3Bot chat text, sent through our server to the model provider so the assistant can reply.</li>
+          <li>Powbot chat text, sent through our server to the model provider so the assistant can reply.</li>
           <li>Profile snapshots and a 180-day retention archive after you delete an account, so ops can handle appeals or legal holds.</li>
         </ul>
       </section>
