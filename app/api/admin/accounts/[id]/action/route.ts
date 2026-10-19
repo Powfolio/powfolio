@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import { writeAudit } from "@/lib/admin/audit";
 import { sendTransactionalEmail, suspensionEmail } from "@/lib/admin/mail";
 import { restoreDeletedAccount, softDeleteAccount } from "@/lib/accounts/soft-delete";
+import { SITE_URL } from "@/lib/site";
 
 export const runtime = "nodejs";
 
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       const { data: authUser } = await admin.auth.admin.getUserById(id);
       const to = authUser.user?.email;
       if (to) {
-        const origin = process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin || "https://pow3folio.vercel.app";
+        const origin = process.env.NEXT_PUBLIC_SITE_URL || SITE_URL;
         const mail = suspensionEmail({ username: publicName, origin });
         await sendTransactionalEmail({ to, ...mail });
       }
@@ -130,6 +131,6 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ ok: true, status: nextStatus });
   } catch (e) {
     console.error("admin action", e);
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Action failed" }, { status: 500 });
+    return NextResponse.json({ error: "Action failed" }, { status: 500 });
   }
 }
