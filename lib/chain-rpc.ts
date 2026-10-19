@@ -1,4 +1,5 @@
 import { evmToBech32 } from "@/lib/bech32";
+import { assertPublicHttps } from "@/lib/security/safe-fetch";
 
 function isAddress(value: string) {
   return /^0x[a-fA-F0-9]{40}$/.test(value);
@@ -25,11 +26,13 @@ function toNumber(raw: string | number | null | undefined, decimals = 18) {
 }
 
 async function getJson(url: string, timeoutMs = 9000): Promise<unknown | null> {
+  const safe = await assertPublicHttps(url);
+  if (!safe) return null;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: "application/json" } });
-    if (!res.ok) return null;
+    const res = await fetch(safe, { signal: ctrl.signal, headers: { Accept: "application/json" }, redirect: "manual" });
+    if (!res.ok || (res.status >= 300 && res.status < 400)) return null;
     return await res.json();
   } catch {
     return null;
@@ -68,16 +71,19 @@ export function kiiLcds() {
 export async function rpcCall(rpc: string | string[], method: string, params: unknown[]): Promise<unknown | null> {
   const urls = (Array.isArray(rpc) ? rpc : [rpc]).filter(Boolean);
   for (const url of urls) {
+    const safe = await assertPublicHttps(url);
+    if (!safe) continue;
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 9000);
     try {
-      const res = await fetch(url, {
+      const res = await fetch(safe, {
         method: "POST",
         signal: ctrl.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+        redirect: "manual",
       });
-      if (!res.ok) continue;
+      if (!res.ok || (res.status >= 300 && res.status < 400)) continue;
       const json = (await res.json()) as { result?: unknown };
       if (json.result != null) return json.result;
     } catch {
@@ -257,7 +263,7 @@ export function bankAsTokens(
     if (!denom || amount === "0") continue;
     if (denom === "akii" || denom === "ukii" || denom === "kii" || denom === chain.native.toLowerCase()) {
       const decimals = denom === "akii" ? 18 : denom === "ukii" ? 6 : 18;
-      nativeQty += toNumber(amount, decimals);
+      nativeQty += toNumber(amount, 18);
       continue;
     }
     const qty = toNumber(amount, 18);
