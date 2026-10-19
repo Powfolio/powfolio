@@ -17,6 +17,8 @@ type Data = {
   snapshot: string;
 };
 
+const CHART_COLORS = ["#6B8F71", "#7A8FA8", "#C4A574", "#A07A6B", "#8B7BA8", "#6B9A9A"];
+
 export default function AnalyticsView() {
   const [data, setData] = useState<Data | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export default function AnalyticsView() {
           <div className="mb-3 flex items-baseline justify-between">
             <div>
               <h2 className="text-sm font-medium">New accounts</h2>
-              <p className="text-[11px] text-foreground-subtle">Last 30 days · hover for crosshair</p>
+              <p className="text-[11px] text-foreground-subtle">Last 30 days · drag across the chart</p>
             </div>
             {hover && (
               <div className="text-right text-xs">
@@ -83,10 +85,8 @@ export default function AnalyticsView() {
 
         <div className="rounded-2xl border border-border/50 bg-surface p-5">
           <h2 className="text-sm font-medium">Locations</h2>
-          <p className="text-[11px] text-foreground-subtle">Click a segment</p>
-          <div className="mt-4">
-            <Donut items={data.topCountries} />
-          </div>
+          <p className="text-[11px] text-foreground-subtle">Share of accounts</p>
+          <LocationDonut items={data.topCountries} />
         </div>
       </div>
 
@@ -119,6 +119,7 @@ function LineChart({
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [cross, setCross] = useState<{ x: number; y: number; date: string; count: number } | null>(null);
+  const dragging = useRef(false);
 
   const w = 640, h = 200, padL = 36, padR = 12, padT = 16, padB = 28;
   const max = Math.max(1, ...points.map((p) => p.count));
@@ -138,10 +139,10 @@ function LineChart({
     ? `${path} L${coords[coords.length - 1].x},${padT + innerH} L${padL},${padT + innerH} Z`
     : "";
 
-  function onMove(e: React.MouseEvent<SVGSVGElement>) {
+  function updateFromEvent(clientX: number) {
     const rect = svgRef.current?.getBoundingClientRect();
     if (!rect || !coords.length) return;
-    const mx = ((e.clientX - rect.left) / rect.width) * w;
+    const mx = ((clientX - rect.left) / rect.width) * w;
     let nearest = coords[0];
     let best = Infinity;
     for (const c of coords) {
@@ -152,6 +153,19 @@ function LineChart({
     onHover({ date: nearest.date, count: nearest.count });
   }
 
+  function onPointerDown(e: React.PointerEvent<SVGSVGElement>) {
+    dragging.current = true;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    updateFromEvent(e.clientX);
+  }
+  function onPointerMove(e: React.PointerEvent<SVGSVGElement>) {
+    if (!dragging.current && e.pointerType === "touch") return;
+    updateFromEvent(e.clientX);
+  }
+  function onPointerUp() {
+    dragging.current = false;
+  }
+
   const yTicks = [0, Math.round(yMax / 2), yMax];
   const xTicks = [0, Math.floor(points.length / 2), points.length - 1].filter((i, idx, arr) => arr.indexOf(i) === idx);
 
@@ -159,9 +173,12 @@ function LineChart({
     <svg
       ref={svgRef}
       viewBox={`0 0 ${w} ${h}`}
-      className="h-52 w-full cursor-crosshair"
-      onMouseMove={onMove}
-      onMouseLeave={() => { setCross(null); onHover(null); }}
+      className="h-52 w-full touch-none select-none"
+      style={{ cursor: "crosshair" }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerLeave={() => { if (!dragging.current) { setCross(null); onHover(null); } }}
     >
       {yTicks.map((t) => {
         const y = padT + innerH - (t / yMax) * innerH;
@@ -181,14 +198,14 @@ function LineChart({
           </text>
         );
       })}
-      <path d={fill} fill="currentColor" className="text-primary/12" />
-      <path d={path} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="text-primary" />
+      <path d={fill} fill="#6B8F71" fillOpacity={0.18} />
+      <path d={path} fill="none" stroke="#6B8F71" strokeWidth="2.2" strokeLinecap="round" />
       {cross && (
         <>
-          <line x1={cross.x} x2={cross.x} y1={padT} y2={padT + innerH} stroke="currentColor" strokeOpacity={0.35} strokeDasharray="3 3" />
-          <line x1={padL} x2={w - padR} y1={cross.y} y2={cross.y} stroke="currentColor" strokeOpacity={0.35} strokeDasharray="3 3" />
-          <circle cx={cross.x} cy={cross.y} r={5} className="fill-primary" />
-          <text x={cross.x + 8} y={cross.y - 8} fontSize="11" fill="currentColor" fontWeight="600">
+          <line x1={cross.x} x2={cross.x} y1={padT} y2={padT + innerH} stroke="#7A8FA8" strokeOpacity={0.7} strokeDasharray="3 3" />
+          <line x1={padL} x2={w - padR} y1={cross.y} y2={cross.y} stroke="#7A8FA8" strokeOpacity={0.7} strokeDasharray="3 3" />
+          <circle cx={cross.x} cy={cross.y} r={5} fill="#6B8F71" />
+          <text x={cross.x + 8} y={Math.max(12, cross.y - 8)} fontSize="11" fill="currentColor" fontWeight="600">
             {cross.count}
           </text>
         </>
@@ -197,70 +214,49 @@ function LineChart({
   );
 }
 
-function Donut({ items }: { items: Country[] }) {
-  const [sel, setSel] = useState<number | null>(null);
+function LocationDonut({ items }: { items: Country[] }) {
   const total = items.reduce((s, i) => s + i.count, 0) || 1;
-  const colors = ["#B8863B", "#6B8F71", "#7A8FA8", "#A07A6B", "#8A7A6B"];
-  const r = 36, c = 50, baseStroke = 10;
+  const r = 34, c = 50, stroke = 14;
   const circ = 2 * Math.PI * r;
   let acc = 0;
 
-  const segs = items.slice(0, 5).map((item, i) => {
+  const segs = items.slice(0, 6).map((item, i) => {
     const len = (item.count / total) * circ;
     const start = acc;
     acc += len;
-    const mid = start + len / 2;
-    const ang = (mid / circ) * Math.PI * 2 - Math.PI / 2;
-    return { ...item, i, len, start, ang, color: colors[i % colors.length] };
+    return { ...item, i, len, start, color: CHART_COLORS[i % CHART_COLORS.length] };
   });
 
-  const selected = sel !== null ? segs[sel] : null;
-
   return (
-    <div className="relative">
-      <svg viewBox="0 0 100 100" className="h-36 w-full">
-        <circle cx={c} cy={c} r={r} fill="none" stroke="currentColor" strokeWidth={baseStroke} className="text-border/30" />
-        {segs.map((s) => {
-          const active = sel === s.i;
-          const stroke = active ? baseStroke + 4 : baseStroke;
-          return (
-            <circle
-              key={s.name}
-              cx={c}
-              cy={c}
-              r={r}
-              fill="none"
-              stroke={s.color}
-              strokeWidth={stroke}
-              strokeDasharray={`${s.len} ${circ - s.len}`}
-              strokeDashoffset={-s.start}
-              className="cursor-pointer transition-all"
-              onClick={() => setSel(sel === s.i ? null : s.i)}
-            />
-          );
-        })}
-        {selected && (
-          <>
-            <line
-              x1={c + Math.cos(selected.ang) * (r + 6)}
-              y1={c + Math.sin(selected.ang) * (r + 6)}
-              x2={c + Math.cos(selected.ang) * 48}
-              y2={c + Math.sin(selected.ang) * 48}
-              stroke={selected.color}
-              strokeWidth={0.6}
-            />
-            <text
-              x={c + Math.cos(selected.ang) * 48}
-              y={c + Math.sin(selected.ang) * 48}
-              textAnchor={Math.cos(selected.ang) > 0 ? "start" : "end"}
-              fontSize="4.2"
-              fill="currentColor"
-            >
-              {selected.name} · {selected.count} ({selected.share}%)
-            </text>
-          </>
-        )}
+    <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
+      <svg viewBox="0 0 100 100" className="h-32 w-32 shrink-0 -rotate-90">
+        <circle cx={c} cy={c} r={r} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-border/25" />
+        {segs.map((s) => (
+          <circle
+            key={s.name}
+            cx={c}
+            cy={c}
+            r={r}
+            fill="none"
+            stroke={s.color}
+            strokeWidth={stroke}
+            strokeDasharray={`${s.len} ${circ - s.len}`}
+            strokeDashoffset={-s.start}
+          />
+        ))}
       </svg>
+      <div className="min-w-0 flex-1 space-y-2 text-sm">
+        {segs.map((s) => (
+          <div key={s.name} className="flex items-center justify-between gap-3">
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
+              <span className="truncate text-foreground-muted">{s.name}</span>
+            </span>
+            <span className="shrink-0 tabular-nums">{s.share}%</span>
+          </div>
+        ))}
+        {segs.length === 0 && <p className="text-foreground-muted">No location data yet.</p>}
+      </div>
     </div>
   );
 }
