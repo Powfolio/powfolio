@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -34,14 +35,15 @@ export async function GET() {
       return NextResponse.json({ messages: [], signedIn: false });
     }
 
-    const { data, error } = await supabase
-      .from("profiles")
+    const admin = createServiceClient();
+    const { data, error } = await admin
+      .from("profile_private")
       .select("ai_chat_history")
-      .eq("id", user.id)
+      .eq("user_id", user.id)
       .maybeSingle();
 
     if (error) {
-      if (error.message?.includes("ai_chat_history") || error.code === "42703") {
+      if (error.message?.includes("profile_private") || error.code === "42P01") {
         return NextResponse.json({ messages: [], signedIn: true, needsMigration: true });
       }
       return NextResponse.json({ messages: [], signedIn: true });
@@ -67,19 +69,16 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     const messages = sanitize(body?.messages);
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({ ai_chat_history: messages })
-      .eq("id", user.id);
+    const admin = createServiceClient();
+    const { error } = await admin.from("profile_private").upsert(
+      { user_id: user.id, ai_chat_history: messages, updated_at: new Date().toISOString() },
+      { onConflict: "user_id" }
+    );
 
     if (error) {
-      if (error.message?.includes("ai_chat_history") || error.code === "42703") {
+      if (error.message?.includes("profile_private") || error.code === "42P01") {
         return NextResponse.json(
-          {
-            ok: false,
-            needsMigration: true,
-            error: "Run the ai_chat_history SQL migration in Supabase.",
-          },
+          { ok: false, needsMigration: true, error: "Run the profile_private SQL migration in Supabase." },
           { status: 400 }
         );
       }
