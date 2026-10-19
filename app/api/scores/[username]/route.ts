@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { computeScores } from "@/lib/ai/scores";
+import { PUBLIC_PROFILE_COLUMNS } from "@/lib/profile/public-columns";
 import type {
   Profile,
   Writing,
@@ -32,7 +33,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("*")
+    .select(PUBLIC_PROFILE_COLUMNS)
     .eq("username", username)
     .eq("is_public", true)
     .maybeSingle();
@@ -41,7 +42,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const p = profile as Profile;
+  const p = profile as unknown as Profile;
 
   const [
     { data: writings },
