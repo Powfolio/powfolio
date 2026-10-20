@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { allowRate } from "@/lib/security/rate-limit";
+import { assertPublicHttps } from "@/lib/security/safe-fetch";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -39,10 +40,7 @@ function extractJson(raw: string): Record<string, unknown> | null {
     const end = cleaned.lastIndexOf("}");
     if (start >= 0 && end > start) {
       try {
-        return JSON.parse(cleaned.slice(start, end + 1)) as Record<
-          string,
-          unknown
-        >;
+        return JSON.parse(cleaned.slice(start, end + 1)) as Record<string, unknown>;
       } catch {
         return null;
       }
@@ -91,9 +89,7 @@ async function fetchNotionText(url: URL): Promise<string | null> {
   const path = url.pathname;
   const m =
     path.match(/([0-9a-f]{32})(?:\/?$)/i) ||
-    path.match(
-      /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
-    );
+    path.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
   if (!m) return null;
 
   let pageId = m[1].replace(/-/g, "").toLowerCase();
@@ -107,8 +103,7 @@ async function fetchNotionText(url: URL): Promise<string | null> {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "User-Agent":
-          "Mozilla/5.0 (compatible; Pow3FolioBot/1.0; +https://pow3folio.vercel.app)",
+        "User-Agent": "Mozilla/5.0 (compatible; Pow3FolioBot/1.0; +https://powfolio.xyz)",
       },
       body: JSON.stringify({
         pageId: uuid,
@@ -133,8 +128,7 @@ async function fetchNotionText(url: URL): Promise<string | null> {
         } else break;
       }
       if (!node || typeof node !== "object") continue;
-      const props = (node as { properties?: Record<string, unknown> })
-        .properties;
+      const props = (node as { properties?: Record<string, unknown> }).properties;
       if (!props) continue;
       for (const key of Object.keys(props)) {
         const out: string[] = [];
@@ -203,9 +197,7 @@ async function fetchGitHubRepos(user: string): Promise<GhRepo[]> {
   }
 }
 
-async function fetchGitHubText(
-  url: URL
-): Promise<{ text: string | null; repos: GhRepo[] }> {
+async function fetchGitHubText(url: URL): Promise<{ text: string | null; repos: GhRepo[] }> {
   const host = url.hostname.toLowerCase();
   if (!host.includes("github.com")) return { text: null, repos: [] };
   const parts = url.pathname.split("/").filter(Boolean);
@@ -215,15 +207,18 @@ async function fetchGitHubText(
     return { text: null, repos: [] };
 
   const profileUrl = `https://github.com/${encodeURIComponent(user)}`;
+  const safe = await assertPublicHttps(profileUrl);
+  if (!safe) return { text: null, repos: [] };
+
   let text = "";
   try {
-    const res = await fetch(profileUrl, {
+    const res = await fetch(safe, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         Accept: "text/html",
       },
-      redirect: "follow",
+      redirect: "manual",
       signal: AbortSignal.timeout(12000),
     });
     if (res.ok) text = htmlToText(await res.text());
@@ -251,9 +246,7 @@ async function fetchGitHubText(
   const repoBlock =
     repos.length > 0
       ? "\n\nOwned repositories (not forks):\n" +
-        repos
-          .map((r) => `- ${r.title}: ${r.description} (${r.url})`)
-          .join("\n")
+        repos.map((r) => `- ${r.title}: ${r.description} (${r.url})`).join("\n")
       : "";
 
   const combined = [`GitHub profile: ${profileUrl}`, text, readme, repoBlock]
@@ -265,16 +258,18 @@ async function fetchGitHubText(
 }
 
 async function fetchGenericText(url: URL): Promise<string | null> {
-  const res = await fetch(url.toString(), {
+  const safe = await assertPublicHttps(url.toString());
+  if (!safe) return null;
+  const res = await fetch(safe, {
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
     },
-    redirect: "follow",
+    redirect: "manual",
     signal: AbortSignal.timeout(12000),
   });
-  if (!res.ok) return null;
+  if (!res.ok || (res.status >= 300 && res.status < 400)) return null;
   const ct = (res.headers.get("content-type") || "").toLowerCase();
   const raw = await res.text();
   const pageText = ct.includes("html") ? htmlToText(raw) : raw.slice(0, 50000);
@@ -316,11 +311,7 @@ async function callGemini(apiKey: string, model: string, pageText: string, sourc
       contents: [
         {
           role: "user",
-          parts: [
-            {
-              text: `${EXTRACT_PROMPT}\n\nSource URL: ${sourceUrl}\n\nPage text:\n${pageText}`,
-            },
-          ],
+          parts: [{ text: `${EXTRACT_PROMPT}\n\nSource URL: ${sourceUrl}\n\nPage text:\n${pageText}` }],
         },
       ],
       generationConfig: { temperature: 0.2, maxOutputTokens: 4000 },
@@ -354,10 +345,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     }
     if (!(await allowRate(`link:${user.id}`, 6))) {
-      return NextResponse.json(
-        { error: "Too many link imports. Wait a minute." },
-        { status: 429 }
-      );
+      return NextResponse.json({ error: "Too many link imports. Wait a minute." }, { status: 429 });
     }
 
     const body = await req.json().catch(() => null);
@@ -375,6 +363,12 @@ export async function POST(req: NextRequest) {
     if (!["http:", "https:"].includes(parsed.protocol)) {
       return NextResponse.json({ error: "Only http(s) links" }, { status: 400 });
     }
+
+    const safe = await assertPublicHttps(parsed.toString());
+    if (!safe) {
+      return NextResponse.json({ error: "That URL is not allowed." }, { status: 400 });
+    }
+    parsed = new URL(safe);
 
     const host = parsed.hostname.toLowerCase();
     if (BLOCKED_HOSTS.some((h) => host === h || host.endsWith("." + h))) {
@@ -427,9 +421,7 @@ export async function POST(req: NextRequest) {
     }
 
     const preferred = (process.env.GEMINI_MODEL || "").trim();
-    const models = preferred
-      ? [preferred, ...MODELS.filter((m) => m !== preferred)]
-      : MODELS;
+    const models = preferred ? [preferred, ...MODELS.filter((m) => m !== preferred)] : MODELS;
 
     let lastErr = "";
     for (const model of models) {
@@ -440,8 +432,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
       const outText =
-        result.data.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") ||
-        "";
+        result.data.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
       const profile = extractJson(outText);
       if (!profile) {
         lastErr = "Could not structure profile from this link";
@@ -453,9 +444,7 @@ export async function POST(req: NextRequest) {
           ? (profile.community as Record<string, unknown>[])
           : [];
         const seen = new Set(
-          existing
-            .map((c) => String(c.url || c.title || "").toLowerCase())
-            .filter(Boolean)
+          existing.map((c) => String(c.url || c.title || "").toLowerCase()).filter(Boolean)
         );
         for (const r of ghRepos) {
           const key = r.url.toLowerCase();
