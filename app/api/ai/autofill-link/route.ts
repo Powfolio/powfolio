@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { allowRate } from "@/lib/security/rate-limit";
-import { assertPublicHttps } from "@/lib/security/safe-fetch";
+import { assertPublicContentUrl } from "@/lib/security/safe-fetch";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -207,7 +207,7 @@ async function fetchGitHubText(url: URL): Promise<{ text: string | null; repos: 
     return { text: null, repos: [] };
 
   const profileUrl = `https://github.com/${encodeURIComponent(user)}`;
-  const safe = await assertPublicHttps(profileUrl);
+  const safe = await assertPublicContentUrl(profileUrl);
   if (!safe) return { text: null, repos: [] };
 
   let text = "";
@@ -258,7 +258,7 @@ async function fetchGitHubText(url: URL): Promise<{ text: string | null; repos: 
 }
 
 async function fetchGenericText(url: URL): Promise<string | null> {
-  const safe = await assertPublicHttps(url.toString());
+  const safe = await assertPublicContentUrl(url.toString());
   if (!safe) return null;
   const res = await fetch(safe, {
     headers: {
@@ -266,10 +266,10 @@ async function fetchGenericText(url: URL): Promise<string | null> {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
     },
-    redirect: "manual",
+    redirect: "follow",
     signal: AbortSignal.timeout(12000),
   });
-  if (!res.ok || (res.status >= 300 && res.status < 400)) return null;
+  if (!res.ok) return null;
   const ct = (res.headers.get("content-type") || "").toLowerCase();
   const raw = await res.text();
   const pageText = ct.includes("html") ? htmlToText(raw) : raw.slice(0, 50000);
@@ -354,21 +354,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "url required" }, { status: 400 });
     }
 
-    let parsed: URL;
-    try {
-      parsed = new URL(rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`);
-    } catch {
-      return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
-    }
-    if (!["http:", "https:"].includes(parsed.protocol)) {
-      return NextResponse.json({ error: "Only http(s) links" }, { status: 400 });
-    }
-
-    const safe = await assertPublicHttps(parsed.toString());
+    const safe = await assertPublicContentUrl(rawUrl);
     if (!safe) {
-      return NextResponse.json({ error: "That URL is not allowed." }, { status: 400 });
+      return NextResponse.json({ error: "That URL is not allowed or is private." }, { status: 400 });
     }
-    parsed = new URL(safe);
+    const parsed = new URL(safe);
 
     const host = parsed.hostname.toLowerCase();
     if (BLOCKED_HOSTS.some((h) => host === h || host.endsWith("." + h))) {
