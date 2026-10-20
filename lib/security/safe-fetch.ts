@@ -34,3 +34,24 @@ export async function assertPublicHttps(url: string): Promise<string | null> {
   }
   return parsed.toString();
 }
+
+/** Softer check for user-pasted public content (autofill, logos). Allows http/https, blocks private hosts, does not fail on DNS errors. */
+export async function assertPublicContentUrl(url: string): Promise<string | null> {
+  let parsed: URL;
+  try {
+    parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
+  } catch {
+    return null;
+  }
+  if (!["http:", "https:"].includes(parsed.protocol)) return null;
+  if (blockedHost(parsed.hostname)) return null;
+  // Prefer https
+  if (parsed.protocol === "http:") parsed.protocol = "https:";
+  try {
+    const records = await lookup(parsed.hostname, { all: true, verbatim: true });
+    if (records.some((r) => blockedHost(r.address))) return null;
+  } catch {
+    // DNS failure on a public-looking host is allowed; the fetch will fail naturally if unreachable
+  }
+  return parsed.toString();
+}
