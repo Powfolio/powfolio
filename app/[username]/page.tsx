@@ -36,6 +36,13 @@ type Props = {
   searchParams: Promise<{ report?: string; appeal?: string }>;
 };
 
+type PublicProfileRow = Profile & {
+  account_status?: string | null;
+  suspension_reason?: string | null;
+  suspended_at?: string | null;
+  deleted_at?: string | null;
+};
+
 function normalizeSkills(raw: Profile["skills"]): Skill[] {
   if (!raw || !Array.isArray(raw)) return [];
   return raw
@@ -86,18 +93,19 @@ function normalizeEducation(list: Education[] | null | undefined): Education[] {
   return list.map((e) => ({ ...e, url: absoluteUrl(e.url) }));
 }
 
-async function loadProfileRow(username: string) {
+async function loadProfileRow(username: string): Promise<PublicProfileRow | null> {
   const handle = username.toLowerCase();
   try {
     const admin = createServiceClient();
     const { data } = await admin.from("profiles").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
-    if (data) return data;
+    if (data && typeof data === "object" && "username" in data) return data as PublicProfileRow;
   } catch {
     /* fall through to the user-scoped client */
   }
   const supabase = await createClient();
   const { data } = await supabase.from("profiles").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
-  return data;
+  if (data && typeof data === "object" && "username" in data) return data as PublicProfileRow;
+  return null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -148,12 +156,7 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
 
   if (!profile) notFound();
 
-  const p = profile as unknown as Profile & {
-    account_status?: string;
-    suspension_reason?: string | null;
-    suspended_at?: string | null;
-    deleted_at?: string | null;
-  };
+  const p = profile;
   const status = p.account_status || "active";
   if (status === "deleted" || p.deleted_at) notFound();
   if (!p.is_public && status !== "suspended") notFound();
