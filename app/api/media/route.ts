@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { lookup } from "node:dns/promises";
 import { gatewayUrls, rewriteUrl, sniffMediaType } from "@/lib/nft-media";
+import { allowRate } from "@/lib/security/rate-limit";
 
 export const revalidate = 86400;
 export const maxDuration = 20;
@@ -8,7 +9,7 @@ export const maxDuration = 20;
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
-const MAX_BYTES = 12 * 1024 * 1024;
+const MAX_BYTES = 8 * 1024 * 1024;
 
 function blockedHost(hostname: string) {
   const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
@@ -46,7 +47,7 @@ async function fetchMedia(url: string) {
     if (!safe) return null;
     const parsed = new URL(safe);
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 10000);
+    const t = setTimeout(() => ctrl.abort(), 8000);
     try {
       const res = await fetch(parsed.toString(), {
         headers: {
@@ -64,11 +65,11 @@ async function fetchMedia(url: string) {
       }
       if (!res.ok) return null;
       const type = (res.headers.get("content-type") || "").toLowerCase();
-      if (type.includes("text/html") || type.includes("application/json")) return null;
+      if (type.includes("text/html") || type.includes("application/json") || type.includes("svg")) return null;
       const buf = await res.arrayBuffer();
       if (!buf.byteLength || buf.byteLength > MAX_BYTES) return null;
       const sniffed = sniffMediaType(buf, type);
-      if (!sniffed) return null;
+      if (!sniffed || sniffed.kind === "svg") return null;
       return { buf, type: sniffed.contentType };
     } catch {
       return null;
@@ -80,6 +81,11 @@ async function fetchMedia(url: string) {
 }
 
 export async function GET(req: Request) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
+  if (!(await allowRate(`media:${ip}`, 60, 60_000))) {
+    return NextResponse.json({ error: "rate" }, { status: 429 });
+  }
+
   const target = new URL(req.url).searchParams.get("u") || "";
   let parsed: URL;
   try {
@@ -96,13 +102,14 @@ export async function GET(req: Request) {
   );
 
   try {
-    for (const url of candidates.slice(0, 8)) {
+    for (const url of candidates.slice(0, 6)) {
       const hit = await fetchMedia(url);
       if (!hit) continue;
       return new NextResponse(hit.buf, {
         headers: {
           "Content-Type": hit.type,
           "Cache-Control": "public, max-age=86400, immutable",
+          "X-Content-Type-Options": "nosniff",
         },
       });
     }
