@@ -63,6 +63,28 @@ function siteLogo(url: string | null) {
     return null;
   }
 }
+function toDateOrNull(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const t = raw.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+  if (/^\d{4}-\d{2}$/.test(t)) return `${t}-01`;
+  return null;
+}
+function formatMonth(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const t = raw.trim();
+  const m = t.match(/^(\d{4})-(\d{2})/);
+  if (!m) return t;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, 1);
+  if (Number.isNaN(d.getTime())) return t;
+  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+function dateRange(start: string | null | undefined, end: string | null | undefined): string | null {
+  const s = formatMonth(start);
+  if (!s) return null;
+  const e = formatMonth(end);
+  return e ? `${s} – ${e}` : `${s} – Present`;
+}
 function Icon({ d, size = 17 }: { d: string; size?: number }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" width={size} height={size} aria-hidden>
@@ -201,8 +223,8 @@ export default function CommunityManager({ userId, username, initialItems }: { u
       url: item.url ?? "",
       tags: otherTags.join(", "),
       metrics: item.metrics ?? "",
-      started_at: item.started_at ?? "",
-      ended_at: item.ended_at ?? "",
+      started_at: item.started_at ? item.started_at.slice(0, 7) : "",
+      ended_at: item.ended_at ? item.ended_at.slice(0, 7) : "",
       is_visible: item.is_visible,
       thumbnail_url: item.thumbnail_url,
       category: categoryFromTags(item.tags),
@@ -247,8 +269,8 @@ export default function CommunityManager({ userId, username, initialItems }: { u
       url: link,
       tags: [form.category, ...extraTags],
       metrics: form.metrics.trim() || null,
-      started_at: form.started_at || null,
-      ended_at: form.ended_at || null,
+      started_at: toDateOrNull(form.started_at),
+      ended_at: toDateOrNull(form.ended_at),
       is_visible: form.is_visible,
       thumbnail_url: form.thumbnail_url || siteLogo(link),
       user_id: userId,
@@ -321,7 +343,7 @@ export default function CommunityManager({ userId, username, initialItems }: { u
           <div className="hero-row"><div><h1>Projects & Collabs</h1><p>Personal builds, partnerships and community roles. The same entry flow as the rest of the workspace, with a logo pulled from each project link.</p></div></div>
         </section>
         <section className="panel active">
-          <div className="section-intro"><h2>{tab === "all" ? "All work" : categoryLabel(tab)}</h2><p>A project or collaboration link is required. The logo is pulled from it. Replace the image if the mark is wrong. Replace the image if the site mark is wrong. Drag a row to change the public order.</p></div>
+          <div className="section-intro"><h2>{tab === "all" ? "All work" : categoryLabel(tab)}</h2><p>A project or collaboration link is required. The logo is pulled from it. Replace the image if the mark is wrong. Drag a row to change the public order.</p></div>
           {drafts.length > 0 && (
             <div className="block">
               <div className="block-head"><div><div className="block-title">Imported projects</div><div className="block-desc">{drafts.length} item{drafts.length === 1 ? "" : "s"} from CV, Notion or GitHub are waiting to be saved.</div></div><button className="action accent" type="button" disabled={importing} onClick={() => void saveDrafts()}>{importing ? "Saving..." : "Save imported"}</button></div>
@@ -341,9 +363,10 @@ export default function CommunityManager({ userId, username, initialItems }: { u
               {visible.length === 0 && <div className="empty">No projects in this section yet.</div>}
               {visible.map((item, i) => {
                 const logoUrl = item.thumbnail_url || siteLogo(item.url);
+                const range = dateRange(item.started_at, item.ended_at);
                 return (
                   <div key={item.id} className="entry" draggable onDragStart={() => setDrag(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (drag === null || drag === i) return; const from = items.findIndex((row) => row.id === visible[drag].id); const to = items.findIndex((row) => row.id === visible[i].id); if (from < 0 || to < 0) return; void persistOrder(moveItem(items, from, to)); setDrag(null); notify("Order updated"); }}>
-                    <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder project"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><span className="logo-preview sm">{logoUrl ? <img src={logoUrl} alt="" /> : item.title.slice(0, 1)}</span><div><div className="entry-title">{item.title}</div><div className="entry-meta">{categoryLabel(categoryFromTags(item.tags))}{item.role ? ` · ${item.role}` : ""}{item.platform ? ` · ${item.platform}` : ""}{item.is_visible ? "" : " · Hidden"}</div>{item.url && <div className="entry-meta">{item.url}</div>}</div></div>
+                    <div className="entry-left"><button className="drag-handle" type="button" aria-label="Reorder project"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button><span className="logo-preview sm">{logoUrl ? <img src={logoUrl} alt="" /> : item.title.slice(0, 1)}</span><div><div className="entry-title">{item.title}</div><div className="entry-meta">{categoryLabel(categoryFromTags(item.tags))}{item.role ? ` · ${item.role}` : ""}{item.platform ? ` · ${item.platform}` : ""}{range ? ` · ${range}` : ""}{item.is_visible ? "" : " · Hidden"}</div>{item.url && <div className="entry-meta">{item.url}</div>}</div></div>
                     <div className="entry-actions">
                       <button className="small-action" type="button" onClick={() => startEdit(item)}>Edit</button>
                       <button className="small-action danger-action" type="button" onClick={() => void handleDelete(item.id)}>Delete</button>
@@ -358,38 +381,25 @@ export default function CommunityManager({ userId, username, initialItems }: { u
                 <div className="field"><label className="label">Role</label><input className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Founder, contributor, mod" /></div>
                 <div className="field"><label className="label">Platform</label><input className="input" value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} placeholder="GitHub, Telegram, Discord" /></div>
                 <div className="field"><label className="label">Category</label><select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Category })}>{CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
-                <div className="field full"><label className="label">Project link</label><input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value, thumbnail_url: form.thumbnail_url && !form.thumbnail_url.includes("google.com/s2/favicons") ? form.thumbnail_url : siteLogo(absoluteUrl(e.target.value)) })} placeholder="https://github.com/you/project" required /></div>
-                <div className="field full logo-field"><span className="logo-preview">{logo ? <img src={logo} alt="" /> : "Logo"}</span><label className="text-action">{uploading ? "Uploading..." : "Replace logo"}<input type="file" accept="image/*" hidden onChange={(e) => void handleImage(e.target.files?.[0] || null)} /></label><span className="logo-note">The site logo is pulled from the link. Upload another image if it is wrong.</span></div>
-                <div className="field full"><label className="label">Description</label><textarea className="textarea" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What you built, who you worked with, or the role you held." /></div>
-                <div className="field"><label className="label">Start</label><input className="input" type="month" value={form.started_at.slice(0, 7)} onChange={(e) => setForm({ ...form, started_at: e.target.value })} /></div>
-                <div className="field"><label className="label">End</label><input className="input" type="month" value={form.ended_at.slice(0, 7)} onChange={(e) => setForm({ ...form, ended_at: e.target.value })} /></div>
-                <div className="field full"><label className="label">Outcome</label><input className="input" value={form.metrics} onChange={(e) => setForm({ ...form, metrics: e.target.value })} placeholder="Optional result, members or shipped milestone" /></div>
-                <div className="field full"><label className="label">Extra tags</label><input className="input" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Comma separated, optional" /></div>
+                <div className="field"><label className="label">Project link *</label><input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://" /></div>
+                <div className="field"><label className="label">Start</label><input className="input" type="month" value={form.started_at} onChange={(e) => setForm({ ...form, started_at: e.target.value })} /></div>
+                <div className="field"><label className="label">End (leave blank for Present)</label><input className="input" type="month" value={form.ended_at} onChange={(e) => setForm({ ...form, ended_at: e.target.value })} /></div>
+                <div className="field"><label className="label">Outcome</label><input className="input" value={form.metrics} onChange={(e) => setForm({ ...form, metrics: e.target.value })} placeholder="Optional result, members or shipped milestone" /></div>
+                <div className="field"><label className="label">Extra tags</label><input className="input" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Comma separated, optional" /></div>
+                <div className="field full"><label className="label">Description</label><textarea className="input" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What you built or led" /></div>
+                <div className="field"><label className="label">Logo</label><input type="file" accept="image/*" onChange={(e) => void handleImage(e.target.files?.[0] || null)} />{logo && <img src={logo} alt="" className="logo-preview" />}</div>
+                <div className="field"><label className="check"><input type="checkbox" checked={form.is_visible} onChange={(e) => setForm({ ...form, is_visible: e.target.checked })} /> Visible on public profile</label><p className="hint">Turn this off to keep the item in your workspace without publishing it.</p></div>
               </div>
-              <div className="cv-row"><div className="cv-copy"><div className="cv-title">Visible on public profile</div><div className="cv-desc">Turn this off to keep the item in your workspace without publishing it.</div></div><button className={`switch${form.is_visible ? " on" : ""}`} type="button" aria-label="Visible on public profile" onClick={() => setForm((f) => ({ ...f, is_visible: !f.is_visible }))}><span /></button></div>
-              {error && <div className="error">{error}</div>}
-              <div className="form-actions"><button className="action accent" type="button" disabled={loading} onClick={() => void handleSubmit()}>{loading ? "Saving..." : editingId ? "Update project" : "Add project"}</button><button className="action" type="button" onClick={resetForm}>Cancel</button></div>
+              {error && <p className="error">{error}</p>}
+              <div className="form-actions">
+                <button className="action accent" type="button" disabled={loading || uploading} onClick={() => void handleSubmit()}>{editingId ? "Save changes" : "Add project"}</button>
+                <button className="action" type="button" onClick={resetForm}>Cancel</button>
+              </div>
             </div>
           </div>
         </section>
       </main>
-      <button className={`tab-fab${dock === "open" ? " open" : ""}`} type="button" aria-label={dock === "open" ? "Close sections" : "Open sections"} onClick={() => { if (dock === "open") closeDock(); else setDock("open"); }}>
-        <svg className="burger" viewBox="0 0 24 18" width="22" height="16" aria-hidden>
-          <rect x="1" y="1" width="22" height="3.2" rx="1.6" />
-          <rect x="1" y="7.4" width="22" height="3.2" rx="1.6" />
-          <rect x="1" y="13.8" width="22" height="3.2" rx="1.6" />
-        </svg>
-      </button>
-      <div className={`tab-dock${dock === "open" ? " open" : ""}${dock === "closing" ? " closing" : ""}`}>
-        {TABS.map((item, index) => (
-          <button key={item.id} className={`dock-tab${tab === item.id ? " active" : ""}`} style={{ transitionDelay: `${index * 45}ms` }} type="button" onClick={() => { selectTab(item.id); closeDock(); }}>
-            <Icon d={item.icon} size={16} />
-            <span>{item.short}</span>
-          </button>
-        ))}
-      </div>
-      {dock !== "closed" && <button className="dock-backdrop" type="button" aria-label="Close sections" onClick={closeDock} />}
-      <div className={`toast${toastOn ? " show" : ""}`}>{toast}</div>
+      {toastOn && <div className="toast">{toast}</div>}
     </div>
   );
 }
