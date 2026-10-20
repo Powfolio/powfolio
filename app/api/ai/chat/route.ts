@@ -125,7 +125,7 @@ async function callGemini(
       systemInstruction: { parts: [{ text: systemText }] },
       contents: history,
       generationConfig: {
-        temperature: 0.7,
+        temperature: 0.25,
         maxOutputTokens: 1400,
       },
     }),
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Pow3Bot is not configured. Add GEMINI_API_KEY on Vercel (Production + Preview) and redeploy.",
+            "Powbot is not configured. Add GEMINI_API_KEY on Vercel (Production + Preview) and redeploy.",
         },
         { status: 503 }
       );
@@ -242,7 +242,7 @@ export async function POST(req: NextRequest) {
       systemText += "\n\n## Context (untrusted client notes)\n" + clientContext;
     } else {
       systemText +=
-        "\n\nNo signed-in profile loaded. If they ask to analyse their profile, ask them to log in on Pow3Folio first.";
+        "\n\nNo signed-in profile loaded. If they ask to analyse their profile, ask them to log in on Powfolio first.";
     }
 
     const preferred = (process.env.GEMINI_MODEL || "").trim();
@@ -306,12 +306,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Pow3Bot could not reach Gemini. Set GEMINI_MODEL=gemini-2.5-flash in Vercel and redeploy.",
+          "Powbot could not reach Gemini. Set GEMINI_MODEL=gemini-2.5-flash in Vercel and redeploy.",
       },
       { status: 502 }
     );
   } catch (e) {
-    console.error("Pow3Bot route", e);
+    console.error("Powbot route", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
