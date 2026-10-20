@@ -15,6 +15,12 @@ const QUICK = [
   "Where is the FAQ?",
 ];
 
+const WELCOME: Msg = {
+  role: "assistant",
+  content:
+    "Hey. I'm Powbot, here for Powfolio only. Ask about your profile, scores, proof sections, or paste rough text and I'll clean it up. If you're logged in, I can see your profile and be honest about the gaps.",
+};
+
 function stripMd(s: string) {
   return s
     .replace(/\*\*([^*]+)\*\*/g, "$1")
@@ -35,13 +41,7 @@ export default function Pow3Bot({ context }: Props) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Msg[]>([
-    {
-      role: "assistant",
-      content:
-        "Hey. I'm Powbot, here for Powfolio only. Ask about your profile, scores, proof sections, or paste rough text and I'll clean it up. If you're logged in, I can see your profile and be honest about the gaps.",
-    },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([WELCOME]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const loaded = useRef(false);
 
@@ -68,7 +68,6 @@ export default function Pow3Bot({ context }: Props) {
     };
   }, [open]);
 
-  // Load history once when the panel first opens
   useEffect(() => {
     if (!open || loaded.current) return;
     loaded.current = true;
@@ -98,6 +97,13 @@ export default function Pow3Bot({ context }: Props) {
     } catch {
       /* silent */
     }
+  }
+
+  async function clearChat() {
+    if (!confirm("Clear this chat? It will be deleted.")) return;
+    setMessages([WELCOME]);
+    setError(null);
+    await persist([]);
   }
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
@@ -250,6 +256,9 @@ export default function Pow3Bot({ context }: Props) {
               <p className="text-[10px] text-foreground-subtle">Drag the button to move · tap outside to close</p>
             </div>
             <div className="flex items-center gap-1">
+              <button type="button" className="btn-ghost text-[10px] px-2" onClick={() => void clearChat()}>
+                Clear
+              </button>
               <Link href="/faq" className="btn-ghost text-[10px] px-2" onClick={() => setOpen(false)}>
                 FAQ
               </Link>
