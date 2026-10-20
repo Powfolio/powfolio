@@ -1,4 +1,5 @@
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { safeJsonForScript } from "@/lib/security/safe-json";
 
 export default function JsonLd() {
   const data = {
@@ -20,6 +21,6 @@ export default function JsonLd() {
   };
 
   return (
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonForScript(data) }} />
   );
 }
