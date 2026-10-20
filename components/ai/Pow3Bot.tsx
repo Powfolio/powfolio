@@ -43,8 +43,8 @@ export default function Pow3Bot({ context }: Props) {
     },
   ]);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const loaded = useRef(false);
 
-  // Session only drag position (resets on full page refresh)
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const drag = useRef<{
     active: boolean;
@@ -59,7 +59,6 @@ export default function Pow3Bot({ context }: Props) {
     if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open, loading]);
 
-  // Lock body scroll while open
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -68,6 +67,38 @@ export default function Pow3Bot({ context }: Props) {
       document.body.style.overflow = prev;
     };
   }, [open]);
+
+  // Load history once when the panel first opens
+  useEffect(() => {
+    if (!open || loaded.current) return;
+    loaded.current = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/ai/chat/history");
+        const data = await res.json().catch(() => ({}));
+        if (Array.isArray(data.messages) && data.messages.length) {
+          setMessages(data.messages);
+        }
+        if (data.needsMigration) {
+          setError("Chat history needs a one-time database update. Ask the founder to run the profile_private SQL.");
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, [open]);
+
+  async function persist(next: Msg[]) {
+    try {
+      await fetch("/api/ai/chat/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: next }),
+      });
+    } catch {
+      /* silent */
+    }
+  }
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     const el = e.currentTarget as HTMLElement;
@@ -123,21 +154,21 @@ export default function Pow3Bot({ context }: Props) {
         body: JSON.stringify({ messages: next, context }),
       });
       const data = await res.json().catch(() => ({}));
+      let final: Msg[];
       if (!res.ok) {
         setError(data.error || "Could not reach Powbot");
-        setMessages([
+        final = [
           ...next,
           {
             role: "assistant",
             content: data.error || "Something went wrong. Try again in a moment.",
           },
-        ]);
+        ];
       } else {
-        setMessages([
-          ...next,
-          { role: "assistant", content: stripMd(data.reply || "…") },
-        ]);
+        final = [...next, { role: "assistant", content: stripMd(data.reply || "…") }];
       }
+      setMessages(final);
+      void persist(final);
     } catch {
       setError("Network error");
       setMessages([
