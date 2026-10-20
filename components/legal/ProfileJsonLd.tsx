@@ -1,4 +1,5 @@
 import { SITE_NAME } from "@/lib/site";
+import { safeJsonForScript } from "@/lib/security/safe-json";
 
 export default function ProfileJsonLd({
   name,
@@ -29,6 +30,6 @@ export default function ProfileJsonLd({
   };
 
   return (
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonForScript(data) }} />
   );
 }
