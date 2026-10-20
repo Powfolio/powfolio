@@ -43,6 +43,10 @@ type PublicProfileRow = Profile & {
   deleted_at?: string | null;
 };
 
+function isProfileRow(value: unknown): value is PublicProfileRow {
+  return !!value && typeof value === "object" && "username" in value && typeof (value as { username?: unknown }).username === "string";
+}
+
 function normalizeSkills(raw: Profile["skills"]): Skill[] {
   if (!raw || !Array.isArray(raw)) return [];
   return raw
@@ -98,13 +102,13 @@ async function loadProfileRow(username: string): Promise<PublicProfileRow | null
   try {
     const admin = createServiceClient();
     const { data } = await admin.from("profiles").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
-    if (data && typeof data === "object" && "username" in data) return data as PublicProfileRow;
+    if (isProfileRow(data)) return data;
   } catch {
     /* fall through to the user-scoped client */
   }
   const supabase = await createClient();
   const { data } = await supabase.from("profiles").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
-  if (data && typeof data === "object" && "username" in data) return data as PublicProfileRow;
+  if (isProfileRow(data)) return data;
   return null;
 }
 
