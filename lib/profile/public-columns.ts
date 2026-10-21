@@ -1,5 +1,4 @@
-/** Columns safe to select on public profile pages and public APIs.
- *  ai_chat_history and cv_notes stay in profile_private. */
+/** Columns exposed by the profiles_public view. Private fields stay off this list. */
 export const PUBLIC_PROFILE_COLUMNS = [
   "id",
   "username",
@@ -9,21 +8,11 @@ export const PUBLIC_PROFILE_COLUMNS = [
   "avatar_url",
   "banner_url",
   "open_to_work",
-  "wallet_address",
-  "extra_wallets",
-  "custom_chains",
-  "public_chain_ids",
-  "imported_tokens",
   "ens_name",
   "x_url",
-  "discord_url",
-  "telegram_url",
   "github_url",
+  "telegram_url",
   "website_url",
-  "primary_email",
-  "secondary_email",
-  "show_primary_email",
-  "show_secondary_email",
   "location_country",
   "location_region",
   "skills",
@@ -36,12 +25,7 @@ export const PUBLIC_PROFILE_COLUMNS = [
   "show_airdrops",
   "show_nfts",
   "show_credentials",
-  "show_dust_tokens",
   "is_public",
   "account_status",
-  "suspension_reason",
-  "suspended_at",
-  "deleted_at",
   "created_at",
-  "updated_at",
 ].join(",");
