@@ -45,7 +45,7 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
             <p className="landing-reveal landing-delay-1 text-[11px] font-medium uppercase tracking-[0.2em] text-foreground-subtle">Live scores · real proof · one public link</p>
             <h1 className="landing-reveal landing-delay-2 mt-5 text-[2.15rem] font-semibold leading-[1.12] tracking-tight sm:text-5xl lg:text-[3.35rem]">
               Your Web3 work.
-              <span className="mt-1 block hero-gradient-text font-semibold">Verified. Visible.</span>
+              <span className="mt-1 block text-primary font-semibold">Verified. Visible.</span>
             </h1>
             <p className="landing-reveal landing-delay-3 mx-auto mt-6 max-w-xl text-[15px] leading-relaxed text-foreground-muted sm:text-base">
               Trades, threads, roles, and onchain activity in one public page. Scores that move with evidence, not slogans.
@@ -62,7 +62,7 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
               {STATS.map((s) => (
                 <div key={s.label} className="text-center">
                   <dt className="text-[10px] uppercase tracking-[0.14em] text-foreground-subtle">{s.label}</dt>
-                  <dd className="mt-1 text-2xl font-semibold tracking-tight">{s.value}</dd>
+                  <dd className="mt-1 text-2xl font-semibold tracking-tight text-info">{s.value}</dd>
                 </div>
               ))}
             </dl>
