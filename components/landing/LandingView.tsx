@@ -62,7 +62,7 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
               {STATS.map((s) => (
                 <div key={s.label} className="text-center">
                   <dt className="text-[10px] uppercase tracking-[0.14em] text-foreground-subtle">{s.label}</dt>
-                  <dd className="mt-1 text-2xl font-semibold tracking-tight text-info">{s.value}</dd>
+                  <dd className="mt-1 text-2xl font-semibold tracking-tight text-foreground">{s.value}</dd>
                 </div>
               ))}
             </dl>
