@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildVerifiedCookie, otpCookieName, verifyOtpCookie } from "@/lib/auth/otp";
+import { allowRate } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -14,9 +15,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Enter the 4-digit code from your email." }, { status: 400 });
   }
 
-  const attemptsRaw = req.cookies.get(ATTEMPT_COOKIE)?.value || "0";
-  const attempts = Number(attemptsRaw);
-  if (Number.isFinite(attempts) && attempts >= MAX_ATTEMPTS) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
+  const emailKey = `otp-email:${email}`;
+  const ipKey = `otp-ip:${ip}`;
+  if (!(await allowRate(emailKey, MAX_ATTEMPTS, 10 * 60_000)) || !(await allowRate(ipKey, 20, 10 * 60_000))) {
     const res = NextResponse.json({ ok: false, error: "Too many attempts. Request a new code." }, { status: 429 });
     res.cookies.set(otpCookieName(), "", { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 0 });
     return res;
@@ -24,18 +26,7 @@ export async function POST(req: NextRequest) {
 
   const result = verifyOtpCookie(req.cookies.get(otpCookieName())?.value, email, code);
   if (!result.ok) {
-    const next = (Number.isFinite(attempts) ? attempts : 0) + 1;
     const res = NextResponse.json({ ok: false, error: result.error }, { status: 400 });
-    res.cookies.set(ATTEMPT_COOKIE, String(next), {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 10 * 60,
-    });
-    if (next >= MAX_ATTEMPTS) {
-      res.cookies.set(otpCookieName(), "", { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 0 });
-    }
     return res;
   }
 
