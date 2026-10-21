@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServiceClient, hasServiceRole } from "@/lib/supabase/admin";
+import { allowRate } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,12 @@ export async function POST(req: NextRequest) {
   const password = String(body.password || "");
   if (!identifier || !password) {
     return NextResponse.json({ ok: false, error: "Email/username and password are required." }, { status: 400 });
+  }
+
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
+  const idKey = identifier.toLowerCase().slice(0, 120);
+  if (!(await allowRate(`login-ip:${ip}`, 12, 5 * 60_000)) || !(await allowRate(`login-id:${idKey}`, 8, 10 * 60_000))) {
+    return NextResponse.json({ ok: false, error: "Too many attempts. Wait a few minutes." }, { status: 429 });
   }
 
   let email = identifier;
@@ -52,7 +59,7 @@ export async function POST(req: NextRequest) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data.session) {
     return NextResponse.json(
-      { ok: false, error: error?.message || "Invalid login credentials." },
+      { ok: false, error: "Invalid login credentials." },
       { status: 401 }
     );
   }
