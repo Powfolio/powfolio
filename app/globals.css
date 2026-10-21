@@ -24,6 +24,8 @@
     --success: 76 154 106;
     --warning: 217 122 61;
     --danger: 196 69 61;
+    --info: 56 120 168;
+    --ai: 108 86 168;
   }
 
   .dark {
@@ -47,6 +49,8 @@
     --success: 76 154 106;
     --warning: 217 122 61;
     --danger: 196 69 61;
+    --info: 90 154 196;
+    --ai: 138 116 196;
   }
 
   html {
@@ -242,6 +246,11 @@
   .marquee-item {
     @apply shrink-0 text-sm font-medium text-foreground-muted tracking-wide;
   }
+
+  .text-info { color: rgb(var(--info)); }
+  .text-ai { color: rgb(var(--ai)); }
+  .text-success { color: rgb(var(--success)); }
+  .text-danger { color: rgb(var(--danger)); }
 }
 
 @keyframes open-dot-blink {
