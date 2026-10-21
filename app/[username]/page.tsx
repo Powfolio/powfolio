@@ -99,15 +99,23 @@ function normalizeEducation(list: Education[] | null | undefined): Education[] {
 
 async function loadProfileRow(username: string): Promise<PublicProfileRow | null> {
   const handle = username.toLowerCase();
+  // Prefer the column-safe public view. Fall back to the table if the view is missing.
+  try {
+    const admin = createServiceClient();
+    const view = await admin.from("profiles_public").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
+    if (isProfileRow(view.data)) return view.data;
+  } catch {
+    /* view missing or not readable */
+  }
   try {
     const admin = createServiceClient();
     const { data } = await admin.from("profiles").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
     if (isProfileRow(data)) return data;
   } catch {
-    /* fall through to the user-scoped client */
+    /* fall through */
   }
   const supabase = await createClient();
-  const { data } = await supabase.from("profiles").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
+  const { data } = await supabase.from("profiles_public").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
   if (isProfileRow(data)) return data;
   return null;
 }
