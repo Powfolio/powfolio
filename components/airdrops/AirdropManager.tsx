@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { moveItem } from "@/lib/move-item";
 import WorkspaceShell from "@/components/workspace/WorkspaceShell";
+import EntrySheet from "@/components/ui/EntrySheet";
 import type { Airdrop, AirdropStatus } from "@/types/database";
 
 const TABS = [
@@ -35,6 +36,7 @@ export default function AirdropManager({ userId, username, initialItems }: { use
   const router = useRouter();
   const [items, setItems] = useState<Airdrop[]>(() => sortItems(initialItems));
   const [form, setForm] = useState(emptyForm);
+  const formBaseline = useRef("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,11 +53,21 @@ export default function AirdropManager({ userId, username, initialItems }: { use
     if (TABS.some((t) => t.id === hash)) setTab(hash);
   }, []);
 
-  function startEdit(item: Airdrop) {
-    setEditingId(item.id);
-    setOpen(true);
+  function openNew() {
+    const next = { ...emptyForm, status: tab === "all" ? "farming" as AirdropStatus : tab as AirdropStatus };
+    setEditingId(null);
     setError(null);
-    setForm({ title: item.title, chain: item.chain ?? "Ethereum", status: item.status, role: item.role ?? "", description: item.description ?? "", reward: item.reward ?? "", url: item.url ?? "", tags: (item.tags ?? []).join(", "), started_at: item.started_at ?? "", claimed_at: item.claimed_at ?? "", is_visible: item.is_visible, thumbnail_url: item.thumbnail_url });
+    setForm(next);
+    formBaseline.current = JSON.stringify(next);
+    setOpen(true);
+  }
+  function startEdit(item: Airdrop) {
+    const next = { title: item.title, chain: item.chain ?? "Ethereum", status: item.status, role: item.role ?? "", description: item.description ?? "", reward: item.reward ?? "", url: item.url ?? "", tags: (item.tags ?? []).join(", "), started_at: item.started_at ?? "", claimed_at: item.claimed_at ?? "", is_visible: item.is_visible, thumbnail_url: item.thumbnail_url };
+    setEditingId(item.id);
+    setError(null);
+    setForm(next);
+    formBaseline.current = JSON.stringify(next);
+    setOpen(true);
   }
   function resetForm() { setEditingId(null); setForm(emptyForm); setOpen(false); setError(null); }
   async function handleThumbnail(file: File | null) {
@@ -123,10 +135,36 @@ export default function AirdropManager({ userId, username, initialItems }: { use
   const logo = form.thumbnail_url || siteLogo(absoluteUrl(form.url));
 
   return (
-    <WorkspaceShell title="Airdrops" eyebrow="Airdrop workspace" intro="Campaigns you farmed, qualified for, or claimed. The campaign link pulls a logo, and claim status stays on the same entry." username={username} note="Airdrop workspace" tabs={TABS} tab={tab} onTab={setTab} hideDock>
+    <WorkspaceShell title="Airdrops" eyebrow="Airdrop workspace" intro="Campaigns you farmed, qualified for, or claimed. The campaign link pulls a logo, and claim status stays on the same entry." username={username} note="Airdrop workspace" tabs={TABS} tab={tab} onTab={setTab} hideDock overlay={
+      <EntrySheet
+        open={open}
+        title={editingId ? "Edit campaign" : "Add campaign"}
+        saveLabel={editingId ? "Update campaign" : "Add campaign"}
+        saving={loading || uploading}
+        dirty={open && JSON.stringify(form) !== formBaseline.current}
+        onClose={resetForm}
+        onSave={() => void handleSubmit()}
+      >
+        <div className="form-grid">
+          <div className="field"><label className="label">Title *</label><input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Campaign name" /></div>
+          <div className="field"><label className="label">Status</label><select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as AirdropStatus })}>{STATUSES.map((s) => <option key={s} value={s}>{label(s)}</option>)}</select></div>
+          <div className="field"><label className="label">Chain</label><select className="input" value={form.chain} onChange={(e) => setForm({ ...form, chain: e.target.value })}>{CHAINS.map((c) => <option key={c}>{c}</option>)}</select></div>
+          <div className="field"><label className="label">Role</label><input className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Tester, contributor, hunter" /></div>
+          <div className="field full"><label className="label">Campaign link</label><input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value, thumbnail_url: form.thumbnail_url && !form.thumbnail_url.includes("google.com/s2/favicons") ? form.thumbnail_url : siteLogo(absoluteUrl(e.target.value)) })} placeholder="https://campaign.xyz" /></div>
+          <div className="field full logo-field"><span className="logo-preview">{logo ? <img src={logo} alt="" /> : "Logo"}</span><label className="text-action">{uploading ? "Uploading..." : "Replace logo"}<input type="file" accept="image/*" hidden onChange={(e) => void handleThumbnail(e.target.files?.[0] || null)} /></label><span className="logo-note">The campaign logo is pulled from the link. Upload one if the image is wrong.</span></div>
+          <div className="field"><label className="label">Reward</label><input className="input" value={form.reward} onChange={(e) => setForm({ ...form, reward: e.target.value })} placeholder="Allocation or points" /></div>
+          <div className="field"><label className="label">Started</label><input className="input" type="date" value={form.started_at.slice(0, 10)} onChange={(e) => setForm({ ...form, started_at: e.target.value })} /></div>
+          <div className="field"><label className="label">Claimed</label><input className="input" type="date" value={form.claimed_at.slice(0, 10)} onChange={(e) => setForm({ ...form, claimed_at: e.target.value })} /></div>
+          <div className="field full"><label className="label">Description</label><textarea className="textarea" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What you did in the campaign." /></div>
+          <div className="field full"><label className="label">Tags</label><input className="input" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Comma separated" /></div>
+        </div>
+        <div className="cv-row"><div className="cv-copy"><div className="cv-title">Visible on public profile</div><div className="cv-desc">Hidden campaigns stay saved and do not publish.</div></div><button className={`switch${form.is_visible ? " on" : ""}`} type="button" aria-label="Visible on public profile" onClick={() => setForm((f) => ({ ...f, is_visible: !f.is_visible }))}><span /></button></div>
+        {error && <div className="error">{error}</div>}
+      </EntrySheet>
+    }>
       <div className="section-intro"><h2>{tab === "all" ? "All campaigns" : label(tab)}</h2><p>Add the campaign link so the logo is pulled automatically. Replace it if the mark is wrong.</p></div>
       <div className="block">
-        <div className="block-head"><div><div className="block-title">Campaigns</div><div className="block-desc">{visible.length} in this section.</div></div><button className="action accent" type="button" onClick={() => { resetForm(); setOpen(true); setForm({ ...emptyForm, status: tab === "all" ? "farming" : tab as AirdropStatus }); }}>Add campaign</button></div>
+        <div className="block-head"><div><div className="block-title">Campaigns</div><div className="block-desc">{visible.length} in this section.</div></div><button className="action accent" type="button" onClick={openNew}>Add campaign</button></div>
         <div className="entry-list">
           {visible.length === 0 && <div className="empty">No campaigns in this section yet.</div>}
           {visible.map((item, i) => (
@@ -135,24 +173,6 @@ export default function AirdropManager({ userId, username, initialItems }: { use
               <div className="entry-actions"><button className="small-action" type="button" onClick={() => startEdit(item)}>Edit</button><button className="small-action danger-action" type="button" onClick={() => void handleDelete(item.id)}>Delete</button></div>
             </div>
           ))}
-        </div>
-        <div className={`entry-form${open ? " open" : ""}`}>
-          <div className="form-grid">
-            <div className="field"><label className="label">Title *</label><input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Campaign name" /></div>
-            <div className="field"><label className="label">Status</label><select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as AirdropStatus })}>{STATUSES.map((s) => <option key={s} value={s}>{label(s)}</option>)}</select></div>
-            <div className="field"><label className="label">Chain</label><select className="input" value={form.chain} onChange={(e) => setForm({ ...form, chain: e.target.value })}>{CHAINS.map((c) => <option key={c}>{c}</option>)}</select></div>
-            <div className="field"><label className="label">Role</label><input className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Tester, contributor, hunter" /></div>
-            <div className="field full"><label className="label">Campaign link</label><input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value, thumbnail_url: form.thumbnail_url && !form.thumbnail_url.includes("google.com/s2/favicons") ? form.thumbnail_url : siteLogo(absoluteUrl(e.target.value)) })} placeholder="https://campaign.xyz" /></div>
-            <div className="field full logo-field"><span className="logo-preview">{logo ? <img src={logo} alt="" /> : "Logo"}</span><label className="text-action">{uploading ? "Uploading..." : "Replace logo"}<input type="file" accept="image/*" hidden onChange={(e) => void handleThumbnail(e.target.files?.[0] || null)} /></label><span className="logo-note">The campaign logo is pulled from the link. Upload one if the image is wrong.</span></div>
-            <div className="field"><label className="label">Reward</label><input className="input" value={form.reward} onChange={(e) => setForm({ ...form, reward: e.target.value })} placeholder="Allocation or points" /></div>
-            <div className="field"><label className="label">Started</label><input className="input" type="date" value={form.started_at.slice(0, 10)} onChange={(e) => setForm({ ...form, started_at: e.target.value })} /></div>
-            <div className="field"><label className="label">Claimed</label><input className="input" type="date" value={form.claimed_at.slice(0, 10)} onChange={(e) => setForm({ ...form, claimed_at: e.target.value })} /></div>
-            <div className="field full"><label className="label">Description</label><textarea className="textarea" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What you did in the campaign." /></div>
-            <div className="field full"><label className="label">Tags</label><input className="input" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Comma separated" /></div>
-          </div>
-          <div className="cv-row"><div className="cv-copy"><div className="cv-title">Visible on public profile</div><div className="cv-desc">Hidden campaigns stay saved and do not publish.</div></div><button className={`switch${form.is_visible ? " on" : ""}`} type="button" aria-label="Visible on public profile" onClick={() => setForm((f) => ({ ...f, is_visible: !f.is_visible }))}><span /></button></div>
-          {error && <div className="error">{error}</div>}
-          <div className="form-actions"><button className="action accent" type="button" disabled={loading} onClick={() => void handleSubmit()}>{loading ? "Saving..." : editingId ? "Update campaign" : "Add campaign"}</button><button className="action" type="button" onClick={resetForm}>Cancel</button></div>
         </div>
       </div>
       <div className={`toast${toastOn ? " show" : ""}`}>{toast}</div>

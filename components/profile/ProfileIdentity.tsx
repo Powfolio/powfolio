@@ -11,6 +11,7 @@ import { SITE_URL } from "@/lib/site";
 import { isReservedUsername, reservedUsernameMessage } from "@/lib/usernames";
 import { moveItem } from "@/lib/move-item";
 import CvDetails from "@/components/profile/CvDetails";
+import EntrySheet from "@/components/ui/EntrySheet";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import type { Credential, Education, Profile, Skill, WorkExperience } from "@/types/database";
 
@@ -220,6 +221,8 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
   const [soloDiscard, setSoloDiscard] = useState(false);
   const [soloBusy, setSoloBusy] = useState(false);
   const workBaseline = useRef(JSON.stringify(BLANK_WORK));
+  const eduBaseline = useRef("");
+  const docBaseline = useRef({ title: "", issuer: "", note: "" });
   const [eForm, setEForm] = useState({ institution: "", degree: "", field: "", country: "", start: "", end: "", url: "", desc: "", logo: "" });
   const [expError, setExpError] = useState("");
   const [eduError, setEduError] = useState("");
@@ -781,6 +784,14 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     setEduError("");
     setEduOpen(false);
   }
+  function openNewEdu() {
+    const blank = { institution: "", degree: "", field: "", country: "", start: "", end: "", url: "", desc: "", logo: "" };
+    setEForm(blank);
+    setEditingEdu(null);
+    setEduError("");
+    eduBaseline.current = JSON.stringify(blank);
+    setEduOpen(true);
+  }
   async function saveEduItem() {
     if (!eForm.institution.trim()) {
       setEduError("Institution is required.");
@@ -804,15 +815,15 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
       logo_url: eForm.logo || siteLogo(schoolUrl),
     };
     const next = editingEdu ? education.map((e) => (e.id === editingEdu ? item : e)) : [...education, item];
+    const wasEditing = Boolean(editingEdu);
     const ok = await persistExperience(work, next);
     if (ok) {
       resetEdu();
-      notify(editingEdu ? "Education updated" : "Education added");
+      notify(wasEditing ? "Education updated" : "Education added");
     }
   }
   function editEdu(item: Education) {
-    setEditingEdu(item.id);
-    setEForm({
+    const next = {
       institution: item.institution,
       degree: item.degree || "",
       field: item.field_of_study || "",
@@ -822,7 +833,11 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
       url: item.url || "",
       desc: item.description || "",
       logo: item.logo_url || "",
-    });
+    };
+    setEditingEdu(item.id);
+    setEForm(next);
+    setEduError("");
+    eduBaseline.current = JSON.stringify(next);
     setEduOpen(true);
   }
 
@@ -844,6 +859,26 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     setDocFile(null);
     setDocError("");
     setDocOpen(false);
+  }
+  function openNewDoc() {
+    setEditingDoc(null);
+    setDocTitle("");
+    setDocIssuer("");
+    setDocNote("");
+    setDocFile(null);
+    setDocError("");
+    docBaseline.current = { title: "", issuer: "", note: "" };
+    setDocOpen(true);
+  }
+  function openEditDoc(item: Credential) {
+    setEditingDoc(item.id);
+    setDocTitle(item.title);
+    setDocIssuer(item.issuer || "");
+    setDocNote(item.description || "");
+    setDocFile(null);
+    setDocError("");
+    docBaseline.current = { title: item.title, issuer: item.issuer || "", note: item.description || "" };
+    setDocOpen(true);
   }
   async function saveDoc() {
     if (!docTitle.trim()) {
@@ -1089,7 +1124,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
             </div>
           </div>
           <div className="block">
-            <div className="block-head"><div><div className="block-title">Education</div><div className="block-desc">Add institutions, degrees and study details already supported by the profile schema.</div></div><button className="action accent" type="button" onClick={() => { resetEdu(); setEduOpen(true); }}>Add education</button></div>
+            <div className="block-head"><div><div className="block-title">Education</div><div className="block-desc">Add institutions, degrees and study details already supported by the profile schema.</div></div><button className="action accent" type="button" onClick={openNewEdu}>Add education</button></div>
             <div className="entry-list">
               {education.length === 0 && <div className="empty">No education added yet.</div>}
               {education.map((item, i) => (
@@ -1102,21 +1137,6 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
                 </div>
               ))}
             </div>
-            <div className={`entry-form${eduOpen ? " open" : ""}`}>
-              <div className="form-grid">
-                <div className="field"><label className="label">Institution *</label><input className="input" value={eForm.institution} onChange={(e) => setEForm({ ...eForm, institution: e.target.value })} placeholder="Institution name" /></div>
-                <div className="field"><label className="label">Degree</label><input className="input" value={eForm.degree} onChange={(e) => setEForm({ ...eForm, degree: e.target.value })} placeholder="Degree or program" /></div>
-                <div className="field"><label className="label">Field of study</label><input className="input" value={eForm.field} onChange={(e) => setEForm({ ...eForm, field: e.target.value })} placeholder="Field of study" /></div>
-                <div className="field"><label className="label">Country</label><input className="input" value={eForm.country} onChange={(e) => setEForm({ ...eForm, country: e.target.value })} placeholder="Country" /></div>
-                <div className="field"><label className="label">Start year</label><input className="input" value={eForm.start} onChange={(e) => setEForm({ ...eForm, start: e.target.value })} placeholder="2024" inputMode="numeric" /></div>
-                <div className="field"><label className="label">End year</label><input className="input" value={eForm.end} onChange={(e) => setEForm({ ...eForm, end: e.target.value })} placeholder="2028" inputMode="numeric" /></div>
-                <div className="field full"><label className="label">School website</label><input className="input" value={eForm.url} onChange={(e) => setEForm({ ...eForm, url: e.target.value, logo: "" })} placeholder="https://school.edu" /></div>
-                <div className="field full logo-field"><span className="logo-preview">{eForm.logo || siteLogo(absoluteUrl(eForm.url) ) ? <img src={eForm.logo || siteLogo(absoluteUrl(eForm.url)) || ""} alt="" /> : "ED"}</span><label className="text-action">Upload school logo<input type="file" accept="image/*" hidden onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadLogo(file); if (url) setEForm((f) => ({ ...f, logo: url })); }} /></label><span className="logo-note">Use the school website to pull the logo. Upload one if you have no link.</span></div>
-                <div className="field full"><label className="label">Description</label><textarea className="textarea" value={eForm.desc} onChange={(e) => setEForm({ ...eForm, desc: e.target.value })} placeholder="Optional context about the program." /></div>
-              </div>
-              {eduError && <div className="error">{eduError}</div>}
-              <div className="form-actions"><button className="action accent" type="button" onClick={() => void saveEduItem()}>{editingEdu ? "Update education" : "Add education"}</button><button className="action" type="button" onClick={resetEdu}>Cancel</button></div>
-            </div>
           </div>
           <div className="save-area"><button className="save" type="button" onClick={() => void saveExperienceOrder()}>{saving === "experience" ? "Saving..." : "Save changes"}</button>{saved === "experience" && <span className="save-state">Saved</span>}</div>
         </section>
@@ -1124,7 +1144,7 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
         <section className={`panel${tab === "docs" ? " active" : ""}`} role="tabpanel">
           <div className="section-intro"><h2>Docs &amp; Credentials</h2><p>Upload the supporting documents that already belong to Powfolio. Credentials stay viewable online, while public CV download is controlled separately.</p></div>
           <div className="block">
-            <div className="block-head"><div><div className="block-title">Documents</div><div className="block-desc">Drag documents to change their public order. Edit changes the document metadata or lets the file be replaced. Delete removes the document.</div></div><button className="action accent" type="button" onClick={() => { resetDoc(); setDocOpen(true); }}>Upload document</button></div>
+            <div className="block-head"><div><div className="block-title">Documents</div><div className="block-desc">Drag documents to change their public order. Edit changes the document metadata or lets the file be replaced. Delete removes the document.</div></div><button className="action accent" type="button" onClick={openNewDoc}>Upload document</button></div>
             <div className="doc-list">
               {docs.length === 0 && <div className="empty">No documents uploaded yet.</div>}
               {docs.map((d, i) => (
@@ -1132,21 +1152,11 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
                   <div className="doc-main"><button className="drag-handle" type="button" aria-label="Rearrange document"><Icon d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" /></button>{isImageFile(d.file_name, d.file_type) ? <img className="doc-thumb" src={d.file_url} alt="" /> : <span className="doc-file" aria-hidden>PDF</span>}<div className="doc-copy"><div className="doc-title">{d.title}</div><div className="doc-meta">{d.file_name || "Uploaded file"}{d.issuer ? ` · ${d.issuer}` : ""}</div></div></div>
                   <div className="doc-actions">
                     <a className="small-action" href={d.file_url} target="_blank" rel="noreferrer">View</a>
-                    <button className="small-action" type="button" onClick={() => { setEditingDoc(d.id); setDocTitle(d.title); setDocIssuer(d.issuer || ""); setDocNote(d.description || ""); setDocOpen(true); }}>Edit</button>
+                    <button className="small-action" type="button" onClick={() => openEditDoc(d)}>Edit</button>
                     <button className="small-action danger-action" type="button" onClick={() => void deleteDoc(d.id)}>Delete</button>
                   </div>
                 </div>
               ))}
-            </div>
-            <div className={`doc-form${docOpen ? " open" : ""}`}>
-              <div className="form-grid">
-                <div className="field full"><label className="label">File</label><input className="input" type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" onChange={(e) => setDocFile(e.target.files?.[0] || null)} /></div>
-                <div className="field"><label className="label">Title *</label><input className="input" value={docTitle} onChange={(e) => setDocTitle(e.target.value)} placeholder="Resume or certificate title" /></div>
-                <div className="field"><label className="label">Issuer</label><input className="input" value={docIssuer} onChange={(e) => setDocIssuer(e.target.value)} placeholder="University / organisation" /></div>
-                <div className="field full"><label className="label">Note</label><input className="input" value={docNote} onChange={(e) => setDocNote(e.target.value)} placeholder="Optional short note" /></div>
-              </div>
-              {docError && <div className="error">{docError}</div>}
-              <div className="form-actions"><button className="action accent" type="button" disabled={docBusy} onClick={() => void saveDoc()}>{docBusy ? "Saving..." : editingDoc ? "Update document" : "Add document"}</button><button className="action" type="button" onClick={resetDoc}>Cancel</button></div>
             </div>
           </div>
           <div className="block">
@@ -1173,6 +1183,44 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
       </div>
       {dock !== "closed" && <button className="dock-backdrop" type="button" aria-label="Close sections" onClick={() => { setDock("closing"); window.setTimeout(() => setDock("closed"), 380); }} />}
       <div className={`toast${toastOn ? " show" : ""}`}>{toast}</div>
+      <EntrySheet
+        open={eduOpen && tab === "experience"}
+        title={editingEdu ? "Edit education" : "Add education"}
+        saveLabel={editingEdu ? "Update education" : "Add education"}
+        dirty={eduOpen && JSON.stringify(eForm) !== eduBaseline.current}
+        onClose={resetEdu}
+        onSave={() => void saveEduItem()}
+      >
+        <div className="form-grid">
+          <div className="field"><label className="label">Institution *</label><input className="input" value={eForm.institution} onChange={(e) => setEForm({ ...eForm, institution: e.target.value })} placeholder="Institution name" /></div>
+          <div className="field"><label className="label">Degree</label><input className="input" value={eForm.degree} onChange={(e) => setEForm({ ...eForm, degree: e.target.value })} placeholder="Degree or program" /></div>
+          <div className="field"><label className="label">Field of study</label><input className="input" value={eForm.field} onChange={(e) => setEForm({ ...eForm, field: e.target.value })} placeholder="Field of study" /></div>
+          <div className="field"><label className="label">Country</label><input className="input" value={eForm.country} onChange={(e) => setEForm({ ...eForm, country: e.target.value })} placeholder="Country" /></div>
+          <div className="field"><label className="label">Start year</label><input className="input" value={eForm.start} onChange={(e) => setEForm({ ...eForm, start: e.target.value })} placeholder="2024" inputMode="numeric" /></div>
+          <div className="field"><label className="label">End year</label><input className="input" value={eForm.end} onChange={(e) => setEForm({ ...eForm, end: e.target.value })} placeholder="2028" inputMode="numeric" /></div>
+          <div className="field full"><label className="label">School website</label><input className="input" value={eForm.url} onChange={(e) => setEForm({ ...eForm, url: e.target.value, logo: "" })} placeholder="https://school.edu" /></div>
+          <div className="field full logo-field"><span className="logo-preview">{eForm.logo || siteLogo(absoluteUrl(eForm.url)) ? <img src={eForm.logo || siteLogo(absoluteUrl(eForm.url)) || ""} alt="" /> : "ED"}</span><label className="text-action">Upload school logo<input type="file" accept="image/*" hidden onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadLogo(file); if (url) setEForm((f) => ({ ...f, logo: url })); }} /></label><span className="logo-note">Use the school website to pull the logo. Upload one if you have no link.</span></div>
+          <div className="field full"><label className="label">Description</label><textarea className="textarea" value={eForm.desc} onChange={(e) => setEForm({ ...eForm, desc: e.target.value })} placeholder="Optional context about the program." /></div>
+        </div>
+        {eduError && <div className="error">{eduError}</div>}
+      </EntrySheet>
+      <EntrySheet
+        open={docOpen && tab === "docs"}
+        title={editingDoc ? "Edit document" : "Add document"}
+        saveLabel={editingDoc ? "Update document" : "Add document"}
+        saving={docBusy}
+        dirty={docOpen && (docFile !== null || docTitle !== docBaseline.current.title || docIssuer !== docBaseline.current.issuer || docNote !== docBaseline.current.note)}
+        onClose={resetDoc}
+        onSave={() => void saveDoc()}
+      >
+        <div className="form-grid">
+          <div className="field full"><label className="label">File</label><input className="input" type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" onChange={(e) => setDocFile(e.target.files?.[0] || null)} /></div>
+          <div className="field"><label className="label">Title *</label><input className="input" value={docTitle} onChange={(e) => setDocTitle(e.target.value)} placeholder="Resume or certificate title" /></div>
+          <div className="field"><label className="label">Issuer</label><input className="input" value={docIssuer} onChange={(e) => setDocIssuer(e.target.value)} placeholder="University / organisation" /></div>
+          <div className="field full"><label className="label">Note</label><input className="input" value={docNote} onChange={(e) => setDocNote(e.target.value)} placeholder="Optional short note" /></div>
+        </div>
+        {docError && <div className="error">{docError}</div>}
+      </EntrySheet>
       {workOpen && (
         <div className="exp-modal" role="dialog" aria-modal="true" aria-labelledby="exp-modal-title">
           <button className="exp-modal-backdrop" type="button" aria-label="Close experience form" onClick={requestCloseWork} />

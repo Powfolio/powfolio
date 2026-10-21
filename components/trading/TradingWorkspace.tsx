@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { moveItem } from "@/lib/move-item";
 import { getPlatformDomain, searchPlatforms } from "@/lib/cex-dex-list";
 import WorkspaceShell from "@/components/workspace/WorkspaceShell";
+import EntrySheet from "@/components/ui/EntrySheet";
 import TradeUpdatesEditor from "@/components/trading/TradeUpdatesEditor";
 import PlatformLogo from "@/components/ui/PlatformLogo";
 import { asChart } from "@/components/trading/TradeUpdatesModal";
@@ -29,6 +30,7 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
   const [platformOpen, setPlatformOpen] = useState(false);
   const [items, setItems] = useState<Trade[]>(() => sortItems(initialItems));
   const [form, setForm] = useState(emptyForm);
+  const tradeBaseline = useRef("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [updatesTradeId, setUpdatesTradeId] = useState<string | null>(null);
@@ -63,9 +65,36 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
     void savePlatforms(next);
   }
 
+  function openPlatform() {
+    setQuery("");
+    setSelectedName(null);
+    setLink("");
+    setError(null);
+    setPlatformOpen(true);
+  }
+  function closePlatform() {
+    setPlatformOpen(false);
+    setQuery("");
+    setSelectedName(null);
+    setLink("");
+    setError(null);
+  }
+  function openNewTrade() {
+    setEditingId(null);
+    setError(null);
+    setUpdatesTradeId(null);
+    setForm(emptyForm);
+    tradeBaseline.current = JSON.stringify(emptyForm);
+    setOpen(true);
+  }
   function startEdit(item: Trade) {
-    setEditingId(item.id); setOpen(true); setError(null); setUpdatesTradeId(item.id);
-    setForm({ ticker: item.ticker, pair: item.pair ?? "", direction: item.direction || "long", status: item.status, roi: item.roi != null ? String(item.roi) : "", entry_price: item.entry_price != null ? String(item.entry_price) : "", exit_price: item.exit_price != null ? String(item.exit_price) : "", analysis: item.analysis ?? "", traded_at: item.traded_at ?? "", post_url: item.post_url ?? "", is_visible: item.is_visible, chart_url: item.chart_url, chart_url_2: item.chart_url_2 });
+    const next = { ticker: item.ticker, pair: item.pair ?? "", direction: item.direction || "long", status: item.status, roi: item.roi != null ? String(item.roi) : "", entry_price: item.entry_price != null ? String(item.entry_price) : "", exit_price: item.exit_price != null ? String(item.exit_price) : "", analysis: item.analysis ?? "", traded_at: item.traded_at ?? "", post_url: item.post_url ?? "", is_visible: item.is_visible, chart_url: item.chart_url, chart_url_2: item.chart_url_2 };
+    setEditingId(item.id);
+    setError(null);
+    setUpdatesTradeId(item.id);
+    setForm(next);
+    tradeBaseline.current = JSON.stringify(next);
+    setOpen(true);
   }
   function resetForm() { setEditingId(null); setForm(emptyForm); setOpen(false); setError(null); setUpdatesTradeId(null); }
   async function uploadImage(file: File) {
@@ -129,26 +158,61 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
   const visible = tab === "wins" ? items.filter((i) => i.status === "win") : tab === "losses" ? items.filter((i) => i.status === "loss") : items;
 
   return (
-    <WorkspaceShell title="Trading Record" eyebrow="Trading workspace" intro="Platforms, charts and outcomes. Wins and losses stay in the same record, with the chart images already supported by each trade." username={username} note="Trading workspace" tabs={TABS} tab={tab} onTab={setTab}>
+    <WorkspaceShell title="Trading Record" eyebrow="Trading workspace" intro="Platforms, charts and outcomes. Wins and losses stay in the same record, with the chart images already supported by each trade." username={username} note="Trading workspace" tabs={TABS} tab={tab} onTab={setTab} overlay={
+      <>
+        <EntrySheet
+          open={platformOpen && tab === "platforms"}
+          title="Add platform"
+          saveLabel="Add platform"
+          dirty={query.trim() !== "" || link.trim() !== "" || selectedName !== null}
+          onClose={closePlatform}
+          onSave={addPlatform}
+        >
+          <div className="form-grid">
+            <div className="field full"><label className="label">Search</label><input className="input" value={query} onChange={(e) => { setQuery(e.target.value); setSelectedName(null); }} placeholder="Type Bin, Byb, Hyp..." autoComplete="off" /></div>
+            {query && !selectedName && suggestions.length > 0 && <div className="field full suggestion-list">{suggestions.map((s) => <button key={s.name} className="suggestion" type="button" onClick={() => { setSelectedName(s.name); setQuery(s.name); }}><PlatformLogo name={s.name} size={16} className="h-4 w-4" />{s.name}</button>)}</div>}
+            {selectedName && <div className="field full"><label className="label">Profile or referral link</label><input className="input" value={link} onChange={(e) => setLink(e.target.value)} placeholder={getPlatformDomain(selectedName)} /></div>}
+          </div>
+          {error && tab === "platforms" && <div className="error">{error}</div>}
+        </EntrySheet>
+        <EntrySheet
+          open={open && tab !== "platforms"}
+          title={editingId ? "Edit trade" : "Add trade"}
+          saveLabel={editingId ? "Update trade" : "Add trade"}
+          saving={loading || uploading}
+          dirty={open && JSON.stringify(form) !== tradeBaseline.current}
+          onClose={resetForm}
+          onSave={() => void handleSubmit()}
+        >
+          <div className="form-grid">
+            <div className="field"><label className="label">Ticker *</label><input className="input" value={form.ticker} onChange={(e) => setForm({ ...form, ticker: e.target.value })} placeholder="BTC" /></div>
+            <div className="field"><label className="label">Pair</label><input className="input" value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })} placeholder="USDT" /></div>
+            <div className="field"><label className="label">Direction</label><select className="input" value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value as TradeDirection })}><option value="long">Long</option><option value="short">Short</option><option value="spot">Spot</option></select></div>
+            <div className="field"><label className="label">Status</label><select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TradeStatus })}><option value="win">Win</option><option value="loss">Loss</option><option value="breakeven">Breakeven</option><option value="open">Open</option></select></div>
+            <div className="field"><label className="label">ROI %</label><input className="input" value={form.roi} onChange={(e) => setForm({ ...form, roi: e.target.value })} placeholder="12.4" /></div>
+            <div className="field"><label className="label">Entry</label><input className="input" value={form.entry_price} onChange={(e) => setForm({ ...form, entry_price: e.target.value })} /></div>
+            <div className="field"><label className="label">Exit</label><input className="input" value={form.exit_price} onChange={(e) => setForm({ ...form, exit_price: e.target.value })} /></div>
+            <div className="field"><label className="label">Date</label><input className="input" type="date" value={form.traded_at.slice(0, 10)} onChange={(e) => setForm({ ...form, traded_at: e.target.value })} /></div>
+            <div className="field full"><label className="label">Post link</label><input className="input" value={form.post_url} onChange={(e) => setForm({ ...form, post_url: e.target.value })} placeholder="https://x.com/..." /></div>
+            <div className="field full logo-field"><span className="logo-preview">{form.chart_url ? <img src={asChart(form.chart_url)?.thumb || ""} alt="" /> : "1"}</span><label className="text-action">{uploading ? "Uploading..." : "Chart image"}<input type="file" accept="image/*" hidden onChange={(e) => void handleChart(e.target.files?.[0] || null, 1)} /></label><span className="logo-preview">{form.chart_url_2 ? <img src={asChart(form.chart_url_2)?.thumb || ""} alt="" /> : "2"}</span><label className="text-action">Second chart<input type="file" accept="image/*" hidden onChange={(e) => void handleChart(e.target.files?.[0] || null, 2)} /></label></div>
+            <div className="field full"><label className="label">Analysis</label><textarea className="textarea" value={form.analysis} onChange={(e) => setForm({ ...form, analysis: e.target.value })} placeholder="What the trade proved." /></div>
+          </div>
+          <div className="cv-row"><div className="cv-copy"><div className="cv-title">Visible on public profile</div><div className="cv-desc">Hidden trades stay in the record and do not publish.</div></div><button className={`switch${form.is_visible ? " on" : ""}`} type="button" aria-label="Visible on public profile" onClick={() => setForm((f) => ({ ...f, is_visible: !f.is_visible }))}><span /></button></div>
+          {updatesTradeId && <div className="block"><div className="block-title">Trade updates</div><TradeUpdatesEditor userId={userId} tradeId={updatesTradeId} onError={setError} /></div>}
+          {error && tab !== "platforms" && <div className="error">{error}</div>}
+        </EntrySheet>
+      </>
+    }>
       {tab === "platforms" ? (
         <div className="block">
           <div className="section-intro"><h2>Platforms</h2><p>Up to four CEX or DEX platforms. They publish as the chips under your trading record.</p></div>
-          <div className="block-head"><div><div className="block-title">CEX / DEX</div><div className="block-desc">{platforms.length} of 4 added.</div></div>{platforms.length < 4 && <button className="action accent" type="button" onClick={() => { setPlatformOpen(true); setError(null); }}>Add platform</button>}</div>
+          <div className="block-head"><div><div className="block-title">CEX / DEX</div><div className="block-desc">{platforms.length} of 4 added.</div></div>{platforms.length < 4 && <button className="action accent" type="button" onClick={openPlatform}>Add platform</button>}</div>
           <div className="skills">{platforms.map((p) => <span className="chip" key={p.id}><PlatformLogo name={p.name} size={16} className="h-4 w-4" /><span>{p.name}</span><button type="button" aria-label={`Remove ${p.name}`} onClick={() => void savePlatforms(platforms.filter((row) => row.id !== p.id))}>×</button></span>)}{platforms.length === 0 && <span className="empty">No platforms added yet.</span>}</div>
-          <div className={`entry-form${platformOpen ? " open" : ""}`}>
-            <div className="form-grid">
-              <div className="field full"><label className="label">Search</label><input className="input" value={query} onChange={(e) => { setQuery(e.target.value); setSelectedName(null); }} placeholder="Type Bin, Byb, Hyp..." autoComplete="off" /></div>
-              {query && !selectedName && suggestions.length > 0 && <div className="field full suggestion-list">{suggestions.map((s) => <button key={s.name} className="suggestion" type="button" onClick={() => { setSelectedName(s.name); setQuery(s.name); }}><PlatformLogo name={s.name} size={16} className="h-4 w-4" />{s.name}</button>)}</div>}
-              {selectedName && <div className="field full"><label className="label">Profile or referral link</label><input className="input" value={link} onChange={(e) => setLink(e.target.value)} placeholder={getPlatformDomain(selectedName)} /></div>}
-            </div>
-            {error && <div className="error">{error}</div>}
-            <div className="form-actions"><button className="action accent" type="button" onClick={addPlatform}>Add platform</button><button className="action" type="button" onClick={() => setPlatformOpen(false)}>Cancel</button></div>
-          </div>
         </div>
       ) : (
         <div className="block">
           <div className="section-intro"><h2>{tab === "wins" ? "Wins" : tab === "losses" ? "Losses" : "Trades"}</h2><p>Charts stay attached to the trade. Updates remain available while editing a saved trade.</p></div>
-          <div className="block-head"><div><div className="block-title">Record</div><div className="block-desc">{visible.length} in this section.</div></div><button className="action accent" type="button" onClick={() => { resetForm(); setOpen(true); }}>Add trade</button></div>
+          <div className="block-head"><div><div className="block-title">Record</div><div className="block-desc">{visible.length} in this section.</div></div><button className="action accent" type="button" onClick={openNewTrade}>Add trade</button></div>
           <div className="entry-list">
             {visible.length === 0 && <div className="empty">No trades in this section yet.</div>}
             {visible.map((item, i) => (
@@ -157,25 +221,6 @@ export default function TradingWorkspace({ userId, username, initialItems, initi
                 <div className="entry-actions"><button className="small-action" type="button" onClick={() => startEdit(item)}>Edit</button><button className="small-action danger-action" type="button" onClick={() => void handleDelete(item.id)}>Delete</button></div>
               </div>
             ))}
-          </div>
-          <div className={`entry-form${open ? " open" : ""}`}>
-            <div className="form-grid">
-              <div className="field"><label className="label">Ticker *</label><input className="input" value={form.ticker} onChange={(e) => setForm({ ...form, ticker: e.target.value })} placeholder="BTC" /></div>
-              <div className="field"><label className="label">Pair</label><input className="input" value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })} placeholder="USDT" /></div>
-              <div className="field"><label className="label">Direction</label><select className="input" value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value as TradeDirection })}><option value="long">Long</option><option value="short">Short</option><option value="spot">Spot</option></select></div>
-              <div className="field"><label className="label">Status</label><select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TradeStatus })}><option value="win">Win</option><option value="loss">Loss</option><option value="breakeven">Breakeven</option><option value="open">Open</option></select></div>
-              <div className="field"><label className="label">ROI %</label><input className="input" value={form.roi} onChange={(e) => setForm({ ...form, roi: e.target.value })} placeholder="12.4" /></div>
-              <div className="field"><label className="label">Entry</label><input className="input" value={form.entry_price} onChange={(e) => setForm({ ...form, entry_price: e.target.value })} /></div>
-              <div className="field"><label className="label">Exit</label><input className="input" value={form.exit_price} onChange={(e) => setForm({ ...form, exit_price: e.target.value })} /></div>
-              <div className="field"><label className="label">Date</label><input className="input" type="date" value={form.traded_at.slice(0, 10)} onChange={(e) => setForm({ ...form, traded_at: e.target.value })} /></div>
-              <div className="field full"><label className="label">Post link</label><input className="input" value={form.post_url} onChange={(e) => setForm({ ...form, post_url: e.target.value })} placeholder="https://x.com/..." /></div>
-              <div className="field full logo-field"><span className="logo-preview">{form.chart_url ? <img src={asChart(form.chart_url)?.thumb || ""} alt="" /> : "1"}</span><label className="text-action">{uploading ? "Uploading..." : "Chart image"}<input type="file" accept="image/*" hidden onChange={(e) => void handleChart(e.target.files?.[0] || null, 1)} /></label><span className="logo-preview">{form.chart_url_2 ? <img src={asChart(form.chart_url_2)?.thumb || ""} alt="" /> : "2"}</span><label className="text-action">Second chart<input type="file" accept="image/*" hidden onChange={(e) => void handleChart(e.target.files?.[0] || null, 2)} /></label></div>
-              <div className="field full"><label className="label">Analysis</label><textarea className="textarea" value={form.analysis} onChange={(e) => setForm({ ...form, analysis: e.target.value })} placeholder="What the trade proved." /></div>
-            </div>
-            <div className="cv-row"><div className="cv-copy"><div className="cv-title">Visible on public profile</div><div className="cv-desc">Hidden trades stay in the record and do not publish.</div></div><button className={`switch${form.is_visible ? " on" : ""}`} type="button" aria-label="Visible on public profile" onClick={() => setForm((f) => ({ ...f, is_visible: !f.is_visible }))}><span /></button></div>
-            {updatesTradeId && <div className="block"><div className="block-title">Trade updates</div><TradeUpdatesEditor userId={userId} tradeId={updatesTradeId} onError={setError} /></div>}
-            {error && <div className="error">{error}</div>}
-            <div className="form-actions"><button className="action accent" type="button" disabled={loading} onClick={() => void handleSubmit()}>{loading ? "Saving..." : editingId ? "Update trade" : "Add trade"}</button><button className="action" type="button" onClick={resetForm}>Cancel</button></div>
           </div>
         </div>
       )}

@@ -25,6 +25,7 @@ export default function WorkspaceShell({
   onTab,
   children,
   hideDock = false,
+  overlay = null,
 }: {
   title: string;
   eyebrow: string;
@@ -36,6 +37,7 @@ export default function WorkspaceShell({
   onTab: (id: string) => void;
   children: React.ReactNode;
   hideDock?: boolean;
+  overlay?: React.ReactNode;
 }) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [dock, setDock] = useState<"closed" | "open" | "closing">("closed");
@@ -103,6 +105,7 @@ export default function WorkspaceShell({
       </div>
       {dock !== "closed" && <button className="dock-backdrop" type="button" aria-label="Close sections" onClick={closeDock} />}
       </>}
+      {overlay}
     </div>
   );
 }

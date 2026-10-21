@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { moveItem } from "@/lib/move-item";
 import WorkspaceShell from "@/components/workspace/WorkspaceShell";
+import EntrySheet from "@/components/ui/EntrySheet";
 import type { Writing } from "@/types/database";
 import { loadPendingAutofill, markSectionSaved } from "@/lib/autofill-store";
 
@@ -47,6 +48,7 @@ export default function WritingManager({ userId, username, initialItems }: { use
   const router = useRouter();
   const [items, setItems] = useState<Writing[]>(() => sortItems(initialItems));
   const [form, setForm] = useState(emptyForm);
+  const formBaseline = useRef("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -116,11 +118,15 @@ export default function WritingManager({ userId, username, initialItems }: { use
     router.refresh();
   }
 
-  function startEdit(item: Writing) {
-    setEditingId(item.id);
-    setOpen(true);
+  function openNew() {
+    setEditingId(null);
     setError(null);
-    setForm({
+    setForm(emptyForm);
+    formBaseline.current = JSON.stringify(emptyForm);
+    setOpen(true);
+  }
+  function startEdit(item: Writing) {
+    const next = {
       title: item.title,
       url: item.url,
       description: item.description ?? "",
@@ -129,7 +135,12 @@ export default function WritingManager({ userId, username, initialItems }: { use
       is_visible: item.is_visible,
       thumbnail_url: item.thumbnail_url,
       image_url_2: item.image_url_2,
-    });
+    };
+    setEditingId(item.id);
+    setError(null);
+    setForm(next);
+    formBaseline.current = JSON.stringify(next);
+    setOpen(true);
   }
   function resetForm() {
     setEditingId(null);
@@ -209,7 +220,29 @@ export default function WritingManager({ userId, username, initialItems }: { use
   const cover = form.thumbnail_url || siteLogo(absoluteUrl(form.url));
 
   return (
-    <WorkspaceShell title="Writing" eyebrow="Writing workspace" intro="Articles, threads, Mirror posts and research. A link pulls the publication mark, and you can replace it with your own cover." username={username} note="Writing workspace" tabs={TABS} tab={tab} onTab={setTab}>
+    <WorkspaceShell title="Writing" eyebrow="Writing workspace" intro="Articles, threads, Mirror posts and research. A link pulls the publication mark, and you can replace it with your own cover." username={username} note="Writing workspace" tabs={TABS} tab={tab} onTab={setTab} overlay={
+      <EntrySheet
+        open={open}
+        title={editingId ? "Edit writing" : "Add writing"}
+        saveLabel={editingId ? "Update writing" : "Add writing"}
+        saving={loading || uploading !== null}
+        dirty={open && JSON.stringify(form) !== formBaseline.current}
+        onClose={resetForm}
+        onSave={() => void handleSubmit()}
+      >
+        <div className="form-grid">
+          <div className="field"><label className="label">Title *</label><input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Article or thread title" /></div>
+          <div className="field"><label className="label">Published date *</label><input className="input" type="date" value={form.published_at.slice(0, 10)} onChange={(e) => setForm({ ...form, published_at: e.target.value })} /></div>
+          <div className="field full"><label className="label">Link *</label><input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value, thumbnail_url: form.thumbnail_url && !form.thumbnail_url.includes("google.com/s2/favicons") ? form.thumbnail_url : siteLogo(absoluteUrl(e.target.value)) })} placeholder="https://mirror.xyz/..." /></div>
+          <div className="field full logo-field"><span className="logo-preview">{cover ? <img src={cover} alt="" /> : "Cover"}</span><label className="text-action">{uploading === "1" ? "Uploading..." : "Replace cover"}<input type="file" accept="image/*" hidden onChange={(e) => void uploadImage(e.target.files?.[0] || null, "1")} /></label><span className="logo-note">The publication mark is pulled from the link. Upload a cover if you want a different image.</span></div>
+          <div className="field full logo-field"><span className="logo-preview">{form.image_url_2 ? <img src={form.image_url_2} alt="" /> : "2"}</span><label className="text-action">{uploading === "2" ? "Uploading..." : "Second image"}<input type="file" accept="image/*" hidden onChange={(e) => void uploadImage(e.target.files?.[0] || null, "2")} /></label><span className="logo-note">Optional second image already supported by writing.</span></div>
+          <div className="field full"><label className="label">Description</label><textarea className="textarea" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What the piece covers." /></div>
+          <div className="field full"><label className="label">Tags</label><input className="input" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Comma separated" /></div>
+        </div>
+        <div className="cv-row"><div className="cv-copy"><div className="cv-title">Visible on public profile</div><div className="cv-desc">Hidden pieces stay in the workspace and do not publish.</div></div><button className={`switch${form.is_visible ? " on" : ""}`} type="button" aria-label="Visible on public profile" onClick={() => setForm((f) => ({ ...f, is_visible: !f.is_visible }))}><span /></button></div>
+        {error && <div className="error">{error}</div>}
+      </EntrySheet>
+    }>
       <div className="section-intro"><h2>{tab === "hidden" ? "Hidden writing" : tab === "public" ? "Public writing" : "All writing"}</h2><p>Published date is required before a piece can be saved. Drag a row to change the public order.</p></div>
       {drafts.length > 0 && (
         <div className="block">
@@ -219,7 +252,7 @@ export default function WritingManager({ userId, username, initialItems }: { use
         </div>
       )}
       <div className="block">
-        <div className="block-head"><div><div className="block-title">Pieces</div><div className="block-desc">{visible.length} in this section.</div></div><button className="action accent" type="button" onClick={() => { resetForm(); setOpen(true); }}>Add writing</button></div>
+        <div className="block-head"><div><div className="block-title">Pieces</div><div className="block-desc">{visible.length} in this section.</div></div><button className="action accent" type="button" onClick={openNew}>Add writing</button></div>
         <div className="entry-list">
           {visible.length === 0 && <div className="empty">No writing in this section yet.</div>}
           {visible.map((item, i) => (
@@ -228,20 +261,6 @@ export default function WritingManager({ userId, username, initialItems }: { use
               <div className="entry-actions"><button className="small-action" type="button" onClick={() => startEdit(item)}>Edit</button><button className="small-action danger-action" type="button" onClick={() => void handleDelete(item.id)}>Delete</button></div>
             </div>
           ))}
-        </div>
-        <div className={`entry-form${open ? " open" : ""}`}>
-          <div className="form-grid">
-            <div className="field"><label className="label">Title *</label><input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Article or thread title" /></div>
-            <div className="field"><label className="label">Published date *</label><input className="input" type="date" value={form.published_at.slice(0, 10)} onChange={(e) => setForm({ ...form, published_at: e.target.value })} /></div>
-            <div className="field full"><label className="label">Link *</label><input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value, thumbnail_url: form.thumbnail_url && !form.thumbnail_url.includes("google.com/s2/favicons") ? form.thumbnail_url : siteLogo(absoluteUrl(e.target.value)) })} placeholder="https://mirror.xyz/..." /></div>
-            <div className="field full logo-field"><span className="logo-preview">{cover ? <img src={cover} alt="" /> : "Cover"}</span><label className="text-action">{uploading === "1" ? "Uploading..." : "Replace cover"}<input type="file" accept="image/*" hidden onChange={(e) => void uploadImage(e.target.files?.[0] || null, "1")} /></label><span className="logo-note">The publication mark is pulled from the link. Upload a cover if you want a different image.</span></div>
-            <div className="field full logo-field"><span className="logo-preview">{form.image_url_2 ? <img src={form.image_url_2} alt="" /> : "2"}</span><label className="text-action">{uploading === "2" ? "Uploading..." : "Second image"}<input type="file" accept="image/*" hidden onChange={(e) => void uploadImage(e.target.files?.[0] || null, "2")} /></label><span className="logo-note">Optional second image already supported by writing.</span></div>
-            <div className="field full"><label className="label">Description</label><textarea className="textarea" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What the piece covers." /></div>
-            <div className="field full"><label className="label">Tags</label><input className="input" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Comma separated" /></div>
-          </div>
-          <div className="cv-row"><div className="cv-copy"><div className="cv-title">Visible on public profile</div><div className="cv-desc">Hidden pieces stay in the workspace and do not publish.</div></div><button className={`switch${form.is_visible ? " on" : ""}`} type="button" aria-label="Visible on public profile" onClick={() => setForm((f) => ({ ...f, is_visible: !f.is_visible }))}><span /></button></div>
-          {error && <div className="error">{error}</div>}
-          <div className="form-actions"><button className="action accent" type="button" disabled={loading} onClick={() => void handleSubmit()}>{loading ? "Saving..." : editingId ? "Update writing" : "Add writing"}</button><button className="action" type="button" onClick={resetForm}>Cancel</button></div>
         </div>
       </div>
       <div className={`toast${toastOn ? " show" : ""}`}>{toast}</div>

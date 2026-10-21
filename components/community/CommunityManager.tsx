@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { SiteLogo } from "@/components/ui/BrandMark";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { moveItem } from "@/lib/move-item";
+import EntrySheet from "@/components/ui/EntrySheet";
 import type { CommunityItem } from "@/types/database";
 import { loadPendingAutofill, markSectionSaved } from "@/lib/autofill-store";
 
@@ -109,6 +110,7 @@ export default function CommunityManager({ userId, username, initialItems }: { u
   const router = useRouter();
   const [items, setItems] = useState<CommunityItem[]>(() => sortItems(initialItems));
   const [form, setForm] = useState(emptyForm);
+  const formBaseline = useRef("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -209,13 +211,18 @@ export default function CommunityManager({ userId, username, initialItems }: { u
     router.refresh();
   }
 
+  function openNew() {
+    const next = { ...emptyForm, category: (tab === "all" ? "built" : tab) as Category };
+    setEditingId(null);
+    setError(null);
+    setForm(next);
+    formBaseline.current = JSON.stringify(next);
+    setOpen(true);
+  }
   function startEdit(item: CommunityItem) {
     const rawTags = item.tags || [];
     const otherTags = rawTags.filter((t) => !["built", "built by me", "collaboration", "collab", "community", "community role", "personal project", "partner", "mod"].includes(t.toLowerCase()));
-    setEditingId(item.id);
-    setOpen(true);
-    setError(null);
-    setForm({
+    const next = {
       title: item.title,
       role: item.role ?? "",
       platform: item.platform ?? "",
@@ -228,7 +235,12 @@ export default function CommunityManager({ userId, username, initialItems }: { u
       is_visible: item.is_visible,
       thumbnail_url: item.thumbnail_url,
       category: categoryFromTags(item.tags),
-    });
+    };
+    setEditingId(item.id);
+    setError(null);
+    setForm(next);
+    formBaseline.current = JSON.stringify(next);
+    setOpen(true);
   }
   function resetForm() {
     setEditingId(null);
@@ -358,7 +370,7 @@ export default function CommunityManager({ userId, username, initialItems }: { u
             </div>
           )}
           <div className="block">
-            <div className="block-head"><div><div className="block-title">Projects</div><div className="block-desc">{visible.length} visible in this section. Hidden items stay saved but do not publish.</div></div><button className="action accent" type="button" onClick={() => { resetForm(); setOpen(true); setForm({ ...emptyForm, category: tab === "all" ? "built" : tab }); }}>Add project</button></div>
+            <div className="block-head"><div><div className="block-title">Projects</div><div className="block-desc">{visible.length} visible in this section. Hidden items stay saved but do not publish.</div></div><button className="action accent" type="button" onClick={openNew}>Add project</button></div>
             <div className="entry-list">
               {visible.length === 0 && <div className="empty">No projects in this section yet.</div>}
               {visible.map((item, i) => {
@@ -375,30 +387,34 @@ export default function CommunityManager({ userId, username, initialItems }: { u
                 );
               })}
             </div>
-            <div className={`entry-form${open ? " open" : ""}`}>
-              <div className="form-grid">
-                <div className="field"><label className="label">Title *</label><input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Project, collab or community name" /></div>
-                <div className="field"><label className="label">Role</label><input className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Founder, contributor, mod" /></div>
-                <div className="field"><label className="label">Platform</label><input className="input" value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} placeholder="GitHub, Telegram, Discord" /></div>
-                <div className="field"><label className="label">Category</label><select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Category })}>{CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
-                <div className="field"><label className="label">Project link *</label><input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://" /></div>
-                <div className="field"><label className="label">Start</label><input className="input" type="month" value={form.started_at} onChange={(e) => setForm({ ...form, started_at: e.target.value })} /></div>
-                <div className="field"><label className="label">End (leave blank for Present)</label><input className="input" type="month" value={form.ended_at} onChange={(e) => setForm({ ...form, ended_at: e.target.value })} /></div>
-                <div className="field"><label className="label">Outcome</label><input className="input" value={form.metrics} onChange={(e) => setForm({ ...form, metrics: e.target.value })} placeholder="Optional result, members or shipped milestone" /></div>
-                <div className="field"><label className="label">Extra tags</label><input className="input" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Comma separated, optional" /></div>
-                <div className="field full"><label className="label">Description</label><textarea className="input" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What you built or led" /></div>
-                <div className="field"><label className="label">Logo</label><input type="file" accept="image/*" onChange={(e) => void handleImage(e.target.files?.[0] || null)} />{logo && <img src={logo} alt="" className="logo-preview" />}</div>
-                <div className="field"><label className="check"><input type="checkbox" checked={form.is_visible} onChange={(e) => setForm({ ...form, is_visible: e.target.checked })} /> Visible on public profile</label><p className="hint">Turn this off to keep the item in your workspace without publishing it.</p></div>
-              </div>
-              {error && <p className="error">{error}</p>}
-              <div className="form-actions">
-                <button className="action accent" type="button" disabled={loading || uploading} onClick={() => void handleSubmit()}>{editingId ? "Save changes" : "Add project"}</button>
-                <button className="action" type="button" onClick={resetForm}>Cancel</button>
-              </div>
-            </div>
           </div>
         </section>
       </main>
+      <EntrySheet
+        open={open}
+        title={editingId ? "Edit project" : "Add project"}
+        saveLabel={editingId ? "Save changes" : "Add project"}
+        saving={loading || uploading}
+        dirty={open && JSON.stringify(form) !== formBaseline.current}
+        onClose={resetForm}
+        onSave={() => void handleSubmit()}
+      >
+        <div className="form-grid">
+          <div className="field"><label className="label">Title *</label><input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Project, collab or community name" /></div>
+          <div className="field"><label className="label">Role</label><input className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Founder, contributor, mod" /></div>
+          <div className="field"><label className="label">Platform</label><input className="input" value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} placeholder="GitHub, Telegram, Discord" /></div>
+          <div className="field"><label className="label">Category</label><select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Category })}>{CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
+          <div className="field"><label className="label">Project link *</label><input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://" /></div>
+          <div className="field"><label className="label">Start</label><input className="input" type="month" value={form.started_at} onChange={(e) => setForm({ ...form, started_at: e.target.value })} /></div>
+          <div className="field"><label className="label">End (leave blank for Present)</label><input className="input" type="month" value={form.ended_at} onChange={(e) => setForm({ ...form, ended_at: e.target.value })} /></div>
+          <div className="field"><label className="label">Outcome</label><input className="input" value={form.metrics} onChange={(e) => setForm({ ...form, metrics: e.target.value })} placeholder="Optional result, members or shipped milestone" /></div>
+          <div className="field"><label className="label">Extra tags</label><input className="input" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Comma separated, optional" /></div>
+          <div className="field full"><label className="label">Description</label><textarea className="textarea" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What you built or led" /></div>
+          <div className="field full logo-field"><span className="logo-preview">{logo ? <img src={logo} alt="" /> : "Logo"}</span><label className="text-action">{uploading ? "Uploading..." : "Replace logo"}<input type="file" accept="image/*" hidden onChange={(e) => void handleImage(e.target.files?.[0] || null)} /></label><span className="logo-note">The logo is pulled from the project link. Upload one if the mark is wrong.</span></div>
+        </div>
+        <div className="cv-row"><div className="cv-copy"><div className="cv-title">Visible on public profile</div><div className="cv-desc">Hidden items stay in the workspace and do not publish.</div></div><button className={`switch${form.is_visible ? " on" : ""}`} type="button" aria-label="Visible on public profile" onClick={() => setForm((f) => ({ ...f, is_visible: !f.is_visible }))}><span /></button></div>
+        {error && <div className="error">{error}</div>}
+      </EntrySheet>
       {toastOn && <div className="toast">{toast}</div>}
     </div>
   );
