@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { checkReportEligibility } from "@/lib/reports/eligibility";
 import { allowRate } from "@/lib/security/rate-limit";
+import { isSafeImageBytes } from "@/lib/security/image-bytes";
 import {
   GROUP_WINDOW_MS,
   MAX_ATTACHMENT_BYTES,
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
       if (file.size > MAX_ATTACHMENT_BYTES) {
         return NextResponse.json({ error: "Each image must be 5MB or smaller." }, { status: 400 });
       }
-      if (!file.type.startsWith("image/")) {
+      if (!file.type.startsWith("image/") || file.type.includes("svg")) {
         return NextResponse.json({ error: "Attachments must be images." }, { status: 400 });
       }
     }
@@ -87,9 +88,10 @@ export async function POST(req: NextRequest) {
 
     const attachments: string[] = [];
     for (const file of files) {
+      const buf = Buffer.from(await file.arrayBuffer());
+      if (!isSafeImageBytes(new Uint8Array(buf))) continue;
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5);
       const path = `${targetId}/${groupId}/${user.id}-${Date.now()}-${attachments.length}.${ext || "jpg"}`;
-      const buf = Buffer.from(await file.arrayBuffer());
       const { error: upErr } = await admin.storage.from("report-evidence").upload(path, buf, {
         contentType: file.type || "image/jpeg",
         upsert: false,
