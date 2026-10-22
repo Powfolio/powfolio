@@ -99,13 +99,14 @@ function normalizeEducation(list: Education[] | null | undefined): Education[] {
 
 async function loadProfileRow(username: string): Promise<PublicProfileRow | null> {
   const handle = username.toLowerCase();
-  // Prefer the column-safe public view. Fall back to the table if the view is missing.
+  // Public profile reads are server-side only and always use the service-role client.
+  // The view exposes an explicit allowlist of public columns; no client fallback is permitted.
   try {
     const admin = createServiceClient();
     const view = await admin.from("profiles_public").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
     if (isProfileRow(view.data)) return view.data;
   } catch {
-    /* view missing or not readable */
+    /* fall through to the protected base-table read */
   }
   try {
     const admin = createServiceClient();
@@ -114,9 +115,6 @@ async function loadProfileRow(username: string): Promise<PublicProfileRow | null
   } catch {
     /* fall through */
   }
-  const supabase = await createClient();
-  const { data } = await supabase.from("profiles_public").select(PUBLIC_PROFILE_COLUMNS).eq("username", handle).maybeSingle();
-  if (isProfileRow(data)) return data;
   return null;
 }
 
