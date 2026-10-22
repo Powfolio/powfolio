@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const emailKey = `otp-email:${email}`;
   const ipKey = `otp-ip:${ip}`;
   if (!(await allowRate(emailKey, MAX_ATTEMPTS, 10 * 60_000)) || !(await allowRate(ipKey, 20, 10 * 60_000))) {
-    const res = NextResponse.json({ ok: false, error: "Too many attempts. Request a new code." }, { status: 429 });
+    const res = NextResponse.json({ ok: false, error: "Too many verification attempts. Request a new code or try again in about 10 minutes.", retryAfterSeconds: 600, rateLimit: "otp-verify" }, { status: 429, headers: { "Retry-After": "600" } });
     res.cookies.set(otpCookieName(), "", { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 0 });
     return res;
   }
