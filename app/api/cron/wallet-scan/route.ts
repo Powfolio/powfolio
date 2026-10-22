@@ -16,7 +16,6 @@ export async function GET(req: Request) {
 
   const supabase = createServiceClient();
 
-  // Scheduled scan: pick a small batch of profiles that have a wallet and have not been scanned recently.
   const cutoff = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
   const { data: profiles } = await supabase
     .from("profiles")
@@ -27,6 +26,7 @@ export async function GET(req: Request) {
 
   let imported = 0;
   let scanned = 0;
+  let cached = 0;
 
   for (const profile of profiles || []) {
     const addresses = [
@@ -42,6 +42,17 @@ export async function GET(req: Request) {
     for (const address of [...new Set(addresses)].slice(0, 3)) {
       try {
         const nfts = await loadWalletNfts(address);
+        try {
+          await supabase.from("nft_cache").upsert({
+            address,
+            payload: nfts.slice(0, 40),
+            updated_at: new Date().toISOString(),
+          });
+          cached++;
+        } catch {
+          /* cache table may not exist yet */
+        }
+
         const { data: existing } = await supabase
           .from("collectibles")
           .select("token_id, tags, chain")
@@ -78,5 +89,5 @@ export async function GET(req: Request) {
     await supabase.from("profiles").update({ last_wallet_scan_at: new Date().toISOString() }).eq("id", profile.id);
   }
 
-  return NextResponse.json({ ok: true, scanned, imported });
+  return NextResponse.json({ ok: true, scanned, imported, cached });
 }
