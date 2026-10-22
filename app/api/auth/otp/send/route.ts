@@ -41,8 +41,8 @@ export async function POST(req: NextRequest) {
           .gte("created_at", since);
         if ((count || 0) >= 12) {
           return NextResponse.json(
-            { ok: false, error: "Too many verification requests. Try again later." },
-            { status: 429 }
+            { ok: false, error: "Too many verification requests. Try again in about 15 minutes.", retryAfterSeconds: 900, rateLimit: "otp-send" },
+            { status: 429, headers: { "Retry-After": "900" } }
           );
         }
         await admin.from("signup_attempts").insert({ ip_hash: ipHash });
