@@ -266,7 +266,7 @@ async function fetchGenericText(url: URL): Promise<string | null> {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
     },
-    redirect: "follow",
+    redirect: "manual",
     signal: AbortSignal.timeout(12000),
   });
   if (!res.ok) return null;
