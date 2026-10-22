@@ -66,6 +66,8 @@ async function fetchMedia(url: string) {
       if (!res.ok) return null;
       const type = (res.headers.get("content-type") || "").toLowerCase();
       if (type.includes("text/html") || type.includes("application/json") || type.includes("svg")) return null;
+      const declared = Number(res.headers.get("content-length") || 0);
+      if (declared > MAX_BYTES) return null;
       const buf = await res.arrayBuffer();
       if (!buf.byteLength || buf.byteLength > MAX_BYTES) return null;
       const sniffed = sniffMediaType(buf, type);
