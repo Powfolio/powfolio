@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import { lookupWalletToken, type CustomChainInput } from "@/lib/onchain";
 import { lookupWalletNfts } from "@/lib/nfts";
 import { allowRate } from "@/lib/security/rate-limit";
+import { createServiceClient, hasServiceRole } from "@/lib/supabase/admin";
 
 export const revalidate = 60;
 export const maxDuration = 30;
+
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 export async function GET(req: Request, { params }: { params: Promise<{ address: string }> }) {
   const { address } = await params;
@@ -25,9 +28,39 @@ export async function GET(req: Request, { params }: { params: Promise<{ address:
   } catch {
     extra = [];
   }
+
+  // Prefer cached NFT payload when the table exists and the row is fresh.
+  if (hasServiceRole() && !contract && !tokenId) {
+    try {
+      const admin = createServiceClient();
+      const { data } = await admin.from("nft_cache").select("payload, updated_at").eq("address", addrKey).maybeSingle();
+      const age = data?.updated_at ? Date.now() - new Date(data.updated_at).getTime() : Infinity;
+      if (data && Array.isArray(data.payload) && age < CACHE_TTL_MS) {
+        const tokens = await lookupWalletToken(address, contract, { chainId: chain || null, extraChains: extra });
+        return NextResponse.json({ tokens, nfts: data.payload, cached: true });
+      }
+    } catch {
+      /* table missing or unreadable; fall through to live */
+    }
+  }
+
   const [tokens, nfts] = await Promise.all([
     lookupWalletToken(address, contract, { chainId: chain || null, extraChains: extra }),
     lookupWalletNfts(address, contract, tokenId || null),
   ]);
+
+  if (hasServiceRole() && !contract && !tokenId && Array.isArray(nfts)) {
+    try {
+      const admin = createServiceClient();
+      await admin.from("nft_cache").upsert({
+        address: addrKey,
+        payload: nfts.slice(0, 40),
+        updated_at: new Date().toISOString(),
+      });
+    } catch {
+      /* cache write is best-effort */
+    }
+  }
+
   return NextResponse.json({ tokens, nfts });
 }
