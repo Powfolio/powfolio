@@ -85,7 +85,7 @@ async function fetchMedia(url: string) {
 export async function GET(req: Request) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
   if (!(await allowRate(`media:${ip}`, 60, 60_000))) {
-    return NextResponse.json({ error: "rate" }, { status: 429 });
+    return NextResponse.json({ error: "Media request limit reached. Try again in about 1 minute.", retryAfterSeconds: 60, rateLimit: "media" }, { status: 429, headers: { "Retry-After": "60" } });
   }
 
   const target = new URL(req.url).searchParams.get("u") || "";
