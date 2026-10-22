@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { type CustomChainInput, type OnchainChain, mergeChains } from "@/lib/onchain";
 import { normalizeExtraChains } from "@/lib/chain-enrich";
 import { loadChainDeep } from "@/lib/onchain-deep";
+import { allowRate } from "@/lib/security/rate-limit";
 
 export const revalidate = 60;
 export const maxDuration = 25;
@@ -10,7 +11,7 @@ function parseJson<T>(raw: string | null): T[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw) as T[];
-    return Array.isArray(parsed) ? parsed.slice(0, 20) : [];
+    return Array.isArray(parsed) ? parsed.slice(0, 8) : [];
   } catch {
     return [];
   }
@@ -18,6 +19,12 @@ function parseJson<T>(raw: string | null): T[] {
 
 export async function GET(req: Request, { params }: { params: Promise<{ address: string }> }) {
   const { address } = await params;
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
+  const addrKey = address.toLowerCase().slice(0, 42);
+  if (!(await allowRate(`onchain-deep-ip:${ip}`, 10, 60_000)) || !(await allowRate(`onchain-deep-addr:${addrKey}`, 4, 60_000))) {
+    return NextResponse.json({ error: "Too many deep lookups. Try again in a minute." }, { status: 429 });
+  }
+
   const url = new URL(req.url);
   const chainId = (url.searchParams.get("chain") || "").toLowerCase();
   const extra = normalizeExtraChains(parseJson<CustomChainInput>(url.searchParams.get("chains")));
