@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
     if (lastSent && Date.now() - Number(lastSent) < 30_000) {
       const wait = Math.ceil((30_000 - (Date.now() - Number(lastSent))) / 1000);
       return NextResponse.json(
-        { ok: false, error: `Please wait ${wait}s before requesting another code.` },
-        { status: 429 }
+        { ok: false, error: `Please wait ${wait}s before requesting another code.`, retryAfterSeconds: wait, rateLimit: "otp-resend" },
+        { status: 429, headers: { "Retry-After": String(wait) } }
       );
     }
 
