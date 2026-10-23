@@ -29,11 +29,11 @@ export default async function FaqPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <LandingNav signedIn={Boolean(user)} active="faq" />
+      <LandingNav signedIn={Boolean(user)} />
       <main id="main" className="container-app max-w-2xl py-10 sm:py-14">
         <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-foreground-subtle">Help</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">FAQ</h1>
-        <p className="mt-3 text-sm leading-relaxed text-foreground-muted">Short answers. For a live walkthrough, open Pow3Bot.</p>
+        <p className="mt-3 text-sm leading-relaxed text-foreground-muted">Short answers. For a live walkthrough, open Powbot.</p>
         <div className="mt-8 divide-y divide-border/40 border-y border-border/40">
           {FAQS.map((item) => (
             <details key={item.q} className="faq-item py-4">
