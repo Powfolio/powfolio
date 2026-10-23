@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Log in to submit a report." }, { status: 401 });
   }
   if (!(await allowRate(`report:${user.id}`, 5, 60 * 60_000))) {
-    return NextResponse.json({ error: "Report limit reached. Try again in an hour." }, { status: 429 });
+    return NextResponse.json({ error: "Report limit reached. Try again in about 1 hour.", retryAfterSeconds: 3600, rateLimit: "report" }, { status: 429, headers: { "Retry-After": "3600" } });
   }
 
   const form = await req.formData();

@@ -14,6 +14,7 @@ export default function DashboardAutofill() {
   const [link, setLink] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [rateLimitToast, setRateLimitToast] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingAutofill | null>(null);
 
   useEffect(() => {
@@ -90,7 +91,9 @@ export default function DashboardAutofill() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(data.error || "Could not read link");
+        const message = data.error || "Could not read link";
+        setErr(message);
+        if (res.status === 429) setRateLimitToast(message);
         return;
       }
       if (!data.profile) {
@@ -106,6 +109,8 @@ export default function DashboardAutofill() {
   }
 
   return (
+    <>
+    {rateLimitToast && <div role="alert" className="fixed bottom-5 left-1/2 z-[100] w-[min(92vw,26rem)] -translate-x-1/2 rounded-xl border border-amber-500/50 bg-background px-4 py-3 text-sm shadow-xl"><div className="flex items-start justify-between gap-3"><p>{rateLimitToast}</p><button type="button" className="text-foreground-muted underline" onClick={() => setRateLimitToast(null)}>Dismiss</button></div></div>}
     <div className="mb-6 rounded-xl border border-border bg-surface p-4 sm:p-5">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -172,5 +177,6 @@ export default function DashboardAutofill() {
       {msg && <p className="mt-2 text-xs text-primary">{msg}</p>}
       {err && <p className="mt-2 text-xs text-danger break-words">{err}</p>}
     </div>
+    </>
   );
 }

@@ -143,8 +143,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     }
 
-    if (!(await allowRate(`autofill:${user.id}`, 8))) {
-      return NextResponse.json({ error: "Too many uploads. Wait a minute." }, { status: 429 });
+    if (!(await allowRate(`autofill:${user.id}`, 8, 60_000))) {
+      return NextResponse.json({ error: "Upload limit reached. Try again in about 1 minute.", retryAfterSeconds: 60, rateLimit: "autofill" }, { status: 429, headers: { "Retry-After": "60" } });
     }
 
     const form = await req.formData();

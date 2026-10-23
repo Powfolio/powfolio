@@ -22,7 +22,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ address:
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
   const addrKey = address.toLowerCase().slice(0, 42);
   if (!(await allowRate(`onchain-main-ip:${ip}`, 15, 60_000)) || !(await allowRate(`onchain-main-addr:${addrKey}`, 5, 60_000))) {
-    return NextResponse.json({ error: "Too many lookups. Try again in a minute." }, { status: 429 });
+    return NextResponse.json({ error: "Too many lookups. Try again in about 1 minute.", retryAfterSeconds: 60, rateLimit: "onchain" }, { status: 429, headers: { "Retry-After": "60" } });
   }
 
   const url = new URL(req.url);

@@ -30,9 +30,11 @@ const DEFAULT_MODELS = [
 const MAX_HISTORY = 12;
 const MAX_USER_CHARS = 4000;
 
-const LIMIT_GUEST = 12;
-const LIMIT_USER = 40;
+const LIMIT_GUEST = 10;
+const LIMIT_USER = 10;
 const WINDOW_MS = 60_000;
+const GUEST_REPLY_LIMIT = 5;
+const GUEST_REPLY_WINDOW_MS = 365 * 24 * 60 * 60_000;
 
 /** Strip common prompt-injection markers from untrusted client strings. */
 function sanitizeClientText(raw: string, max: number): string {
@@ -208,12 +210,8 @@ export async function POST(req: NextRequest) {
     const limit = userId ? LIMIT_USER : LIMIT_GUEST;
     if (!(await allowRate(`chat:${limitKey}`, limit, WINDOW_MS))) {
       return NextResponse.json(
-        {
-          error: userId
-            ? "Rate limit: max 40 messages per minute for signed-in builders."
-            : "Rate limit: sign in for higher limits, or wait a minute.",
-        },
-        { status: 429 }
+        { error: "Powbot chat limit reached. Try again in about 1 minute.", retryAfterSeconds: 60, rateLimit: "chat" },
+        { status: 429, headers: { "Retry-After": "60" } }
       );
     }
 
@@ -261,6 +259,18 @@ export async function POST(req: NextRequest) {
       lastErr = result.raw || `HTTP ${result.status}`;
 
       if (result.ok) {
+        if (!userId) {
+          const guestIdRaw = (body as { guestId?: unknown }).guestId;
+          const guestId = typeof guestIdRaw === "string" && /^[a-zA-Z0-9_-]{16,80}$/.test(guestIdRaw)
+            ? guestIdRaw
+            : "no-browser-id";
+          if (!(await allowRate(`chat-guest-lifetime:${ip}:${guestId}`, GUEST_REPLY_LIMIT, GUEST_REPLY_WINDOW_MS))) {
+            return NextResponse.json(
+              { error: "You’ve used your 5 free Powbot replies. Sign in to continue chatting.", requiresSignIn: true, rateLimit: "guest-replies" },
+              { status: 429 }
+            );
+          }
+        }
         const parts = (
           result.data as {
             candidates?: { content?: { parts?: { text?: string }[] } }[];

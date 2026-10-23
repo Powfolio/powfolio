@@ -344,8 +344,11 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     }
-    if (!(await allowRate(`link:${user.id}`, 6))) {
-      return NextResponse.json({ error: "Too many link imports. Wait a minute." }, { status: 429 });
+    if (!(await allowRate(`link:${user.id}`, 5, 60_000))) {
+      return NextResponse.json(
+        { error: "Link import limit reached. Try again in about 1 minute.", retryAfterSeconds: 60, rateLimit: "link-import" },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
     }
 
     const body = await req.json().catch(() => null);

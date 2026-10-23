@@ -28,14 +28,14 @@ export async function POST(req: NextRequest) {
       .gte("created_at", since);
     if ((count || 0) >= SIGNUP_IP_LIMIT) {
       return NextResponse.json(
-        { ok: false, error: "Too many signups from this network. Try again later." },
-        { status: 429 }
+        { ok: false, error: "Too many signups from this network. Try again in about 6 hours.", retryAfterSeconds: 21600, rateLimit: "signup" },
+        { status: 429, headers: { "Retry-After": "21600" } }
       );
     }
     await admin.from("signup_attempts").insert({ ip_hash: ipHash });
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("signup guard", e);
-    return NextResponse.json({ ok: true, skipped: true });
+    return NextResponse.json({ ok: false, error: "Signup protection is temporarily unavailable. Please try again shortly." }, { status: 503 });
   }
 }

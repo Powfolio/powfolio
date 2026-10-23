@@ -41,6 +41,7 @@ export default function Pow3Bot({ context }: Props) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimitWarning, setRateLimitWarning] = useState<{ message: string; signIn: boolean } | null>(null);
   const [messages, setMessages] = useState<Msg[]>([WELCOME]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const loaded = useRef(false);
@@ -148,18 +149,39 @@ export default function Pow3Bot({ context }: Props) {
     const content = text.trim();
     if (!content || loading) return;
     setError(null);
+    setRateLimitWarning(null);
     const next: Msg[] = [...messages, { role: "user", content }];
     setMessages(next);
     setInput("");
     setLoading(true);
 
     try {
+      let guestId = "";
+      try {
+        guestId = localStorage.getItem("pow3bot-guest-id") || "";
+        if (!guestId) {
+          guestId = typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID().replace(/-/g, "")
+            : `guest_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
+          localStorage.setItem("pow3bot-guest-id", guestId);
+        }
+      } catch {
+        guestId = "guest_browser_unavailable";
+      }
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next, context }),
+        body: JSON.stringify({ messages: next, context, guestId }),
       });
       const data = await res.json().catch(() => ({}));
+      if (res.status === 429) {
+        const requiresSignIn = Boolean(data.requiresSignIn);
+        const message = String(data.error || "Powbot is rate-limited. Try again in about 1 minute.");
+        setRateLimitWarning({ message, signIn: requiresSignIn });
+        setError(message);
+        setMessages(next);
+        return;
+      }
       let final: Msg[];
       if (!res.ok) {
         setError(data.error || "Could not reach Powbot");
@@ -323,7 +345,14 @@ export default function Pow3Bot({ context }: Props) {
               Send
             </button>
           </form>
-          {error && <p className="px-3 pb-2 text-[10px] text-danger">{error}</p>}
+          {rateLimitWarning && (
+            <div role="alert" className="mx-3 mb-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-foreground">
+              <p>{rateLimitWarning.message}</p>
+              {rateLimitWarning.signIn && <Link href="/login" className="mt-1 inline-block font-semibold text-primary underline" onClick={() => setOpen(false)}>Sign in to continue</Link>}
+              <button type="button" className="ml-3 underline text-foreground-muted" onClick={() => setRateLimitWarning(null)}>Dismiss</button>
+            </div>
+          )}
+          {error && !rateLimitWarning && <p className="px-3 pb-2 text-[10px] text-danger">{error}</p>}
         </div>
       )}
     </>
