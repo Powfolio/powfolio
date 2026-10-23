@@ -31,7 +31,7 @@ export default function PrivacyPage() {
           <li>Reports you submit about another profile, including a required note and optional images.</li>
           <li>Signup IP, used only to rate-limit abuse.</li>
           <li>Powbot chat text, sent through our server to the model provider so the assistant can reply.</li>
-          <li>Profile snapshots and a 180-day retention archive after you delete an account, so ops can handle appeals or legal holds.</li>
+          <li>Profile snapshots and a 180-day retention archive after you delete an account, so we can handle appeals or legal holds.</li>
         </ul>
       </section>
       <section>
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-base font-semibold text-foreground">Who sees what</h2>
         <p className="mt-2">
-          Anything you mark public is visible on your profile URL. Super Admin ops can review accounts, reports, appeals, and retained snapshots. We do not sell profile data.
+          Anything you mark public is visible on your profile URL. We do not sell profile data.
         </p>
       </section>
       <section>
@@ -61,7 +61,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-base font-semibold text-foreground">Your choices</h2>
         <p className="mt-2">
-          You can edit or hide profile sections, hide emails, appeal a suspension, export a CV for yourself, and request deletion from the dashboard. For a copy of retained data after deletion, contact ops through the appeal flow.
+          You can edit or hide profile sections, hide emails, appeal a suspension, export a CV for yourself, and request deletion from the dashboard. For a copy of retained data after deletion, contact privacy@powfolio.xyz.
         </p>
       </section>
       <section>
