@@ -39,13 +39,13 @@ export default function TermsPage() {
           <li>No fake work, fake metrics, or fabricated accounts.</li>
           <li>No malware, spam, harassment, or illegal content.</li>
           <li>No scraping that burdens the product or copies private fields.</li>
-          <li>No asking Pow3Bot for investment advice or seed phrases.</li>
+          <li>No asking Powbot for investment advice or seed phrases.</li>
         </ul>
       </section>
       <section>
         <h2 className="text-base font-semibold text-foreground">Moderation</h2>
         <p className="mt-2">
-          Ops may review reports, suspend an account, or delete content that breaks these terms. You can appeal a suspension. Soft-deleted accounts stay in a 180-day retention window before purge.
+          Accounts may be reviewed. Content that breaks these terms may be removed, and an account may be suspended. You can appeal a suspension. Soft-deleted accounts stay in a 180-day retention window before purge.
         </p>
       </section>
       <section>
