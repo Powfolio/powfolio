@@ -19,8 +19,8 @@ export default function CookiesPage() {
         <h2 className="text-base font-semibold text-foreground">Necessary</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>Auth session cookies from Supabase so you stay signed in.</li>
-          <li>Theme preference in local storage (`pow3folio-theme`).</li>
-          <li>Cookie acknowledgement (`pow3folio-cookie-ack`).</li>
+          <li>Theme preference in local storage (`powfolio-theme`).</li>
+          <li>Cookie acknowledgement (`powfolio-cookie-ack`).</li>
           <li>A pending wallet address in local storage only until you finish sign-in.</li>
         </ul>
       </section>
