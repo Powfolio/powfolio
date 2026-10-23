@@ -2,26 +2,11 @@ import Link from "next/link";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import BrandMark from "@/components/ui/BrandMark";
 
-const LINKS = [
-  { href: "/features", label: "Features" },
-  { href: "/how", label: "How it works" },
-  { href: "/faq", label: "FAQ" },
-];
-
 export default function LandingNav({
   signedIn = false,
-  active,
 }: {
   signedIn?: boolean;
-  active?: "features" | "how" | "faq";
 }) {
-  function linkClass(href: string) {
-    const on = active && href === `/${active}`;
-    return `rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors ${
-      on ? "text-foreground" : "text-foreground-muted hover:text-foreground"
-    }`;
-  }
-
   return (
     <header className="sticky top-0 z-30 bg-background/78 backdrop-blur-xl">
       <div className="container-app flex h-16 items-center justify-between gap-3">
@@ -43,15 +28,6 @@ export default function LandingNav({
             </>
           )}
         </div>
-      </div>
-      <div className="border-t border-border/40">
-        <nav className="container-app flex h-10 items-center justify-center gap-1 overflow-x-auto" aria-label="Landing">
-          {LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className={linkClass(link.href)}>
-              {link.label}
-            </Link>
-          ))}
-        </nav>
       </div>
     </header>
   );
