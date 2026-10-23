@@ -3,8 +3,6 @@ import BrandMark from "@/components/ui/BrandMark";
 import { SITE_NAME } from "@/lib/site";
 
 const LINKS = [
-  { href: "/features", label: "Features" },
-  { href: "/how", label: "How it works" },
   { href: "/faq", label: "FAQ" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
