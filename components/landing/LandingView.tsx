@@ -40,7 +40,7 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
       <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-[0.035] dark:opacity-[0.055]" style={{ backgroundSize: "48px 48px" }} aria-hidden />
       <LandingNav signedIn={signedIn} />
       <main id="main" className="relative z-10">
-        <section className="container-app pb-12 pt-14 sm:pb-20 sm:pt-24">
+        <section className="container-app pb-8 pt-6 sm:pb-12 sm:pt-10">
           <div className="mx-auto max-w-3xl text-center">
             <p className="landing-reveal landing-delay-1 text-[11px] font-medium uppercase tracking-[0.2em] text-foreground-subtle">Live scores · real proof · one public link</p>
             <h1 className="landing-reveal landing-delay-2 mt-5 text-[2.15rem] font-semibold leading-[1.12] tracking-tight sm:text-5xl lg:text-[3.35rem]">
