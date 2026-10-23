@@ -38,7 +38,7 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
       <JsonLd />
       <LandingFocus target={focus} />
       <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-[0.035] dark:opacity-[0.055]" style={{ backgroundSize: "48px 48px" }} aria-hidden />
-      <LandingNav signedIn={signedIn} active={focus} />
+      <LandingNav signedIn={signedIn} />
       <main id="main" className="relative z-10">
         <section className="container-app pb-12 pt-14 sm:pb-20 sm:pt-24">
           <div className="mx-auto max-w-3xl text-center">
