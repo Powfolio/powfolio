@@ -41,7 +41,8 @@ export default async function FaqPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <LandingNav signedIn={Boolean(user)} />
-      <main id="main" className="container-app max-w-2xl py-10 sm:py-14">\n        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonForScript(faqJsonLd) }} />
+      <main id="main" className="container-app max-w-2xl py-10 sm:py-14">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonForScript(faqJsonLd) }} />
         <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-foreground-subtle">Help</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">FAQ</h1>
         <p className="mt-3 text-sm leading-relaxed text-foreground-muted">Short answers. For a live walkthrough, open Powbot.</p>
