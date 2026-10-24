@@ -44,8 +44,8 @@ export async function connectEthereumWallet(): Promise<string> {
       metadata: {
         name: "Powfolio",
         description: "Proof of work portfolio for Web3 builders",
-        url: "https://powfolio.xyz",
-        icons: ["https://powfolio.xyz/folio-mark.png"],
+        url: "https://www.powfolio.xyz",
+        icons: ["https://www.powfolio.xyz/folio-mark.png"],
       },
     });
 
