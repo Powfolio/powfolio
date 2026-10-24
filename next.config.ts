@@ -16,6 +16,11 @@ const cspReportOnly = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Captured once at build time so sitemap <lastmod> reflects the deployment,
+  // rather than changing on every sitemap request.
+  env: {
+    SITEMAP_BUILD_TIMESTAMP: new Date().toISOString(),
+  },
   images: {
     remotePatterns: [
       {
