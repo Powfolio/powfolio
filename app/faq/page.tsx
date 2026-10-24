@@ -3,6 +3,7 @@ import LandingNav from "@/components/landing/LandingNav";
 import SiteFooter from "@/components/legal/SiteFooter";
 import BackToTop from "@/components/ui/BackToTop";
 import { createClient } from "@/lib/supabase/server";
+import { safeJsonForScript } from "@/lib/security/safe-json";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -23,6 +24,16 @@ const FAQS: { q: string; a: string }[] = [
   { q: "Can I hide my email?", a: "You can hide any of your email addresses, but at least one email address must remain visible on your public profile." },
 ];
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.map(({ q, a }) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: { "@type": "Answer", text: a },
+  })),
+};
+
 export default async function FaqPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -31,6 +42,7 @@ export default async function FaqPage() {
     <div className="min-h-screen bg-background text-foreground">
       <LandingNav signedIn={Boolean(user)} />
       <main id="main" className="container-app max-w-2xl py-10 sm:py-14">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonForScript(faqJsonLd) }} />
         <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-foreground-subtle">Help</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">FAQ</h1>
         <p className="mt-3 text-sm leading-relaxed text-foreground-muted">Short answers. For a live walkthrough, open Powbot.</p>

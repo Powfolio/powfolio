@@ -5,7 +5,7 @@ export const SITE_URL = (
 ).replace(/\/$/, "");
 
 export const SITE_DESCRIPTION =
-  "A public proof-of-work profile for Web3 talent. One link for writing, trading, projects, airdrops, onchain activity, and a downloadable CV.";
+  "Powfolio is a proof-of-work portfolio and Web3 identity for professionals. Build a public portfolio, Web3 CV or resume, showcase work, and share one trusted talent profile.";
 
 export function absoluteUrl(path = "/") {
   if (/^https?:\/\//i.test(path)) return path;
