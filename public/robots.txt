@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://powfolio.xyz/sitemap.xml
