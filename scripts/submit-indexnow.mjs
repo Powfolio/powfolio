@@ -4,12 +4,12 @@
  * Run with: npm run indexnow:submit
  */
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://powfolio.xyz").replace(/\/$/, "");
-const KEY = (await fetch(new URL("/indexnow-key.txt", SITE_URL))).ok
-  ? (await (await fetch(new URL("/indexnow-key.txt", SITE_URL))).text()).trim()
-  : "";
+const keyResponse = await fetch(new URL("/indexnow-key.txt", SITE_URL));
+if (!keyResponse.ok) throw new Error("IndexNow key file unavailable: HTTP " + keyResponse.status);
+const KEY = (await keyResponse.text()).trim();
 
-if (!KEY || !/^[a-zA-Z0-9-]{8,128}$/.test(KEY)) {
-  throw new Error("IndexNow key file is missing or invalid at " + SITE_URL + "/indexnow-key.txt");
+if (!/^[a-zA-Z0-9-]{8,128}$/.test(KEY)) {
+  throw new Error("IndexNow key file is invalid at " + SITE_URL + "/indexnow-key.txt");
 }
 
 const sitemapResponse = await fetch(new URL("/sitemap.xml", SITE_URL));
@@ -26,7 +26,8 @@ const urls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)]
     }
   });
 
-if (!urls.length) throw new Error("No valid public URLs found in sitemap.xml");
+const uniqueUrls = [...new Set(urls)].slice(0, 10000);
+if (!uniqueUrls.length) throw new Error("No valid public URLs found in sitemap.xml");
 
 const response = await fetch("https://api.indexnow.org/indexnow", {
   method: "POST",
@@ -35,7 +36,7 @@ const response = await fetch("https://api.indexnow.org/indexnow", {
     host: new URL(SITE_URL).host,
     key: KEY,
     keyLocation: new URL("/indexnow-key.txt", SITE_URL).toString(),
-    urlList: [...new Set(urls)].slice(0, 10000),
+    urlList: uniqueUrls,
   }),
 });
 
@@ -43,4 +44,4 @@ if (!response.ok) {
   const detail = await response.text().catch(() => "");
   throw new Error("IndexNow submission failed: HTTP " + response.status + (detail ? " — " + detail : ""));
 }
-console.log("IndexNow accepted " + urls.length + " sitemap URLs for " + SITE_URL + ". This confirms submission, not indexing.");
+console.log("IndexNow accepted " + uniqueUrls.length + " sitemap URLs for " + SITE_URL + ". Submission does not guarantee indexing.");
