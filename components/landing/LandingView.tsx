@@ -93,6 +93,32 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
             ))}
           </div>
         </section>
+        <section aria-labelledby="audience-heading" className="container-app pb-20 sm:pb-24">
+          <div className="mx-auto max-w-3xl">
+            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-foreground-subtle">One portfolio, real evidence</p>
+            <h2 id="audience-heading" className="mt-3 text-center text-[1.7rem] font-semibold tracking-tight sm:text-4xl">A professional portfolio built around what you can prove.</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-center text-sm leading-relaxed text-foreground-muted">
+              Powfolio is a proof-of-work portfolio and public talent profile for people building online. Bring your projects, writing, skills, work history, and credentials into one shareable profile—whether your work is in Web3 or a broader digital career. Use it as a Web3 CV or trader portfolio, and organize relevant airdrop activity and NFT collectibles alongside the rest of your proof.
+            </p>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-xl border border-border/50 p-5">
+                <h3 className="text-base font-semibold">For Web3 and onchain talent</h3>
+                <p className="mt-2 text-sm leading-relaxed text-foreground-muted">
+                  Build a Web3 portfolio, crypto portfolio, or onchain resume with space for trading records, airdrop activity, collectibles, community roles, and project contributions. Make your work easier to review than a scattered list of links.
+                </p>
+              </div>
+              <div className="rounded-xl border border-border/50 p-5">
+                <h3 className="text-base font-semibold">For independent professionals</h3>
+                <p className="mt-2 text-sm leading-relaxed text-foreground-muted">
+                  Present writing, research, skills, projects, and experience in a professional talent profile. Use it as a writing portfolio, community portfolio, builder profile, or a shareable alternative to a traditional CV.
+                </p>
+              </div>
+            </div>
+            <p className="mx-auto mt-5 max-w-2xl text-center text-sm leading-relaxed text-foreground-muted">
+              Profile Score reflects profile completeness. Builder Score reflects the evidence you add. These scores help organize your profile; they are not a guarantee of hiring, trading performance, or independent verification of every claim.
+            </p>
+          </div>
+        </section>
         <section id="how" className="container-app scroll-mt-20 pb-20 sm:pb-28">
           <div className="mx-auto mb-12 max-w-2xl text-center">
             <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-foreground-subtle">How it works</p>
