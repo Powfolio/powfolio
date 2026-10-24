@@ -98,7 +98,7 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
             <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-foreground-subtle">One portfolio, real evidence</p>
             <h2 id="audience-heading" className="mt-3 text-center text-[1.7rem] font-semibold tracking-tight sm:text-4xl">A professional portfolio built around what you can prove.</h2>
             <p className="mx-auto mt-4 max-w-2xl text-center text-sm leading-relaxed text-foreground-muted">
-              Powfolio is a proof-of-work portfolio and public talent profile for people building online. Bring your projects, writing, skills, work history, and credentials into one shareable profile—whether your work is in Web3 or a broader digital career. Use it as a Web3 CV or trader portfolio, and organize relevant airdrop activity and NFT collectibles alongside the rest of your proof.
+              Powfolio is a proof-of-work portfolio and public talent profile for people building online. Bring your projects, writing, skills, work history, and credentials into one shareable profile—whether your work is in Web3 or a broader digital career. Use it as a Web3 CV or trader portfolio, with relevant airdrop activity and NFT collectibles supporting your wider airdrop portfolio or NFT portfolio.
             </p>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl border border-border/50 p-5">
