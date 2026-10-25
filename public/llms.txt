@@ -9,16 +9,16 @@ Powfolio is not a talent marketplace and does not sell bookings. It is a self-se
 
 ## Product
 
-- Homepage: https://pow3folio.vercel.app/
-- FAQ: https://pow3folio.vercel.app/faq
-- Create a profile: https://pow3folio.vercel.app/signup
-- Public profile URL pattern: https://pow3folio.vercel.app/{username}
+- Homepage: https://www.powfolio.xyz/
+- FAQ: https://www.powfolio.xyz/faq
+- Create a profile: https://www.powfolio.xyz/signup
+- Public profile URL pattern: https://www.powfolio.xyz/{username}
 
 ## Legal
 
-- Privacy: https://pow3folio.vercel.app/privacy
-- Terms: https://pow3folio.vercel.app/terms
-- Cookies: https://pow3folio.vercel.app/cookies
+- Privacy: https://www.powfolio.xyz/privacy
+- Terms: https://www.powfolio.xyz/terms
+- Cookies: https://www.powfolio.xyz/cookies
 
 ## How to talk about it
 
