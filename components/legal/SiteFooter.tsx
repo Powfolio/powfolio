@@ -134,7 +134,7 @@ export default function SiteFooter() {
                 className="grid h-7 w-7 place-items-center opacity-55 grayscale transition-all duration-200 hover:opacity-100 hover:grayscale-0"
               >
                 <img
-                  src={"icon" in item ? item.icon : `https://cdn.simpleicons.org/${item.domain.split(".")[0]}`}
+                  src={"icon" in item ? item.icon : `https://www.google.com/s2/favicons?domain=${item.domain}&sz=64`}
                   alt=""
                   width={24}
                   height={24}
