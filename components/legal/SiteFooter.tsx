@@ -22,11 +22,12 @@ const INTEGRATIONS = [
   { name: "Alchemy", domain: "alchemy.com", href: "https://www.alchemy.com" },
   { name: "Reservoir", domain: "reservoir.tools", href: "https://reservoir.tools" },
   { name: "OpenSea", domain: "opensea.io", href: "https://opensea.io" },
-  { name: "Gemini", domain: "ai.google.dev", href: "https://ai.google.dev" },
+  { name: "Gemini", domain: "gemini.google.com", href: "https://gemini.google.com" },
   { name: "IPFS", domain: "ipfs.tech", href: "https://ipfs.tech" },
   { name: "Arweave", domain: "arweave.org", href: "https://www.arweave.org" },
   { name: "KiiChain", domain: "kiichain.io", href: "https://www.kiichain.io" },
   { name: "DEX Screener", domain: "dexscreener.com", href: "https://dexscreener.com" },
+  { name: "Resend", domain: "resend.com", href: "https://resend.com" },
 ];
 
 export default function SiteFooter() {
@@ -35,7 +36,10 @@ export default function SiteFooter() {
       <div className="container-app py-12 sm:py-16">
         <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
           <div>
-            <BrandMark href="/" />
+            <div className="flex items-center gap-2">
+              <BrandMark href="/" />
+              <span className="text-sm font-semibold tracking-tight text-foreground">{SITE_NAME}</span>
+            </div>
             <p className="mt-4 max-w-md text-sm leading-6 text-foreground-muted">
               A professional home for your proof of work, built to make real experience easier to discover and trust.
             </p>
@@ -114,7 +118,7 @@ export default function SiteFooter() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                <Mail className="h-4.5 w-4.5" aria-hidden="true" />
+                <Mail className="h-4 w-4" aria-hidden="true" />
               </span>
               <div>
                 <h2 id="footer-contact-heading" className="text-sm font-semibold text-foreground">Need to reach us?</h2>
