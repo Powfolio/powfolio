@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronDown, Mail } from "lucide-react";
+import { ChevronDown, Github, Mail } from "lucide-react";
 import BrandMark from "@/components/ui/BrandMark";
 import { SITE_NAME } from "@/lib/site";
 
@@ -86,9 +86,7 @@ export default function SiteFooter() {
               aria-label="POWFOLIO on GitHub"
               className="grid h-9 w-9 place-items-center rounded-full border border-border text-foreground-muted transition-colors hover:border-border-strong hover:text-foreground"
             >
-              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
-                <path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.17c-3.22.7-3.9-1.37-1.3-1.71 0 0 1.06-.73.08-.72 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.41-1.27.74-1.56-2.57-.29-5.27-1.29-5.27-5.74 0-1.27.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.16 1.19a10.98 10.98 0 0 1 5.76 0c2.19-1.5 3.16-1.19 3.16-1.19.63 1.59.23 2.77.11 3.06.74.81 1.19 1.84 1.19 3.11 0 4.46-2.71 5.44-5.29 5.73.42.36.79 1.07.79 2.16v3.2c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z" />
-              </svg>
+              <Github className="h-4 w-4" aria-hidden="true" />
             </a>
             <a
               href="mailto:support@powfolio.xyz"
