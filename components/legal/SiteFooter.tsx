@@ -8,8 +8,7 @@ const GROUPS = [
     title: "Resources",
     links: [
       { href: "/faq", label: "Help center" },
-      { href: "mailto:dev@powfolio.xyz?subject=API%20or%20development%20question", label: "API & development" },
-      { href: "mailto:dev@powfolio.xyz?subject=Documentation%20question", label: "Documentation" },
+      { href: "/docs/Powfolio_White_Paper_v2.pdf", label: "White paper", external: true },
     ],
   },
   {
@@ -27,9 +26,8 @@ const STACK = [
   { name: "Reservoir", domain: "reservoir.tools", href: "https://reservoir.tools" },
   { name: "OpenSea", domain: "opensea.io", href: "https://opensea.io" },
   { name: "IPFS", icon: "https://cdn.simpleicons.org/ipfs", href: "https://ipfs.tech" },
-  { name: "Arweave", icon: "https://cdn.simpleicons.org/arweave", href: "https://arweave.org" },
   { name: "KiiChain", domain: "kiichain.io", href: "https://kiichain.io" },
-  { name: "DEX Screener", icon: "https://cdn.simpleicons.org/dexscreener", href: "https://dexscreener.com" },
+  { name: "DEX Screener", icon: "https://brandlogos.sgp1.digitaloceanspaces.com/svg/arcticons/dex-screener.svg", href: "https://dexscreener.com" },
   { name: "Resend", domain: "resend.com", href: "https://resend.com" },
 ];
 
