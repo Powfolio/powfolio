@@ -87,12 +87,12 @@ export function welcomeEmail(opts: { name?: string | null; username?: string | n
     `Open your dashboard: ${origin}/dashboard`,
     opts.username ? `Public profile: ${origin}/${opts.username}` : "",
     "",
-    "If you did not create this account, contact support@powfolio.com.",
+    "If you did not create this account, contact support@powfolio.xyz.",
   ]
     .filter(Boolean)
     .join("\n");
   const html = `<p>Welcome to Powfolio, <strong>${greet}</strong>.</p><p>Your proof-of-work profile is ready. Add your work, connect a wallet, and link GitHub or X when you want them on the public page.</p><p><a href="${origin}/dashboard">Open your dashboard</a></p>${
     opts.username ? `<p>Public profile: <a href="${origin}/${opts.username}">${origin}/${opts.username}</a></p>` : ""
-  }<p>If you did not create this account, contact support@powfolio.com.</p>`;
+  }<p>If you did not create this account, contact support@powfolio.xyz.</p>`;
   return { subject, text, html };
 }
