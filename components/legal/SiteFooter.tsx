@@ -8,7 +8,7 @@ const GROUPS = [
     title: "Resources",
     links: [
       { href: "/faq", label: "Help center" },
-      { href: "/docs/Powfolio_White_Paper_v2.pdf", label: "White paper", external: true },
+      { href: "/docs/Powfolio_White_Paper.md", label: "White paper", external: true },
     ],
   },
   {
