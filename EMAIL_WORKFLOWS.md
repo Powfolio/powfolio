@@ -33,7 +33,7 @@ Do not email Super Admin internal events (snapshot views, legal hold, exports) t
 ## 5. Talent deleted their own account
 - Function: `accountDeletedEmail`
 - Subject: Your Powfolio account "{username}" has been deleted
-- Message: public profile gone, sign-in disabled, restricted archive until {purgeAt}, then permanent removal. If unexpected, contact support@powfolio.com.
+- Message: public profile gone, sign-in disabled, restricted archive until {purgeAt}, then permanent removal. If unexpected, contact support@powfolio.xyz.
 
 ## 6. Super Admin deleted / archived an account
 - Same template as #5, plus one line that Trust & Safety took the action.
@@ -71,8 +71,8 @@ Do not email Super Admin internal events (snapshot views, legal hold, exports) t
 ## 13. Snapshot / history / export viewed
 - Do not email the talent. Audit only.
 
-## 14. Password login (Supabase-owned)
-- Password sign-in stays on Supabase (`/api/auth/password-login`).
+## 14. Password login
+- Password sign-in stays on the existing authentication flow (`/api/auth/password-login`).
 - Do not invent a second password system.
 
 ## 15. Email verification OTP
@@ -85,7 +85,7 @@ Do not email Super Admin internal events (snapshot views, legal hold, exports) t
 
 ## 16. Forgotten password
 - When: Login "Forgot password?" on `/login`.
-- Today: Supabase Auth sends the reset mail via `resetPasswordForEmail` to `/auth/update-password`.
+- Today: the existing authentication service sends the reset mail via `resetPasswordForEmail` to `/auth/update-password`.
 - Function: `passwordResetEmail` — template ready for the Resend cutover.
 - Subject: Reset your Powfolio password
 - Message: they asked to reset the password; link expires; ignore the mail if they did not request it.
@@ -96,10 +96,10 @@ Do not email Super Admin internal events (snapshot views, legal hold, exports) t
 - Function: `welcomeEmail`
 - Status: Template ready. Wire `sendTransactionalEmail(welcomeEmail(...))` when mail work is turned on. Do not send on every later login.
 - Subject: Welcome to Powfolio
-- Message: account is ready; dashboard link; they can connect wallet / GitHub / X; support@powfolio.com.
+- Message: account is ready; dashboard link; they can connect wallet / GitHub / X; support@powfolio.xyz.
 
 ## Implementation notes when mail work starts
-1. Set `RESEND_API_KEY` and `MAIL_FROM` on Vercel.
+1. Set `RESEND_API_KEY` and `MAIL_FROM` in the production environment.
 2. Keep sends server-side only.
 3. Never put reporter identity, evidence URLs, snapshot payloads, or legal-hold reasons in talent email.
 4. If Resend is missing, `sendTransactionalEmail` already no-ops and logs `mail skipped`.
