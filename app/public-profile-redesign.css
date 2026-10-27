@@ -1,0 +1,100 @@
+/* Cleaner public profile section treatment */
+.public-section {
+  margin-bottom: 2.5rem;
+}
+.public-section-kicker {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(var(--foreground-subtle));
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+.public-section-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.4rem;
+}
+.public-section-desc {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: rgb(var(--foreground-muted));
+  margin: 0 0 1.25rem;
+  max-width: 42rem;
+}
+.public-skill-card {
+  padding: 1rem 0;
+  border-top: 1px solid rgb(var(--border) / 0.6);
+}
+.public-skill-card:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+.public-skill-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgb(var(--primary));
+  letter-spacing: 0.08em;
+  margin-bottom: 0.25rem;
+}
+.public-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+@media (min-width: 640px) {
+  .public-metric-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.public-metric {
+  padding: 0.9rem 0.85rem;
+  border: 1px solid rgb(var(--border));
+  border-radius: 12px;
+  background: rgb(var(--surface));
+}
+.public-metric-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(var(--foreground-subtle));
+  margin-bottom: 0.35rem;
+}
+.public-metric-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.public-trade-table {
+  width: 100%;
+  font-size: 12.5px;
+  border-collapse: collapse;
+}
+.public-trade-table th {
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(var(--foreground-subtle));
+  padding: 0.5rem 0.4rem;
+  border-bottom: 1px solid rgb(var(--border));
+  font-weight: 600;
+}
+.public-trade-table td {
+  padding: 0.65rem 0.4rem;
+  border-bottom: 1px solid rgb(var(--border) / 0.5);
+}
+.public-wallet-chip {
+  border: 1px solid rgb(var(--border));
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgb(var(--surface));
+}
+.public-wallet-chip.active {
+  border-color: rgb(var(--primary));
+  color: rgb(var(--primary));
+  background: rgb(var(--primary) / 0.08);
+}
