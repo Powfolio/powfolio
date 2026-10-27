@@ -8,6 +8,7 @@ import "./palette-lock.css";
 import "./ux-refine.css";
 import "./auth-ui-preloader.css";
 import "./route-loader.css";
+import "./public-profile-redesign.css";
 import Pow3Bot from "@/components/ai/Pow3Bot";
 import { BrandProvider } from "@/components/ui/BrandProvider";
 import { loadSiteBrand } from "@/lib/site-brand";
