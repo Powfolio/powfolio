@@ -21,7 +21,7 @@ function AboutCopy({ text }: { text: string }) {
   const preview = long ? text.trim().slice(0, ABOUT_LIMIT).trimEnd() : text;
   return (
     <div>
-      <h3 className={HEADING}>About</h3>
+      <h3 className="public-section-title">About</h3>
       <p className="whitespace-pre-wrap text-sm leading-relaxed break-words text-foreground">
         {open || !long ? text : preview}
         {!open && long ? "..." : ""}
@@ -62,8 +62,6 @@ function siteLogo(url: string | null | undefined) {
 
 type TabId = "about" | "projects" | "writing" | "trading" | "airdrops" | "onchain";
 
-const HEADING = "section-heading text-sm font-extrabold tracking-wide text-amber-700/90 dark:text-amber-400/75";
-
 type Props = {
   profileUrl: string;
   longBio: string | null;
@@ -89,15 +87,25 @@ type Props = {
   showDustTokens?: boolean;
 };
 
+function SectionHead({ num, title, desc }: { num: string; title: string; desc?: string }) {
+  return (
+    <div className="mb-5">
+      <p className="public-section-kicker">{num}</p>
+      <h3 className="public-section-title">{title}</h3>
+      {desc && <p className="public-section-desc">{desc}</p>}
+    </div>
+  );
+}
+
 export default function PublicProfileTabs({
   profileUrl, longBio, skills, workExperience, education, tradingPlatforms, credentials, writings, trades, updatesByTrade, community, airdrops, nfts, walletAddress, ensName, arkhamUrl, showWriting, showTrading, showCommunity, showAirdrops, showOnchain, showDustTokens = false,
 }: Props) {
   const allTabs: { id: TabId; label: string; show: boolean }[] = [
     { id: "about", label: "About", show: true },
-    { id: "projects", label: "Projects / Collab", show: showCommunity },
-    { id: "writing", label: "Technical Writing / Research", show: showWriting },
-    { id: "trading", label: "Trading Record", show: showTrading },
-    { id: "onchain", label: "Onchain Stats", show: showOnchain },
+    { id: "projects", label: "Projects", show: showCommunity },
+    { id: "writing", label: "Writing", show: showWriting },
+    { id: "trading", label: "Trading", show: showTrading },
+    { id: "onchain", label: "Onchain", show: showOnchain },
     { id: "airdrops", label: "Airdrops", show: showAirdrops },
   ];
   const tabs = allTabs.filter((t) => t.show);
@@ -119,69 +127,70 @@ export default function PublicProfileTabs({
   }
 
   return (
-    <div className="mt-5 sm:mt-6">
-      <div className="sticky top-0 z-20 -mx-1 border-b border-border/80 bg-background/95 backdrop-blur-sm">
+    <div className="mt-8 sm:mt-10">
+      <div className="sticky top-0 z-20 -mx-1 border-b border-border/60 bg-background/95 backdrop-blur-sm">
         <div className="flex gap-0 overflow-x-auto scrollbar-none px-1" style={{ WebkitOverflowScrolling: "touch" }} role="tablist">
           {tabs.map((t) => {
             const isActive = active === t.id;
             return (
-              <button key={t.id} type="button" role="tab" aria-selected={isActive} onClick={() => selectTab(t.id)} className={`relative shrink-0 px-3.5 py-3 text-sm font-medium transition-colors whitespace-nowrap ${isActive ? "text-foreground" : "text-foreground-muted hover:text-foreground"}`}>
+              <button key={t.id} type="button" role="tab" aria-selected={isActive} onClick={() => selectTab(t.id)} className={`relative shrink-0 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${isActive ? "text-foreground" : "text-foreground-muted hover:text-foreground"}`}>
                 {t.label}
-                {isActive && <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-primary" />}
+                {isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-primary" />}
               </button>
             );
           })}
         </div>
       </div>
 
-      <div key={animKey} className="tab-panel-enter pt-4 pb-8">
+      <div key={animKey} className="tab-panel-enter pt-6 pb-12">
         {active === "about" && (
-          <div className="space-y-5">
-            <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed rounded-lg border border-border/60 bg-surface/40 px-3 py-2.5">
-              Skills, background, work history, education and credentials. Tap a skill chip to read the full brief. Company links on experience open the project or employer page.
-            </p>
+          <div className="space-y-10">
             {skills.length > 0 && (
               <div>
-                <h3 className={HEADING}>Skills / Service pillars</h3>
-                <div className="flex flex-wrap gap-1.5">
+                <SectionHead num="01 / SKILLS" title="Skill pillars" desc="Named skills with a short brief. Tap a chip to read the full description." />
+                <div className="flex flex-wrap gap-2">
                   {skills.map((skill) => (
-                    <button key={skill.name} type="button" onClick={() => setSkillPopup(skill)} className="inline-flex items-center rounded-full border border-primary bg-transparent px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/10 transition-colors">
+                    <button key={skill.name} type="button" onClick={() => setSkillPopup(skill)} className="inline-flex items-center rounded-full border border-primary/70 bg-transparent px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors">
                       {skill.name}
                     </button>
                   ))}
                 </div>
               </div>
             )}
-            {longBio && <AboutCopy text={longBio} />}
+            {longBio && (
+              <div>
+                <SectionHead num="02 / ABOUT" title="Background" />
+                <AboutCopy text={longBio} />
+              </div>
+            )}
             {workExperience.length > 0 && (
               <div>
-                <h3 className={HEADING}>Work experience</h3>
-                <div className="space-y-4">
-                  {workExperience.map((w, i) => {
+                <SectionHead num="03 / EXPERIENCE" title="Work experience" desc="Roles with company links when provided." />
+                <div className="space-y-6">
+                  {workExperience.map((w) => {
                     const achievements = achievementLines(w.achievements);
                     return (
-                    <div key={w.id} className={i > 0 ? "pt-3 border-t border-border/50" : ""}>
-                      <div className="min-w-0">
-                        {w.url ? <a href={w.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center font-medium text-sm hover:text-primary"><span className="mr-2"><Mark src={w.logo_url || siteLogo(w.url)} fallback={w.company} /></span>{w.company}</a> : <span className="inline-flex items-center font-medium text-sm"><span className="mr-2"><Mark fallback={w.company} /></span>{w.company}</span>}
-                        <p className="text-xs text-foreground-muted mt-0.5">{w.role} · {w.employment_type === "full-time" ? "Full-time" : "Part-time"}</p>
-                        <p className="text-xs text-foreground-subtle mt-0.5">{w.start_date}{w.end_date ? ` → ${w.end_date}` : " → Present"}</p>
-                        {w.description && <p className="mt-1 text-xs text-foreground-muted leading-relaxed">{w.description}</p>}
-                        {achievements.length > 0 && (
-                          <div className="mt-2.5">
-                            <div className="h-px bg-border/80" aria-hidden />
-                            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground-subtle">Achievements</p>
-                            <ul className="mt-1.5 space-y-1.5">
-                              {achievements.map((line, index) => (
-                                <li key={`${w.id}-ach-${index}`} className="flex items-start gap-2 text-xs leading-relaxed text-foreground">
-                                  <span className="mt-px shrink-0 text-primary" aria-hidden>•</span>
-                                  <span className="min-w-0">{line}</span>
-                                </li>
-                              ))}
-                            </ul>
+                      <div key={w.id} className="public-skill-card">
+                        <div className="flex items-start gap-3">
+                          <Mark src={w.logo_url || siteLogo(w.url)} fallback={w.company} />
+                          <div className="min-w-0">
+                            {w.url ? <a href={w.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary">{w.company}</a> : <span className="font-medium text-sm">{w.company}</span>}
+                            <p className="text-xs text-foreground-muted mt-0.5">{w.role} · {w.employment_type === "full-time" ? "Full-time" : "Part-time"}</p>
+                            <p className="text-xs text-foreground-subtle mt-0.5">{w.start_date}{w.end_date ? ` → ${w.end_date}` : " → Present"}</p>
+                            {w.description && <p className="mt-1.5 text-xs text-foreground-muted leading-relaxed">{w.description}</p>}
+                            {achievements.length > 0 && (
+                              <ul className="mt-2 space-y-1">
+                                {achievements.map((line, index) => (
+                                  <li key={`${w.id}-ach-${index}`} className="flex items-start gap-2 text-xs leading-relaxed text-foreground">
+                                    <span className="mt-px shrink-0 text-primary">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
-                    </div>
                     );
                   })}
                 </div>
@@ -189,14 +198,18 @@ export default function PublicProfileTabs({
             )}
             {education.length > 0 && (
               <div>
-                <h3 className={HEADING}>Education</h3>
-                <div className="space-y-4">
-                  {education.map((e, i) => (
-                    <div key={e.id} className={i > 0 ? "pt-3 border-t border-border/50" : ""}>
-                      {e.url ? <a href={e.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center font-medium text-sm hover:text-primary"><span className="mr-2"><Mark src={e.logo_url || siteLogo(e.url)} fallback={e.institution} /></span>{e.institution}</a> : <span className="inline-flex items-center font-medium text-sm"><span className="mr-2"><Mark fallback={e.institution} /></span>{e.institution}</span>}
-                      <p className="text-xs text-foreground-muted mt-0.5">{[e.degree, e.field_of_study].filter(Boolean).join(" · ")}</p>
-                      <p className="text-xs text-foreground-subtle mt-0.5">{[e.country, e.start_year && e.end_year ? `${e.start_year} - ${e.end_year}` : e.start_year || e.end_year].filter(Boolean).join(" · ")}</p>
-                      {e.description && <p className="mt-1 text-xs text-foreground-muted">{e.description}</p>}
+                <SectionHead num="04 / EDUCATION" title="Education" />
+                <div className="space-y-5">
+                  {education.map((e) => (
+                    <div key={e.id} className="public-skill-card">
+                      <div className="flex items-start gap-3">
+                        <Mark src={e.logo_url || siteLogo(e.url)} fallback={e.institution} />
+                        <div>
+                          {e.url ? <a href={e.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary">{e.institution}</a> : <span className="font-medium text-sm">{e.institution}</span>}
+                          <p className="text-xs text-foreground-muted mt-0.5">{[e.degree, e.field_of_study].filter(Boolean).join(" · ")}</p>
+                          <p className="text-xs text-foreground-subtle mt-0.5">{[e.country, e.start_year && e.end_year ? `${e.start_year} - ${e.end_year}` : e.start_year || e.end_year].filter(Boolean).join(" · ")}</p>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -204,32 +217,24 @@ export default function PublicProfileTabs({
             )}
             {credentials.length > 0 && (
               <div>
-                <h3 className={HEADING}>Docs & credentials</h3>
+                <SectionHead num="05 / DOCS" title="Credentials" />
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   {credentials.map((doc) => (
                     <a key={doc.id} href={doc.file_url} target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center gap-2">
                       <CredentialThumb doc={doc} className="h-36 w-full" />
-                      <div className="w-full text-center">
-                        <p className="text-xs font-medium text-foreground line-clamp-2 break-words">{doc.title}</p>
-                        {(doc.issuer || doc.file_name) && <p className="mt-0.5 text-[10px] text-foreground-subtle line-clamp-1">{[doc.issuer, doc.file_name].filter(Boolean).join(" · ")}</p>}
-                      </div>
+                      <p className="text-xs font-medium text-center line-clamp-2">{doc.title}</p>
                     </a>
                   ))}
                 </div>
               </div>
             )}
-            {skills.length === 0 && !longBio && workExperience.length === 0 && education.length === 0 && credentials.length === 0 && (
-              <div className="text-sm text-foreground-subtle">No about details yet.</div>
-            )}
           </div>
         )}
 
         {active === "projects" && (
-          <div className="space-y-4">
-            <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed rounded-lg border border-border/60 bg-surface/40 px-3 py-2.5">
-              This section showcases personal builds, partnerships and community work. Every card is something this talent shipped, co-built or ran.
-            </p>
-            {community.length === 0 ? <div className="card text-sm text-foreground-subtle">No projects or collaborations yet.</div> : (
+          <div>
+            <SectionHead num="01 / PROJECTS" title="Projects & collaborations" desc="Personal builds, partnerships and community work." />
+            {community.length === 0 ? <div className="text-sm text-foreground-subtle">No projects yet.</div> : (
               <div className="tight-cards tight-cards-4">{community.map((c) => <CommunityCard key={c.id} item={c} profileUrl={profileUrl} />)}</div>
             )}
           </div>
@@ -237,20 +242,17 @@ export default function PublicProfileTabs({
 
         {active === "writing" && (
           <div>
-            {writings.length === 0 ? <div className="card text-sm text-foreground-subtle">No technical writing or research yet.</div> : (
+            <SectionHead num="01 / WRITING" title="Technical writing" desc="Threads, essays and research." />
+            {writings.length === 0 ? <div className="text-sm text-foreground-subtle">No writing yet.</div> : (
               <div className="tight-cards tight-cards-3">
                 {writings.map((w) => {
                   const imgs = [w.thumbnail_url, w.image_url_2, siteLogo(w.url)].filter((u): u is string => !!u);
                   return (
-                    <article key={w.id} className="card flex h-auto w-full flex-col overflow-hidden p-0 transition-all duration-200 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-md">
+                    <article key={w.id} className="card flex flex-col overflow-hidden p-0">
                       {imgs.length > 0 && <TradeImageCarousel images={imgs} href={w.url} hideEmpty className="aspect-[16/10] w-full" />}
-                      <div className="flex flex-col p-2.5 sm:p-3">
-                        <a href={w.url} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline line-clamp-2 text-xs sm:text-sm">{w.title}</a>
-                        {w.description && <p className="mt-1 text-[11px] sm:text-xs text-foreground-muted line-clamp-2">{w.description}</p>}
-                        <div className="mt-2 flex items-center justify-between gap-2">
-                          <div className="flex min-w-0 flex-wrap gap-1 text-[10px] text-foreground-subtle">{w.published_at && <span>{w.published_at}</span>}</div>
-                          <ShareButton title={w.title} url={w.url} />
-                        </div>
+                      <div className="p-3">
+                        <a href={w.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary line-clamp-2">{w.title}</a>
+                        {w.description && <p className="mt-1 text-xs text-foreground-muted line-clamp-2">{w.description}</p>}
                       </div>
                     </article>
                   );
@@ -261,18 +263,19 @@ export default function PublicProfileTabs({
         )}
 
         {active === "trading" && (
-          <div className="space-y-4">
+          <div>
+            <SectionHead num="01 / TRADING" title="Trading record" desc="Live calls with entries and exits." />
             {tradingPlatforms.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2 mb-5">
                 {tradingPlatforms.map((p) => (
-                  <a key={p.id} href={p.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-elevated pl-1 pr-2.5 py-1 text-xs font-medium transition-all hover:border-primary/40 hover:text-primary">
-                    <PlatformLogo name={p.name} size={18} className="h-[18px] w-[18px]" />
+                  <a key={p.id} href={p.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface pl-1 pr-3 py-1 text-xs font-medium hover:border-primary/40">
+                    <PlatformLogo name={p.name} size={16} />
                     {p.name}
                   </a>
                 ))}
               </div>
             )}
-            {trades.length === 0 ? <div className="card text-sm text-foreground-subtle">No trades yet.</div> : (
+            {trades.length === 0 ? <div className="text-sm text-foreground-subtle">No trades yet.</div> : (
               <div className="tight-cards tight-cards-3">{trades.map((t) => <TradeCard key={t.id} trade={t} updates={updatesByTrade[t.id] ?? []} profileUrl={profileUrl} />)}</div>
             )}
           </div>
@@ -280,25 +283,29 @@ export default function PublicProfileTabs({
 
         {active === "airdrops" && (
           <div>
-            {airdrops.length === 0 ? <div className="card text-sm text-foreground-subtle">No airdrops yet.</div> : (
+            <SectionHead num="01 / AIRDROPS" title="Airdrops" desc="Campaigns farmed, qualified or claimed." />
+            {airdrops.length === 0 ? <div className="text-sm text-foreground-subtle">No airdrops yet.</div> : (
               <div className="tight-cards tight-cards-3">{airdrops.map((a) => <AirdropCard key={a.id} item={a} profileUrl={profileUrl} />)}</div>
             )}
           </div>
         )}
 
         {active === "onchain" && (
-          <OnchainSection profileUrl={profileUrl} nfts={nfts} walletAddress={walletAddress} ensName={ensName} arkhamUrl={arkhamUrl} showDustTokens={showDustTokens} />
+          <div>
+            <SectionHead num="01 / ONCHAIN" title="Onchain footprint" desc="Wallet activity across connected chains." />
+            <OnchainSection profileUrl={profileUrl} nfts={nfts} walletAddress={walletAddress} ensName={ensName} arkhamUrl={arkhamUrl} showDustTokens={showDustTokens} />
+          </div>
         )}
       </div>
 
       {skillPopup && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm" onClick={() => setSkillPopup(null)} role="dialog" aria-modal="true">
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-background p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-3">
-              <span className="inline-flex rounded-full border border-primary px-2.5 py-1 text-xs font-semibold text-primary">{skillPopup.name}</span>
-              <button type="button" className="btn-ghost text-sm px-2" onClick={() => setSkillPopup(null)} aria-label="Close">×</button>
+              <span className="inline-flex rounded-full border border-primary px-3 py-1 text-xs font-semibold text-primary">{skillPopup.name}</span>
+              <button type="button" className="text-sm" onClick={() => setSkillPopup(null)} aria-label="Close">×</button>
             </div>
-            <p className="mt-3 text-sm leading-relaxed text-foreground-muted whitespace-pre-wrap">{skillPopup.description?.trim() || "No description added for this skill yet."}</p>
+            <p className="mt-3 text-sm leading-relaxed text-foreground-muted whitespace-pre-wrap">{skillPopup.description?.trim() || "No description added yet."}</p>
           </div>
         </div>
       )}
