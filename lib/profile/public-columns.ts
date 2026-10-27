@@ -9,6 +9,7 @@ export const PUBLIC_PROFILE_COLUMNS = [
   "banner_url",
   "open_to_work",
   "ens_name",
+  "wallet_address",
   "x_url",
   "github_url",
   "telegram_url",
