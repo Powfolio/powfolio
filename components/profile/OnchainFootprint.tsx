@@ -438,7 +438,39 @@ export default function OnchainFootprint({
           <a href={`https://zkcodex.com/id/${activeWallet}`} target="_blank" rel="noopener noreferrer" className="rounded-full border border-border bg-surface-elevated px-2.5 py-1 text-[11px] font-medium hover:border-primary/40 hover:text-primary">zkCodex</a>
         </div>
       </div>
-      {loading && <div className="card p-3 text-sm text-foreground-muted">Reading onchain footprint<span className="load-dots" aria-hidden><i /><i /><i /></span><span className="ml-2 text-[11px] text-foreground-subtle">Try {loadStage} of 3</span></div>}
+      {loading && (
+        <div className="card p-3 text-sm text-foreground-muted">
+          <div className="flex items-center gap-3">
+            <div className="onchain-loader" aria-hidden />
+            <span>Reading onchain footprint</span>
+          </div>
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-border/60">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(95, 20 + loadStage * 25)}%` }} />
+          </div>
+          <p className="mt-1 text-[11px] text-foreground-subtle">{Math.min(95, 20 + loadStage * 25)}%</p>
+          <style>{`
+            .onchain-loader {
+              width: 40px; height: 26px;
+              --c: no-repeat linear-gradient(currentColor 0 0);
+              background: var(--c) 0 100%, var(--c) 50% 100%, var(--c) 100% 100%;
+              background-size: 8px calc(100% - 4px);
+              position: relative;
+              color: #c9a227;
+            }
+            .onchain-loader:before {
+              content: "";
+              position: absolute;
+              width: 8px; height: 8px;
+              border-radius: 50%;
+              background: currentColor;
+              left: 0; top: 0;
+              animation: l3-1 1.5s linear infinite alternate, l3-2 0.75s cubic-bezier(0,200,.8,200) infinite;
+            }
+            @keyframes l3-1 { 100% { left: calc(100% - 8px); } }
+            @keyframes l3-2 { 100% { top: -0.1px; } }
+          `}</style>
+        </div>
+      )}
       {error && (
         <div className="card p-3 text-sm text-danger">
           {error === "stats-problem" ? (
