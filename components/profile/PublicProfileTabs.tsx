@@ -93,12 +93,12 @@ export default function PublicProfileTabs({
   profileUrl, longBio, skills, workExperience, education, tradingPlatforms, credentials, writings, trades, updatesByTrade, community, airdrops, nfts, walletAddress, ensName, arkhamUrl, showWriting, showTrading, showCommunity, showAirdrops, showOnchain, showDustTokens = false,
 }: Props) {
   const allTabs: { id: TabId; label: string; show: boolean }[] = [
-    { id: "about", label: "About", show: true },
-    { id: "projects", label: "Projects / Collab", show: showCommunity },
-    { id: "writing", label: "Technical Writing / Research", show: showWriting },
-    { id: "trading", label: "Trading Record", show: showTrading },
-    { id: "onchain", label: "Onchain Stats", show: showOnchain },
-    { id: "airdrops", label: "Airdrops", show: showAirdrops },
+    { id: "about", label: "Profile", show: true },
+    { id: "projects", label: "Projects", show: showCommunity },
+    { id: "writing", label: "Research", show: showWriting },
+    { id: "trading", label: "Trading", show: showTrading },
+    { id: "onchain", label: "Onchain", show: showOnchain },
+    { id: "airdrops", label: "Ecosystem", show: showAirdrops },
   ];
   const tabs = allTabs.filter((t) => t.show);
   const [active, setActive] = useState<TabId>("about");
