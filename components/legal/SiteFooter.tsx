@@ -14,7 +14,7 @@ const GROUPS = [
   {
     title: "Legal & Support",
     links: [
-      { href: "mailto:support@powfolio.xyz", label: "Support" },
+      { href: "/contact", label: "Support" },
       { href: "mailto:privacy@powfolio.xyz", label: "Privacy requests" },
     ],
   },
@@ -67,7 +67,7 @@ export default function SiteFooter() {
           <div className="mt-3 flex items-center gap-1">
             <SocialLink href="https://x.com/powfolio_xyz" label="POWFOLIO on X"><XIcon /></SocialLink>
             <SocialLink href="https://discord.gg/gnQBN5cN9" label="POWFOLIO on Discord"><DiscordIcon /></SocialLink>
-            <SocialLink href="/contact" label="Contact POWFOLIO"><Mail className="h-4 w-4" aria-hidden="true" /></SocialLink>
+            <a href="mailto:support@powfolio.xyz" aria-label="Email support" className="grid h-9 w-9 place-items-center rounded-full text-foreground-muted transition-colors hover:bg-foreground/5 hover:text-foreground"><Mail className="h-4 w-4" aria-hidden="true" /></a>
           </div>
         </div>
 
