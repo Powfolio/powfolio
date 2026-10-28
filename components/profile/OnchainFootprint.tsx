@@ -151,7 +151,7 @@ export default function OnchainFootprint({
         }
       }
       if (!cancelled) {
-        setError("Stats did not arrive after three tries. Refresh the page or retry this wallet.");
+        setError("stats-problem");
         setLoading(false);
       }
     })();
@@ -194,12 +194,19 @@ export default function OnchainFootprint({
               }
               return {
                 ...c,
-                ...next,
                 activityDays: [...new Set([...prevDays, ...nextDays])].sort(),
                 activityCounts: { ...(c.activityCounts || {}), ...(next.activityCounts || {}) },
                 activityKinds: { ...(c.activityKinds || {}), ...(next.activityKinds || {}) },
                 activityMethods: { ...(c.activityMethods || {}), ...(next.activityMethods || {}) },
                 txCount: Math.max(c.txCount || 0, next.txCount || 0),
+                uniqueContracts: Math.max(c.uniqueContracts || 0, next.uniqueContracts || 0),
+                uniqueTokens: Math.max(c.uniqueTokens || 0, next.uniqueTokens || 0),
+                tokenTrades: Math.max(c.tokenTrades || 0, next.tokenTrades || 0),
+                transferCount: Math.max(c.transferCount || 0, next.transferCount || 0),
+                volumeUsd: Math.max(c.volumeUsd || 0, next.volumeUsd || 0),
+                feesUsd: Math.max(c.feesUsd || 0, next.feesUsd || 0),
+                balance: Number(c.balance) > 0 ? c.balance : (next.balance || c.balance),
+                nativeUsd: (c.nativeUsd || 0) > 0 ? c.nativeUsd : (next.nativeUsd || c.nativeUsd),
               };
             }),
           };
@@ -432,7 +439,18 @@ export default function OnchainFootprint({
         </div>
       </div>
       {loading && <div className="card p-3 text-sm text-foreground-muted">Reading onchain footprint<span className="load-dots" aria-hidden><i /><i /><i /></span><span className="ml-2 text-[11px] text-foreground-subtle">Try {loadStage} of 3</span></div>}
-      {error && <div className="card p-3 text-sm text-danger">{error}</div>}
+      {error && (
+        <div className="card p-3 text-sm text-danger">
+          {error === "stats-problem" ? (
+            <>
+              Stats fetching ran into a problem.{" "}
+              <button type="button" className="underline" onClick={() => window.location.reload()}>Refresh</button>
+              {" "}to try again. If the problem persists, contact{" "}
+              <a href="/contact" className="underline">support</a>.
+            </>
+          ) : error}
+        </div>
+      )}
       {data && (
         <>
           <div className="relative">
