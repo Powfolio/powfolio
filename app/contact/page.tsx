@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ArrowUpRight, Mail } from "lucide-react";
 import Link from "next/link";
+import EnquiryForm from "@/components/contact/EnquiryForm";
 
 export const metadata: Metadata = {
   title: "Contact | POWFOLIO",
@@ -47,10 +48,23 @@ export default function ContactPage() {
       <section className="container-app px-5 py-16 sm:px-8 sm:py-24 lg:py-28">
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground-subtle">Get in touch</p>
-          <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-6xl">Let&apos;s talk.</h1>
+          <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-6xl">Let's talk.</h1>
           <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-foreground-muted sm:text-lg">
-            Have a question, need help, or want to build with POWFOLIO? Choose the right inbox or connect with us.
+            Have a question, need help, or want to build with POWFOLIO? Send a message or choose the right inbox.
           </p>
+        </div>
+
+        <div className="mx-auto mt-10 max-w-xl">
+          <div className="rounded-2xl border border-border bg-surface p-5 sm:p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Talk to us</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">Make an enquiry</h2>
+            <p className="mt-2 text-sm leading-6 text-foreground-muted">
+              For product help, account questions, or a partnership note. This is not an emergency channel.
+            </p>
+            <div className="mt-5">
+              <EnquiryForm />
+            </div>
+          </div>
         </div>
 
         <div className="mx-auto mt-12 max-w-3xl border-y border-border/70">
