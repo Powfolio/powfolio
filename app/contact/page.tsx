@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowUpRight, Mail } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Mail } from "lucide-react";
 import Link from "next/link";
 import EnquiryForm from "@/components/contact/EnquiryForm";
 
@@ -9,21 +9,9 @@ export const metadata: Metadata = {
 };
 
 const CONTACTS = [
-  {
-    label: "Support",
-    email: "support@powfolio.xyz",
-    description: "Product help, account questions, and general support.",
-  },
-  {
-    label: "Privacy",
-    email: "privacy@powfolio.xyz",
-    description: "Privacy requests, data questions, and account deletion matters.",
-  },
-  {
-    label: "Development",
-    email: "dev@powfolio.xyz",
-    description: "Technical questions, integrations, and development matters.",
-  },
+  { label: "Support", email: "support@powfolio.xyz", description: "Product help, account questions, and general support." },
+  { label: "Privacy", email: "privacy@powfolio.xyz", description: "Privacy requests, data questions, and account deletion matters." },
+  { label: "Development", email: "dev@powfolio.xyz", description: "Technical questions, integrations, and development matters." },
 ];
 
 function XIcon() {
@@ -45,7 +33,15 @@ function DiscordIcon() {
 export default function ContactPage() {
   return (
     <main className="min-h-screen">
-      <section className="container-app px-5 py-16 sm:px-8 sm:py-24 lg:py-28">
+      <header className="border-b border-border/60">
+        <div className="container-app flex h-14 items-center">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm text-foreground-muted hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Powfolio
+          </Link>
+        </div>
+      </header>
+      <section className="container-app px-5 py-10 sm:px-8 sm:py-16">
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground-subtle">Get in touch</p>
           <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-6xl">Let's talk.</h1>
@@ -69,57 +65,33 @@ export default function ContactPage() {
 
         <div className="mx-auto mt-12 max-w-3xl border-y border-border/70">
           {CONTACTS.map((contact) => (
-            <a
-              key={contact.email}
-              href={`mailto:${contact.email}`}
-              className="group flex items-center gap-4 border-b border-border/70 py-6 last:border-b-0 sm:gap-5 sm:py-7"
-            >
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border text-foreground-muted transition-colors group-hover:border-border-strong group-hover:text-foreground">
-                <Mail className="h-4 w-4" aria-hidden="true" />
+            <a key={contact.email} href={`mailto:${contact.email}`} className="group flex items-center gap-4 border-b border-border/70 py-6 last:border-b-0 sm:gap-5 sm:py-7">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border text-foreground-muted">
+                <Mail className="h-4 w-4" />
               </span>
               <span className="min-w-0 flex-1 text-left">
                 <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-foreground-subtle">{contact.label}</span>
-                <span className="mt-1 block break-words text-base font-medium text-foreground sm:text-lg">{contact.email}</span>
+                <span className="mt-1 block text-base font-medium text-foreground">{contact.email}</span>
                 <span className="mt-1 block text-sm leading-6 text-foreground-muted">{contact.description}</span>
               </span>
-              <ArrowUpRight className="h-5 w-5 shrink-0 text-foreground-subtle transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" aria-hidden="true" />
+              <ArrowUpRight className="h-5 w-5 shrink-0 text-foreground-subtle" />
             </a>
           ))}
         </div>
 
-        <div className="mx-auto mt-10 flex max-w-3xl flex-col gap-5 border-b border-border/70 pb-10 sm:mt-12 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:pb-12">
+        <div className="mx-auto mt-10 flex max-w-3xl flex-col gap-5 border-b border-border/70 pb-10 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-left">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground-subtle">Social</p>
-            <p className="mt-2 max-w-sm text-sm leading-6 text-foreground-muted">Follow product updates, announcements, and community discussions.</p>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-foreground-muted">Follow product updates and announcements.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <a
-              href="https://x.com/powfolio_xyz"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-            >
-              <XIcon />
-              <span>X</span>
-              <ArrowUpRight className="h-3.5 w-3.5 text-foreground-subtle" aria-hidden="true" />
+            <a href="https://x.com/powfolio_xyz" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-medium">
+              <XIcon /> X
             </a>
-            <a
-              href="https://discord.gg/gnQBN5cN9"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-            >
-              <DiscordIcon />
-              <span>Discord</span>
-              <ArrowUpRight className="h-3.5 w-3.5 text-foreground-subtle" aria-hidden="true" />
+            <a href="https://discord.gg/gnQBN5cN9" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-medium">
+              <DiscordIcon /> Discord
             </a>
           </div>
-        </div>
-
-        <div className="mt-8 text-center">
-          <Link href="/" className="text-sm text-foreground-subtle transition-colors hover:text-foreground">
-            Back to POWFOLIO
-          </Link>
         </div>
       </section>
     </main>
