@@ -7,6 +7,7 @@ import BrandMark from "@/components/ui/BrandMark";
 const LINKS = [
   { href: "/ops", label: "Accounts" },
   { href: "/ops/analytics", label: "Analytics" },
+  { href: "/ops/enquiries", label: "Enquiries" },
   { href: "/ops/reports", label: "Reports" },
   { href: "/ops/appeals", label: "Appeals" },
   { href: "/ops/deleted", label: "Deleted" },
