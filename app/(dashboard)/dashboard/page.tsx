@@ -71,6 +71,7 @@ export default async function DashboardPage() {
   return (
     <DashboardHome
       userId={user.id}
+      email={user.email ?? null}
       username={p?.username ?? null}
       profileScore={scores.profileScore}
       checks={checks}
