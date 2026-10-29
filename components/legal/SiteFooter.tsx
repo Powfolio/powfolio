@@ -7,8 +7,10 @@ const GROUPS = [
   {
     title: "Resources",
     links: [
-      { href: "/faq", label: "Help center" },
       { href: "https://whitepaper.powfolio.xyz", label: "White paper", external: true },
+      { href: "/docs", label: "Documentation" },
+      { href: "/contact", label: "Help center" },
+      { href: "/faq", label: "FAQ" },
     ],
   },
   {
@@ -16,6 +18,9 @@ const GROUPS = [
     links: [
       { href: "/contact", label: "Support" },
       { href: "mailto:privacy@powfolio.xyz", label: "Privacy requests" },
+      { href: "/terms", label: "Terms" },
+      { href: "/privacy", label: "Privacy" },
+      { href: "/cookies", label: "Cookie policy" },
     ],
   },
 ];
