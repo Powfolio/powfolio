@@ -34,6 +34,7 @@ import OnboardingTour, { resetOnboarding } from "@/components/onboarding/Onboard
 import { savePendingAutofill, type AutofillPayload } from "@/lib/autofill-store";
 import { SITE_URL } from "@/lib/site";
 import { SiteLogo } from "@/components/ui/BrandMark";
+import DeleteAccountModal from "@/components/profile/DeleteAccountModal";
 
 type SectionKey =
   | "show_writing"
@@ -103,6 +104,7 @@ const MODULES: ModuleDef[] = [
 
 export type DashboardHomeProps = {
   userId: string;
+  email: string | null;
   username: string | null;
   profileScore: number;
   checks: { basics: boolean; proof: boolean; social: boolean };
@@ -111,6 +113,7 @@ export type DashboardHomeProps = {
 
 export default function DashboardHome({
   userId,
+  email,
   username,
   profileScore,
   checks,
@@ -119,6 +122,7 @@ export default function DashboardHome({
   const router = useRouter();
   const [state, setState] = useState(flags);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [toastOn, setToastOn] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -319,10 +323,10 @@ export default function DashboardHome({
           <span>Sign out</span>
         </button>
         <div className="menu-divider" />
-        <Link href="/dashboard/profile#delete-account" className="menu-row danger" onClick={() => setMenuOpen(false)}>
+        <button type="button" className="menu-row danger" onClick={() => { setMenuOpen(false); setDeleteOpen(true); }}>
           <Trash2 />
           <span>Delete account</span>
-        </Link>
+        </button>
       </div>
       <section className="d-content">
         <div className="page-head">
@@ -423,6 +427,7 @@ export default function DashboardHome({
         </div>
       </section>
       <div className={`toast${toastOn ? " show" : ""}`}>{toastMsg}</div>
+      <DeleteAccountModal email={email} open={deleteOpen} onClose={() => setDeleteOpen(false)} />
     </div>
   );
 }
