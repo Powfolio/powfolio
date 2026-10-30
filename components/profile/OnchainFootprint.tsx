@@ -205,8 +205,9 @@ export default function OnchainFootprint({
                 transferCount: Math.max(c.transferCount || 0, next.transferCount || 0),
                 volumeUsd: Math.max(c.volumeUsd || 0, next.volumeUsd || 0),
                 feesUsd: Math.max(c.feesUsd || 0, next.feesUsd || 0),
-                balance: Number(c.balance) > 0 ? c.balance : (next.balance || c.balance),
-                nativeUsd: (c.nativeUsd || 0) > 0 ? c.nativeUsd : (next.nativeUsd || c.nativeUsd),
+                balance: Number(c.balance) > 0 ? c.balance : (Number(next.balance) > 0 ? next.balance : c.balance),
+                nativeUsd: (c.nativeUsd || 0) > 0 ? c.nativeUsd : ((next.nativeUsd || 0) > 0 ? next.nativeUsd : c.nativeUsd),
+                nativeSymbol: c.nativeSymbol || next.nativeSymbol,
               };
             }),
           };
@@ -220,7 +221,7 @@ export default function OnchainFootprint({
   }, [activeWallet, chainId, customChains, data?.address]);
 
   const interacted = useMemo(
-    () => data?.chains.filter((c) => c.txCount > 0 || c.transferCount > 0 || c.imported || Number(c.balance) > 0) ?? [],
+    () => data?.chains.filter((c) => c.txCount > 0 || c.transferCount > 0 || c.imported || Number(c.balance) > 0 || customChains.some((x) => (x.name || "").toLowerCase() === c.name.toLowerCase())) ?? [],
     [data]
   );
   const publicList = useMemo(() => {
@@ -598,7 +599,12 @@ export default function OnchainFootprint({
               <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-3 backdrop-blur-sm sm:items-center" onClick={() => setPickerOpen(false)}>
                 <div className="max-h-[70vh] w-full max-w-md overflow-y-auto rounded-2xl bg-background p-4" onClick={(e) => e.stopPropagation()}>
                   <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">Add existing chains</h3><button type="button" className="text-sm" onClick={() => setPickerOpen(false)}>Close</button></div>
-                  <div className="space-y-1">{knownChains.map((chain) => <button key={chain.name} type="button" className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm hover:bg-surface" onClick={() => { persistChains(customChains.some((c) => (c.name || "").toLowerCase() === chain.name.toLowerCase()) ? customChains : [...customChains, { ...chain, chainId: Number(chain.chainId) || undefined }], `${chain.name} added.`); setPickerOpen(false); }}><span>{chain.name}</span><span className="text-xs text-foreground-subtle">{chain.native}</span></button>)}</div>
+                  <div className="space-y-1">{knownChains.map((chain) => <button key={chain.name} type="button" className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm hover:bg-surface" onClick={() => {
+                    const already = customChains.some((c) => (c.name || "").toLowerCase() === chain.name.toLowerCase() || String(c.chainId || "") === String(chain.chainId));
+                    if (already) { setPickerOpen(false); return; }
+                    persistChains([...customChains, { ...chain, chainId: Number(chain.chainId) || undefined }], `${chain.name} added.`);
+                    setPickerOpen(false);
+                  }}><span>{chain.name}</span><span className="text-xs text-foreground-subtle">{chain.native}</span></button>)}</div>
                 </div>
               </div>
             )}
