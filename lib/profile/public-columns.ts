@@ -14,6 +14,7 @@ export const PUBLIC_PROFILE_COLUMNS = [
   "github_url",
   "telegram_url",
   "website_url",
+  "websites",
   "location_country",
   "location_region",
   "skills",
