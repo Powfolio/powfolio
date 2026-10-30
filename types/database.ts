@@ -75,6 +75,7 @@ export type Profile = {
   telegram_url: string | null;
   github_url: string | null;
   website_url: string | null;
+  websites?: { name: string; url: string }[] | null;
   secondary_email: string | null;
   primary_email: string | null;
   show_primary_email: boolean;
