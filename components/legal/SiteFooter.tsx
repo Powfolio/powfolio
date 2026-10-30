@@ -8,6 +8,7 @@ const GROUPS = [
     title: "Resources",
     links: [
       { href: "https://whitepaper.powfolio.xyz", label: "White paper", external: true },
+      { href: "https://docs.powfolio.xyz", label: "Documentation", external: true },
       { href: "/contact", label: "Help center" },
       { href: "/faq", label: "FAQ" },
     ],
