@@ -138,7 +138,7 @@
 .profile-identity .banner-role { color: var(--muted); font-size: 12px; }
 .profile-identity .banner-edit-badge { position: absolute; right: 14px; top: calc(156px - 14px); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--bg); color: var(--text); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); }
 .profile-identity .avatar-center {
-  position: absolute; left: 16px; top: calc(156px - 22px); transform: none;
+  position: absolute; left: 16px; top: calc(156px - 28px); transform: none;
   display: flex; flex-direction: column; align-items: center;
 }
 .profile-identity .avatar-preview-wrap { position: relative; }
