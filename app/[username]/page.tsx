@@ -270,11 +270,17 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
     ? `https://arkm.com/explorer/address/${p.wallet_address}`
     : null;
 
+  const namedSites = Array.isArray((p as { websites?: { name?: string; url?: string }[] }).websites)
+    ? ((p as { websites?: { name?: string; url?: string }[] }).websites || [])
+        .map((w) => ({ label: String(w?.name || "Website").slice(0, 40), href: absoluteUrl(String(w?.url || "")) }))
+        .filter((w) => w.href)
+        .slice(0, 3)
+    : [];
   const socials = [
     { label: "X", href: p.x_url },
     { label: "GitHub", href: p.github_url },
     { label: "Telegram", href: p.telegram_url },
-    { label: "Website", href: p.website_url },
+    ...(namedSites.length ? namedSites : [{ label: "Website", href: absoluteUrl(p.website_url) }]),
   ].filter((s) => s.href);
 
   const publicEmails: string[] = [];
@@ -348,7 +354,7 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
             )}
           </div>
 
-          <div className="relative -mt-10 flex items-end justify-between gap-3 px-1 sm:-mt-16 sm:px-2">
+          <div className="relative -mt-6 flex items-start gap-3 px-1 sm:-mt-8 sm:gap-4 sm:px-2">
             <div className="h-20 w-20 sm:h-32 sm:w-32 shrink-0 overflow-hidden rounded-full bg-surface-elevated shadow-[0_0_0_3px_#B8863B,0_0_0_6px_var(--background)]">
               {p.avatar_url ? (
                 <ImageLightbox
@@ -364,31 +370,30 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
                 </div>
               )}
             </div>
-            <div className="score-slot mb-1 self-end">
-              <ScoreRings
-                username={p.username}
-                initialProfile={scores.profileScore}
-                initialBuilder={scores.builderScore}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-3 px-1 text-left animate-slide-up">
-          <div className="min-w-0 space-y-0.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight break-words">
-                {p.display_name || p.username}
-              </h1>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm text-foreground-muted">@{p.username}</p>
-              {p.open_to_work && (
-                <span className="badge-open">
-                  <span className="badge-open-dot" aria-hidden />
-                  Open to opportunities
-                </span>
-              )}
+            <div className="min-w-0 flex-1 pt-0.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight break-words">
+                    {p.display_name || p.username}
+                  </h1>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                    <p className="text-sm text-foreground-muted">@{p.username}</p>
+                    {p.open_to_work && (
+                      <span className="badge-open">
+                        <span className="badge-open-dot" aria-hidden />
+                        Open to opportunities
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="score-slot shrink-0">
+                  <ScoreRings
+                    username={p.username}
+                    initialProfile={scores.profileScore}
+                    initialBuilder={scores.builderScore}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
