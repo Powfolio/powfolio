@@ -198,7 +198,13 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
   const [xUrl, setXUrl] = useState(profile.x_url || "");
   const [githubUrl, setGithubUrl] = useState(profile.github_url || "");
   const [telegramUrl, setTelegramUrl] = useState(profile.telegram_url || "");
-  const [websiteUrl, setWebsiteUrl] = useState(profile.website_url || "");
+  const [websites, setWebsites] = useState<{ name: string; url: string }[]>(() => {
+    const raw = (profile as { websites?: { name?: string; url?: string }[] | null }).websites;
+    if (Array.isArray(raw) && raw.length) {
+      return raw.slice(0, 3).map((w) => ({ name: String(w?.name || "Website").slice(0, 40), url: String(w?.url || "") }));
+    }
+    return profile.website_url ? [{ name: "Website", url: profile.website_url }] : [];
+  });
   const [secondaryEmail, setSecondaryEmail] = useState(profile.secondary_email || "");
   const [showPrimary, setShowPrimary] = useState(profile.show_primary_email ?? true);
   const [showSecondary, setShowSecondary] = useState(profile.show_secondary_email ?? false);
@@ -482,7 +488,6 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
     if (editor === "x") setXUrl(value ? absoluteUrl(value) || value : "");
     if (editor === "github") setGithubUrl(value ? absoluteUrl(value) || value : "");
     if (editor === "telegram") setTelegramUrl(value ? absoluteUrl(value) || value : "");
-    if (editor === "website") setWebsiteUrl(value ? absoluteUrl(value) || value : "");
     if (editor === "ens") setEnsName(value);
     if (editor === "email") setSecondaryEmail(value);
     setEditor(null);
@@ -593,7 +598,8 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
       x_url: xUrl.trim() || null,
       github_url: githubUrl.trim() || null,
       telegram_url: telegramUrl.trim() || null,
-      website_url: websiteUrl.trim() || null,
+      website_url: (websites.find((w) => w.url.trim())?.url || "").trim() || null,
+      websites: websites.map((w) => ({ name: w.name.trim().slice(0, 40) || "Website", url: (w.url.trim() ? (absoluteUrl(w.url) || w.url) : "") })).filter((w) => w.url).slice(0, 3),
       secondary_email: secondary || null,
       primary_email: email ? email.toLowerCase() : null,
       show_primary_email: showPrimary && !!email,
@@ -1061,8 +1067,23 @@ export default function ProfileIdentity({ profile, email, credentials, linkedPro
               <Connection title="GitHub" value={githubUrl || (linkedProviders.includes("github") ? "Connected" : "Not connected")} action={githubUrl || linkedProviders.includes("github") ? "Disconnect" : "Connect GitHub"} onAction={() => githubUrl || linkedProviders.includes("github") ? void disconnectProvider("github") : void connectGithub()} icon="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.2-3.4-1.2-.4-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.4-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.6 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c2-1.3 2.8-1 2.8-1 .5 1.3.2 2.3.1 2.6.6.7 1 1.6 1 2.7 0 3.9-2.3 4.7-4.6 5 .4.3.7.9.7 1.9v2.7c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" />
               <Connection title="Telegram" value={telegramUrl || "Add your public Telegram handle"} action={telegramUrl ? "Edit" : "Add Telegram"} onAction={() => openEditor("telegram", telegramUrl)} icon="M21 4 3 11.2l6.2 2.1L17.5 7 11 14.2V20l3.2-3.6L18 19.5Z" />
               {editor === "telegram" && <Editor value={draft} onChange={setDraft} onSave={applyEditor} onCancel={() => setEditor(null)} placeholder="https://t.me/handle" />}
-              <Connection title="Website" value={websiteUrl || "Add your personal or professional website"} action={websiteUrl ? "Edit" : "Add website"} onAction={() => openEditor("website", websiteUrl)} icon="M12 21a9 9 0 1 0-9-9 9 9 0 0 0 9 9ZM3 12h18M12 3c2.2 2.4 3.2 5.4 3.2 9s-1 6.6-3.2 9c-2.2-2.4-3.2-5.4-3.2-9s1-6.6 3.2-9Z" />
-              {editor === "website" && <Editor value={draft} onChange={setDraft} onSave={applyEditor} onCancel={() => setEditor(null)} placeholder="https://example.com" />}
+              <div className="connection">
+                <div className="connection-left"><div className="brand-icon"><Icon d="M12 21a9 9 0 1 0-9-9 9 9 0 0 0 9 9ZM3 12h18M12 3c2.2 2.4 3.2 5.4 3.2 9s-1 6.6-3.2 9c-2.2-2.4-3.2-5.4-3.2-9s1-6.6 3.2-9Z" /></div><div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium">Websites</span>
+                    <span className="text-[11px] text-foreground-subtle">{websites.length}/3</span>
+                  </div>
+                  {websites.length === 0 && <p className="text-xs text-foreground-subtle">Add up to 3 named sites. The name is what visitors see.</p>}
+                  {websites.map((site, i) => (
+                    <div key={i} className="flex flex-col gap-1.5 sm:flex-row">
+                      <input className="input text-xs sm:max-w-[140px]" value={site.name} onChange={(e) => setWebsites((prev) => prev.map((w, idx) => idx === i ? { ...w, name: e.target.value.slice(0, 40) } : w))} placeholder="Name" />
+                      <input className="input text-xs flex-1" value={site.url} onChange={(e) => setWebsites((prev) => prev.map((w, idx) => idx === i ? { ...w, url: e.target.value } : w))} placeholder="https://yoursite.com" />
+                      <button type="button" className="text-action text-danger" onClick={() => setWebsites((prev) => prev.filter((_, idx) => idx !== i))}>Remove</button>
+                    </div>
+                  ))}
+                  {websites.length < 3 && <button type="button" className="text-action" onClick={() => setWebsites((prev) => [...prev, { name: "", url: "" }])}>Add website</button>}
+                </div></div>
+              </div>
             </div>
           </div>
           <div className="block">
