@@ -167,9 +167,9 @@ html:not(.dark) .dash-app {
 @media (max-width: 768px) {
   .dash-app .d-topbar { padding: 0 16px; height: 56px; }
   .dash-app .d-title { font-size: 14px; }
-  .dash-app .account-menu { top: auto; bottom: 0; left: 0; right: 0; width: 100%; border-radius: 20px 20px 0 0; background: var(--d-elevated); border-bottom: 0; padding: 12px 14px 28px; box-shadow: 0 -12px 40px rgba(13,13,12,.65); transform: translateY(100%); transition: transform .24s cubic-bezier(0.16,1,0.3,1); animation: none; }
-  .dash-app .account-menu.open { transform: translateY(0); display: flex; }
-  .dash-app .mobile-handle { display: block; }
+  .dash-app .account-menu { top: 62px; bottom: auto; left: auto; right: 12px; width: min(260px, calc(100vw - 24px)); border-radius: 12px; padding: 6px; box-shadow: 0 20px 45px rgba(13,13,12,.55); transform: none; animation: dash-dropdown-in .18s cubic-bezier(0.16,1,0.3,1); }
+  .dash-app .account-menu.open { transform: none; display: flex; }
+  .dash-app .mobile-handle { display: none; }
   .dash-app .menu-row, .dash-app .menu-row-link { padding: 12px; font-size: 14px; }
   .dash-app .d-content { padding: 20px 16px 50px; }
   .dash-app .page-head { margin-bottom: 24px; }
