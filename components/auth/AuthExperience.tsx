@@ -7,7 +7,7 @@ import { useAuthExperience, type AuthMode } from "@/components/auth/use-auth-exp
 import BrandMark from "@/components/ui/BrandMark";
 
 const primaryBtn =
-  "w-full rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed active:scale-[0.99]";
+  "w-full rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed";
 const overlayBtn = "overlay-btn-soft";
 
 export default function AuthExperience({
@@ -19,6 +19,8 @@ export default function AuthExperience({
 }) {
   const a = useAuthExperience(initialMode, nextPath);
   const confirmClass = ["pr-7 text-xs confirm-pw-field", a.pwState, a.pwAnim % 2 === 0 ? "pw-replay-even" : "pw-replay-odd"].filter(Boolean).join(" ");
+  const locked = a.lockoutSeconds > 0;
+
   return (
     <div className="pow-auth-page relative flex min-h-screen flex-col items-center justify-between bg-[#FDFCFA] p-4 text-[#171614] dark:bg-darkBg dark:text-[#F2F0EC] sm:p-8">
       <div className="ambient-glow-1" />
@@ -47,24 +49,33 @@ export default function AuthExperience({
                 <span className="absolute bg-white px-3 text-[10px] font-semibold uppercase tracking-wider text-[#8C877C] dark:bg-[#171715] dark:text-[#6B675F]">or email</span>
               </div>
               <form onSubmit={a.handleSignIn} className="space-y-3">
+                {locked ? (
+                  <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3.5 py-3 text-center text-sm text-amber-800 dark:text-amber-200">
+                    <div className="font-medium">Account temporarily locked</div>
+                    <div className="mt-1 text-xs opacity-90">Too many failed attempts. Try again in</div>
+                    <div className="mt-1.5 font-mono text-lg font-semibold tracking-wide tabular-nums">
+                      {a.lockoutFormatted}
+                    </div>
+                  </div>
+                ) : null}
                 <div className="field-group">
-                  <input type="text" required autoComplete="username" value={a.identifier} onChange={(e) => a.setIdentifier(e.target.value)} />
+                  <input type="text" required autoComplete="username" value={a.identifier} onChange={(e) => a.setIdentifier(e.target.value)} disabled={locked} />
                   <label className="field-notch-label">Email / Username</label>
                 </div>
                 <div className="field-group relative">
-                  <input type={a.showLoginPw ? "text" : "password"} required autoComplete="current-password" className="pr-10" value={a.loginPassword} onChange={(e) => a.setLoginPassword(e.target.value)} />
+                  <input type={a.showLoginPw ? "text" : "password"} required autoComplete="current-password" className="pr-10" value={a.loginPassword} onChange={(e) => a.setLoginPassword(e.target.value)} disabled={locked} />
                   <label className="field-notch-label">Password</label>
                   <EyeButton hidden={!a.showLoginPw} onClick={() => a.setShowLoginPw((v) => !v)} />
                 </div>
                 <div className="flex items-center justify-between pt-0.5">
                   <div className="flex items-center">
-                    <input id="rememberMe" type="checkbox" checked={a.rememberMe} onChange={(e) => a.setRememberMe(e.target.checked)} className="h-3.5 w-3.5 cursor-pointer rounded accent-[#B8863B]" />
+                    <input id="rememberMe" type="checkbox" checked={a.rememberMe} onChange={(e) => a.setRememberMe(e.target.checked)} className="h-3.5 w-3.5 cursor-pointer rounded accent-[#B8863B]" disabled={locked} />
                     <label htmlFor="rememberMe" className="ml-2 cursor-pointer text-xs text-[#6B675F] dark:text-[#9C9890]">Remember me</label>
                   </div>
-                  <button type="button" onClick={a.handleForgot} className="text-xs text-[#9C6F2C] hover:underline">Forgot password?</button>
+                  <button type="button" onClick={a.handleForgot} className="text-xs text-[#9C6F2C] hover:underline" disabled={locked}>Forgot password?</button>
                 </div>
-                <button type="submit" className={primaryBtn + " text-sm"}>
-                  Sign In
+                <button type="submit" className={primaryBtn + " text-sm"} disabled={locked}>
+                  {locked ? "Locked" : "Sign In"}
                 </button>
               </form>
               <p className="auth-switch">
