@@ -1,47 +1,113 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 export default function ShapeGridBg() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const onMove = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      setMouse({
+        x: (e.clientX - rect.left) / rect.width,
+        y: (e.clientY - rect.top) / rect.height,
+      });
+      setActive(true);
+    };
+    const onLeave = () => setActive(false);
+
+    el.addEventListener("mousemove", onMove);
+    el.addEventListener("mouseleave", onLeave);
+    return () => {
+      el.removeEventListener("mousemove", onMove);
+      el.removeEventListener("mouseleave", onLeave);
+    };
+  }, []);
+
+  const dots = Array.from({ length: 18 }, (_, i) => {
+    const col = i % 6;
+    const row = Math.floor(i / 6);
+    return {
+      id: i,
+      baseX: 10 + col * 16,
+      baseY: 18 + row * 28,
+      size: 5 + (i % 4) * 2,
+    };
+  });
+
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      {/* Soft radial glows */}
-      <div className="absolute -left-1/4 top-0 h-[60vh] w-[60vw] rounded-full bg-primary/10 blur-3xl" style={{ animation: "glow-drift 18s ease-in-out infinite" }} />
-      <div className="absolute -right-1/4 bottom-0 h-[50vh] w-[50vw] rounded-full bg-primary/8 blur-3xl" style={{ animation: "glow-drift 22s ease-in-out infinite reverse" }} />
+    <div
+      ref={ref}
+      className="pointer-events-auto absolute inset-0 overflow-hidden"
+      aria-hidden
+    >
+      {/* Soft radial glows that follow cursor lightly */}
+      <div
+        className="absolute h-[70vh] w-[70vw] rounded-full bg-primary/12 blur-3xl transition-all duration-700 ease-out"
+        style={{
+          left: `${mouse.x * 60 - 20}%`,
+          top: `${mouse.y * 50 - 15}%`,
+          transform: active ? "scale(1.15)" : "scale(1)",
+          opacity: active ? 0.7 : 0.4,
+        }}
+      />
+      <div
+        className="absolute h-[50vh] w-[50vw] rounded-full bg-primary/8 blur-3xl transition-all duration-1000 ease-out"
+        style={{
+          right: `${(1 - mouse.x) * 40}%`,
+          bottom: `${(1 - mouse.y) * 30}%`,
+          opacity: active ? 0.5 : 0.25,
+        }}
+      />
+
       {/* Animated grid lines */}
-      <div className="absolute inset-0 opacity-30 dark:opacity-40" style={{
-        backgroundImage: `
-          linear-gradient(to right, rgba(184,134,59,0.12) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(184,134,59,0.12) 1px, transparent 1px)
-        `,
-        backgroundSize: "56px 56px",
-        animation: "grid-shift 40s linear infinite",
-      }} />
-      {/* Floating dots */}
-      {Array.from({ length: 12 }).map((_, i) => (
-        <span
-          key={i}
-          className="absolute block rounded-full bg-primary/40"
-          style={{
-            width: 4 + (i % 3) * 2,
-            height: 4 + (i % 3) * 2,
-            left: `${8 + (i * 7) % 84}%`,
-            top: `${12 + (i * 11) % 76}%`,
-            animation: `float-dot ${14 + (i % 5) * 2}s ease-in-out infinite`,
-            animationDelay: `${-i * 0.8}s`,
-          }}
-        />
-      ))}
+      <div
+        className="absolute inset-0 opacity-25 dark:opacity-35"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(184,134,59,0.14) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(184,134,59,0.14) 1px, transparent 1px)
+          `,
+          backgroundSize: "56px 56px",
+          animation: "grid-shift 48s linear infinite",
+        }}
+      />
+
+      {/* Interactive dots with soft physics */}
+      {dots.map((d) => {
+        const dx = (mouse.x * 100 - d.baseX) / 100;
+        const dy = (mouse.y * 100 - d.baseY) / 100;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const influence = Math.max(0, 1 - dist * 2.2);
+        const pull = active ? influence * 18 : 0;
+        const glow = active ? influence : 0;
+
+        return (
+          <span
+            key={d.id}
+            className="absolute block rounded-full bg-primary transition-all duration-300 ease-out"
+            style={{
+              width: d.size,
+              height: d.size,
+              left: `${d.baseX}%`,
+              top: `${d.baseY}%`,
+              transform: `translate(${dx * pull}px, ${dy * pull}px) scale(${1 + glow * 0.6})`,
+              opacity: 0.25 + glow * 0.55,
+              boxShadow: glow > 0.3 ? `0 0 ${8 + glow * 16}px rgba(184,134,59,${0.4 + glow * 0.4})` : "none",
+            }}
+          />
+        );
+      })}
+
       <style>{`
-        @keyframes glow-drift {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(8%, 6%) scale(1.08); }
-        }
         @keyframes grid-shift {
           0% { background-position: 0 0; }
           100% { background-position: 56px 56px; }
-        }
-        @keyframes float-dot {
-          0%, 100% { transform: translateY(0); opacity: 0.35; }
-          50% { transform: translateY(-18px); opacity: 0.7; }
         }
       `}</style>
     </div>
