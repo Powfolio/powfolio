@@ -1,31 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ShapeGridBg() {
-  const ref = useRef<HTMLDivElement>(null);
   const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
   const [active, setActive] = useState(false);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
     const onMove = (e: MouseEvent) => {
-      const rect = el.getBoundingClientRect();
+      const w = window.innerWidth || 1;
+      const h = window.innerHeight || 1;
       setMouse({
-        x: (e.clientX - rect.left) / rect.width,
-        y: (e.clientY - rect.top) / rect.height,
+        x: Math.max(0, Math.min(1, e.clientX / w)),
+        y: Math.max(0, Math.min(1, e.clientY / h)),
       });
       setActive(true);
     };
     const onLeave = () => setActive(false);
 
-    el.addEventListener("mousemove", onMove);
-    el.addEventListener("mouseleave", onLeave);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseleave", onLeave);
     return () => {
-      el.removeEventListener("mousemove", onMove);
-      el.removeEventListener("mouseleave", onLeave);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseleave", onLeave);
     };
   }, []);
 
@@ -41,12 +38,8 @@ export default function ShapeGridBg() {
   });
 
   return (
-    <div
-      ref={ref}
-      className="pointer-events-auto absolute inset-0 overflow-hidden"
-      aria-hidden
-    >
-      {/* Soft radial glows that follow cursor lightly */}
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      {/* Soft radial glows that follow cursor */}
       <div
         className="absolute h-[70vh] w-[70vw] rounded-full bg-primary/12 blur-3xl transition-all duration-700 ease-out"
         style={{
@@ -84,7 +77,7 @@ export default function ShapeGridBg() {
         const dy = (mouse.y * 100 - d.baseY) / 100;
         const dist = Math.sqrt(dx * dx + dy * dy);
         const influence = Math.max(0, 1 - dist * 2.2);
-        const pull = active ? influence * 18 : 0;
+        const pull = active ? influence * 22 : 0;
         const glow = active ? influence : 0;
 
         return (
@@ -96,9 +89,9 @@ export default function ShapeGridBg() {
               height: d.size,
               left: `${d.baseX}%`,
               top: `${d.baseY}%`,
-              transform: `translate(${dx * pull}px, ${dy * pull}px) scale(${1 + glow * 0.6})`,
-              opacity: 0.25 + glow * 0.55,
-              boxShadow: glow > 0.3 ? `0 0 ${8 + glow * 16}px rgba(184,134,59,${0.4 + glow * 0.4})` : "none",
+              transform: `translate(${dx * pull}px, ${dy * pull}px) scale(${1 + glow * 0.7})`,
+              opacity: 0.22 + glow * 0.6,
+              boxShadow: glow > 0.25 ? `0 0 ${10 + glow * 18}px rgba(184,134,59,${0.45 + glow * 0.35})` : "none",
             }}
           />
         );
