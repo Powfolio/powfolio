@@ -402,22 +402,44 @@ export default function OnchainFootprint({
     : [
         { label: "Interactions", value: (data?.totalTx || 0).toLocaleString() },
         { label: "Volume", value: usd(data?.totalVolumeUsd) },
-        { label: "Contracts", value: (data?.uniqueContracts || 0).toLocaleString() },
         { label: "Fees", value: usd(data?.totalFeesUsd) },
-        { label: "Unique tokens", value: (data?.uniqueTokens || 0).toLocaleString() },
-        { label: "ERC-20 transfers", value: (data?.totalTokenTrades || 0).toLocaleString() },
-        { label: "NFT mints", value: (data?.totalNftMints || 0).toLocaleString() },
-        { label: "First txn", value: data?.walletAgeDays ? `${data.walletAgeDays}d ago` : "—" },
-        { label: "Last activity", value: timeAgo(data?.lastTx || null) },
-        { label: "Contracts deployed", value: (data?.contractsDeployed || 0).toLocaleString() },
-        { label: "Active days", value: (data?.activeDays || 0).toLocaleString() },
-        { label: "Active weeks", value: (data?.activeWeeks || 0).toLocaleString() },
-        { label: "Active months", value: (data?.activeMonths || 0).toLocaleString() },
         { label: "Transfers", value: (data?.totalTransfers || 0).toLocaleString() },
+        { label: "Chains used", value: publicList.length.toString() },
+        { label: "Portfolio", value: usd(data?.totalValueUsd) },
       ];
+  const protocolList = (data?.protocols || []).filter((p) => !selected || p.chain === selected.name);
+  const shownChains = owner ? interacted : publicList;
 
   return (
     <div className="space-y-4">
+      {wallets.length > 1 && (
+        <div>
+          <h3 className={HEADING}>Wallets</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {wallets.map((w) => (
+              <button key={w.address} type="button" onClick={() => setActiveWallet(w.address)} className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${activeWallet.toLowerCase() === w.address.toLowerCase() ? "border-primary text-primary bg-primary/10" : "border-border bg-surface-elevated"}`}>
+                {w.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="card p-3 sm:p-4 space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className={HEADING}>Wallet</h3>
+            {ens && <p className="text-sm font-semibold">{ens}</p>}
+            <p className="mt-0.5 font-mono text-xs text-foreground-muted break-all">{activeWallet}</p>
+          </div>
+          <button type="button" className="btn-ghost text-xs" onClick={() => navigator.clipboard.writeText(activeWallet)}>Copy</button>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {explorers.map((x) => (
+            <a key={x.label} href={x.href} target="_blank" rel="noopener noreferrer" className="rounded-full border border-border bg-surface-elevated px-2.5 py-1 text-[11px] font-medium hover:border-primary/40 hover:text-primary">{x.label}</a>
+          ))}
+          <a href={`https://zkcodex.com/id/${activeWallet}`} target="_blank" rel="noopener noreferrer" className="rounded-full border border-border bg-surface-elevated px-2.5 py-1 text-[11px] font-medium hover:border-primary/40 hover:text-primary">zkCodex</a>
+        </div>
+      </div>
       {loading && (
         <div className="card p-3 text-sm text-foreground-muted">
           <LatticeLoader label="Reading onchain footprint" />
@@ -425,27 +447,168 @@ export default function OnchainFootprint({
             <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(95, 20 + loadStage * 25)}%` }} />
           </div>
           <p className="mt-1 text-[11px] text-foreground-subtle">{Math.min(95, 20 + loadStage * 25)}%</p>
+          <style>{`
+            .onchain-loader {
+              width: 40px; height: 26px;
+              --c: no-repeat linear-gradient(currentColor 0 0);
+              background: var(--c) 0 100%, var(--c) 50% 100%, var(--c) 100% 100%;
+              background-size: 8px calc(100% - 4px);
+              position: relative;
+              color: #c9a227;
+            }
+            .onchain-loader:before {
+              content: "";
+              position: absolute;
+              width: 8px; height: 8px;
+              border-radius: 50%;
+              background: currentColor;
+              left: 0; top: 0;
+              animation: l3-1 1.5s linear infinite alternate, l3-2 0.75s cubic-bezier(0,200,.8,200) infinite;
+            }
+            @keyframes l3-1 { 100% { left: calc(100% - 8px); } }
+            @keyframes l3-2 { 100% { top: -0.1px; } }
+          `}</style>
         </div>
       )}
-      {error === "stats-problem" && (
-        <div className="card p-3 text-sm text-foreground-muted">
-          Stats fetching ran into a problem. <button type="button" className="underline" onClick={() => setReloadTick((n) => n + 1)}>Refresh</button> to try again. If the problem persists, <a href="/contact" className="underline">contact support</a>.
+      {error && (
+        <div className="card p-3 text-sm text-danger">
+          {error === "stats-problem" ? (
+            <>
+              Stats fetching ran into a problem.{" "}
+              <button type="button" className="underline" onClick={() => window.location.reload()}>Refresh</button>
+              {" "}to try again. If the problem persists, contact{" "}
+              <a href="/contact" className="underline">support</a>.
+            </>
+          ) : error}
         </div>
       )}
-      {!loading && data && (
+      {data && (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            {publicList.map((c) => (
-              <button key={c.id} type="button" onClick={() => setChainId(c.id)} className={`rounded-full border px-3 py-1 text-xs ${chainId === c.id ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground-muted"}`}>
-                {c.name}
-              </button>
-            ))}
-          </div>
-          {selected && (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-              {metrics.map((m) => <Metric key={m.label} label={m.label} value={m.value} />)}
+          <div className="relative">
+            <h3 className={HEADING}>Chain</h3>
+            <button type="button" onClick={() => setChainOpen((o) => !o)} className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-surface-elevated px-3 py-2.5 text-left text-sm font-medium transition-colors hover:border-primary/40" aria-expanded={chainOpen}>
+              <span className="truncate">{selected?.name || "Select chain"}</span>
+              <svg className={`h-4 w-4 shrink-0 text-foreground-muted transition-transform duration-200 ${chainOpen ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <div className={`overflow-hidden transition-all duration-200 ease-out ${chainOpen ? "mt-1.5 max-h-72 opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="rounded-xl border border-border bg-surface shadow-lg divide-y divide-border/60 overflow-y-auto max-h-72">
+                {shownChains.map((c) => {
+                  const publiclyOn = !visibleIds || visibleIds.length === 0 || visibleIds.includes(c.id);
+                  const isActive = chainId === c.id;
+                  return (
+                    <div key={c.id} className={`flex items-center gap-2 px-3 py-2.5 ${isActive ? "bg-primary/5" : "hover:bg-surface-hover"}`}>
+                      <button type="button" onClick={() => { setChainId(c.id); setChainOpen(false); }} className="min-w-0 flex-1 text-left">
+                        <span className={`block truncate text-sm font-medium ${isActive ? "text-primary" : ""}`}>{c.name}</span>
+                        <span className="block text-[10px] text-foreground-subtle tabular-nums">{c.txCount > 0 ? `${c.txCount.toLocaleString()} tx` : c.imported ? "Imported" : "—"}{Number(c.balance) > 0 ? ` · ${c.balance} ${c.nativeSymbol}` : ""}</span>
+                      </button>
+                      {owner && (
+                        <button type="button" role="switch" aria-checked={publiclyOn} onClick={(e) => { e.stopPropagation(); togglePublicChain(c.id); }} className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${publiclyOn ? "bg-primary" : "bg-border"}`} title={publiclyOn ? "Visible on public page" : "Hidden on public page"}>
+                          <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${publiclyOn ? "translate-x-4" : "translate-x-0"}`} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          )}
+            <p className="mt-1.5 text-[11px] text-foreground-subtle">{owner ? "Pick a chain to view stats. Toggle on the right controls public visibility. At least one chain must stay public." : "Interacted and imported networks. Open the menu to switch chains."}</p>
+            {chainMsg && <p className="mt-1 text-xs text-foreground-muted">{chainMsg}</p>}
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <Metric label="Value" value={usd(portfolioValue)} />
+            <Metric label="Tokens" value={String(visibleTokens.length + (selected && Number(selected.balance) > 0 ? 1 : 0))} />
+            <Metric label="Native" value={selected ? `${selected.balance} ${selected.nativeSymbol}` : "—"} />
+          </div>
+          <div>
+            <h3 className={HEADING}>{selected ? `${selected.name} stats` : "Portfolio stats"}</h3>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{metrics.map((m) => <Metric key={m.label} label={m.label} value={m.value} />)}</div>
+          </div>
+          <div>
+            <h3 className={HEADING}>DeFi pools & protocols</h3>
+            {protocolList.length === 0 ? (
+              <div className="card text-sm text-foreground-subtle">No known protocol interactions on this chain yet.</div>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {protocolList.map((p) => (
+                  <a key={`${p.chain}-${p.name}-${p.address}`} href={p.href} target="_blank" rel="noopener noreferrer" className="rounded-full border border-border bg-surface-elevated px-2.5 py-1 text-[11px] font-medium hover:border-primary/40 hover:text-primary">{p.name}<span className="ml-1 text-foreground-subtle">{p.chain}</span></a>
+                ))}
+              </div>
+            )}
+          </div>
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className={`${HEADING} mb-0`}>Tokens</h3>
+              {owner && !selected && dustCount > 0 && (
+                <button type="button" className="btn-ghost text-[11px]" onClick={toggleDust}>{showDust ? "Hide dust under $1" : `Show dust (${dustCount})`}</button>
+              )}
+            </div>
+            {visibleTokens.length === 0 && !(selected && Number(selected.balance) > 0) ? (
+              <div className="card text-sm text-foreground-subtle">No tokens on this chain.</div>
+            ) : (
+              <div className="card divide-y divide-border/70 overflow-hidden p-0">
+                {selected && Number(selected.balance) > 0 && (
+                  <div className="flex items-center justify-between gap-3 px-3 py-2">
+                    <div><p className="text-sm font-medium">{selected.nativeSymbol}</p><p className="text-[11px] text-foreground-subtle">{selected.name} · native</p></div>
+                    <div className="text-right"><p className="text-xs tabular-nums text-foreground-muted">{selected.balance}</p><p className="text-[10px] text-foreground-subtle">{usd(selected.nativeUsd)}</p></div>
+                  </div>
+                )}
+                {visibleTokens.map((t) => (
+                  <a key={`${t.chain}-${t.contract}`} href={t.href} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-surface-hover">
+                    <div className="min-w-0"><p className="text-sm font-medium truncate">{t.symbol}</p><p className="text-[11px] text-foreground-subtle truncate">{t.chain}{t.name ? ` · ${t.name}` : ""}</p></div>
+                    <div className="text-right shrink-0"><p className="text-xs tabular-nums text-foreground-muted">{t.balance}</p>{t.usdValue != null && <p className="text-[10px] text-foreground-subtle">{usd(t.usdValue)}</p>}</div>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+          <ActivityHeatmap
+            key={selected?.id || "all"}
+            days={selected?.activityDays || data.chains.flatMap((c) => c.activityDays || [])}
+            methods={selected?.activityMethods || {}}
+            counts={selected?.activityCounts}
+            kinds={selected?.activityKinds}
+            chainName={selected?.name}
+            loading={deepLoading}
+          />
+        </>
+      )}
+      {owner && profileId && (
+        <>
+          <form onSubmit={importTokenByCa} className="card space-y-2 p-3">
+            <h3 className={HEADING}>Import a token by CA</h3>
+            <p className="text-[11px] text-foreground-subtle">Select the chain above, paste the contract, and import only if this wallet currently holds it.</p>
+            <p className="text-[11px] text-foreground-muted">Selected chain: {selected?.name || "none"}</p>
+            <input className="input text-sm" value={tokenCa} onChange={(e) => setTokenCa(e.target.value)} placeholder="0x…" />
+            {tokenMsg && <p className="text-xs text-foreground-muted">{tokenMsg}</p>}
+            <button type="submit" className="btn-secondary text-xs" disabled={importingToken || !chainId}>{importingToken ? "Checking…" : "Import if held"}</button>
+          </form>
+          <form onSubmit={saveCustomChain} className="card space-y-2 p-3">
+            <h3 className={HEADING}>Import a network</h3>
+            <p className="text-[11px] text-foreground-subtle">Use the EVM chain ID and a public JSON-RPC. Explorer is optional.</p>
+            <button type="button" className="btn-secondary text-xs" onClick={() => setPickerOpen(true)}>Add existing chains</button>
+            <input className="input text-sm" value={chainForm.name} onChange={(e) => setChainForm((s) => ({ ...s, name: e.target.value }))} placeholder="Network name (Ethereum)" />
+            <input className="input text-sm" value={chainForm.chainId} onChange={(e) => setChainForm((s) => ({ ...s, chainId: e.target.value }))} placeholder="Chain ID (1)" />
+            <input className="input text-sm" value={chainForm.rpc} onChange={(e) => setChainForm((s) => ({ ...s, rpc: e.target.value }))} placeholder="https://ethereum.publicnode.com" />
+            <input className="input text-sm" value={chainForm.explorer} onChange={(e) => setChainForm((s) => ({ ...s, explorer: e.target.value }))} placeholder="https://etherscan.io" />
+            <input className="input text-sm" value={chainForm.native} onChange={(e) => setChainForm((s) => ({ ...s, native: e.target.value }))} placeholder="Native symbol (ETH)" />
+            {pickerOpen && (
+              <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-3 backdrop-blur-sm sm:items-center" onClick={() => setPickerOpen(false)}>
+                <div className="max-h-[70vh] w-full max-w-md overflow-y-auto rounded-2xl bg-background p-4" onClick={(e) => e.stopPropagation()}>
+                  <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">Add existing chains</h3><button type="button" className="text-sm" onClick={() => setPickerOpen(false)}>Close</button></div>
+                  <div className="space-y-1">{knownChains.map((chain) => <button key={chain.name} type="button" className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm hover:bg-surface" onClick={() => {
+                    const already = customChains.some((c) => (c.name || "").toLowerCase() === chain.name.toLowerCase() || String(c.chainId || "") === String(chain.chainId));
+                    if (already) { setPickerOpen(false); return; }
+                    persistChains([...customChains, { ...chain, chainId: Number(chain.chainId) || undefined }], `${chain.name} added.`);
+                    setPickerOpen(false);
+                  }}><span>{chain.name}</span><span className="text-xs text-foreground-subtle">{chain.native}</span></button>)}</div>
+                </div>
+              </div>
+            )}
+            {chainMsg && <p className="text-xs text-foreground-muted">{chainMsg}</p>}
+            <button type="submit" className="btn-secondary text-xs" disabled={savingChain}>{savingChain ? "Saving…" : "Add network"}</button>
+          </form>
         </>
       )}
     </div>
