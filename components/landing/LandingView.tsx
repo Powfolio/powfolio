@@ -4,7 +4,7 @@ import LandingNav from "@/components/landing/LandingNav";
 import ProofCta from "@/components/landing/ProofCta";
 import JsonLd from "@/components/legal/JsonLd";
 import SiteFooter from "@/components/legal/SiteFooter";
-import ShapeGridBg from "@/components/ui/ShapeGridBg";
+import CursorGrid from "@/components/ui/CursorGrid";
 import { createClient } from "@/lib/supabase/server";
 
 const STEPS = [
@@ -38,7 +38,7 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
     <div className="relative min-h-screen overflow-x-hidden">
       <JsonLd />
       <LandingFocus target={focus} />
-      <ShapeGridBg />
+      <CursorGrid cellSize={64} color="#B8863B" gridColor="#B8863B" radius={160} />
       <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-[0.035] dark:opacity-[0.055]" style={{ backgroundSize: "48px 48px" }} aria-hidden />
       <LandingNav signedIn={signedIn} />
       <main id="main" className="relative z-10">
