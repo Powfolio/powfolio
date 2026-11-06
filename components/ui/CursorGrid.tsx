@@ -378,6 +378,13 @@ export default function CursorGrid({
       }
       if (Math.abs(mouse.x - pointer.x) + Math.abs(mouse.y - pointer.y) > 0.05 && presence > 0.002) active = true;
 
+      // Ambient idle for mobile / no pointer: gently light random cells
+      if (!pointer.inside && levels.length && Math.random() < 0.08) {
+        const idx = Math.floor(Math.random() * levels.length);
+        light(idx, 0.35 + Math.random() * 0.4);
+        active = true;
+      }
+
       draw();
       if (active) raf = requestAnimationFrame(frame);
     };
