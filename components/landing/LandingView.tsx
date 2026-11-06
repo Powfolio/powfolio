@@ -5,6 +5,7 @@ import ProofCta from "@/components/landing/ProofCta";
 import JsonLd from "@/components/legal/JsonLd";
 import SiteFooter from "@/components/legal/SiteFooter";
 import CursorGrid from "@/components/ui/CursorGrid";
+import TechText from "@/components/ui/TechText";
 import { createClient } from "@/lib/supabase/server";
 
 const STEPS = [
@@ -42,32 +43,35 @@ export default async function LandingView({ focus }: { focus?: "features" | "how
       <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-[0.035] dark:opacity-[0.055]" style={{ backgroundSize: "48px 48px" }} aria-hidden />
       <LandingNav signedIn={signedIn} />
       <main id="main" className="relative z-10">
-        <section className="container-app pb-8 pt-6 sm:pb-12 sm:pt-10">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="landing-reveal landing-delay-1 text-[11px] font-medium uppercase tracking-[0.2em] text-foreground-subtle">Live scores · real proof · one public link</p>
-            <h1 className="landing-reveal landing-delay-2 mt-5 text-[2.15rem] font-semibold leading-[1.12] tracking-tight sm:text-5xl lg:text-[3.35rem]">
-              Your Web3 work.
-              <span className="mt-1 block text-primary font-semibold">Verified. Visible.</span>
-            </h1>
-            <p className="landing-reveal landing-delay-3 mx-auto mt-6 max-w-xl text-[15px] leading-relaxed text-foreground-muted sm:text-base">
+        <section className="relative isolate min-h-[85vh] overflow-hidden">
+          <div className="relative z-10 mx-auto flex min-h-[85vh] max-w-4xl flex-col items-center justify-center px-6 pb-16 pt-28 text-center sm:pt-32">
+            <div className="mb-6 inline-flex items-center gap-2.5 rounded-full bg-white/10 px-2.5 py-1.5 ring-1 ring-white/15 backdrop-blur">
+              <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-black">Live</span>
+              <span className="text-sm font-medium text-white/90">Proof of work. One public link.</span>
+            </div>
+            <div className="h-[140px] w-full sm:h-[180px]">
+              <TechText text="Your Web3 work." fontSize={110} fontWeight={600} color="#ffffff" accentColor="#B8863B" reveal="letter" dashLength={4} dashGap={2} specks={12} />
+            </div>
+            <p className="mx-auto mt-2 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg">
               Trades, threads, roles, and onchain activity in one public page. Scores that move with evidence, not slogans.
             </p>
-            <div className="landing-reveal landing-delay-4 mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               {signedIn ? (
-                <a href="/dashboard" className="btn-primary w-full max-w-xs px-5 py-2.5 text-sm sm:w-auto">Open dashboard</a>
+                <a href="/dashboard" className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-black transition-colors hover:bg-primary/90">
+                  Open dashboard
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
               ) : (
-                <a href="/signup" className="btn-primary w-full max-w-xs px-5 py-2.5 text-sm sm:w-auto">Create free profile</a>
+                <a href="/signup" className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-black transition-colors hover:bg-primary/90">
+                  Create free profile
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
               )}
-              <a href="/#features" className="btn-ghost px-4 py-2 text-sm">See the proof sections</a>
+              <a href="/#features" className="inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-white/90 transition-colors hover:text-white">
+                See the proof sections
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+              </a>
             </div>
-            <dl className="landing-reveal landing-delay-5 mx-auto mt-14 grid max-w-lg grid-cols-2 gap-y-7 sm:grid-cols-4">
-              {STATS.map((s) => (
-                <div key={s.label} className="text-center">
-                  <dt className="text-[10px] uppercase tracking-[0.14em] text-foreground-subtle">{s.label}</dt>
-                  <dd className="mt-1 text-2xl font-semibold tracking-tight text-foreground">{s.value}</dd>
-                </div>
-              ))}
-            </dl>
           </div>
         </section>
         <div className="marquee-wrap landing-reveal landing-delay-6 mb-14 border-y border-border/25">
