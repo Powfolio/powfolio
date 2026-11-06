@@ -207,7 +207,7 @@ type Props = {
 };
 
 export default function CursorGrid({
-  cellSize = 64,
+  cellSize = 40,
   color = "#B8863B",
   gridColor = "#B8863B",
   radius = 160,
