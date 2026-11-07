@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHash } from "crypto";
 import { passwordResetEmail, sendTransactionalEmail } from "@/lib/admin/mail";
 import { buildOtpCookie, generateOtpCode } from "@/lib/auth/otp";
 
@@ -30,11 +29,11 @@ export async function POST(req: NextRequest) {
     }
 
     const res = NextResponse.json({ ok: true });
-    res.cookies.set("powfolio_pwreset", cookie, {
+    res.cookies.set("powfolio_pwreset", cookie.value, {
       httpOnly: true,
       secure: true,
       sameSite: "lax",
-      maxAge: 600,
+      maxAge: cookie.maxAge,
       path: "/",
     });
     return res;
