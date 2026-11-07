@@ -329,12 +329,12 @@ export function useAuthExperience(initialMode: AuthMode, nextPath = "/dashboard"
   async function handleForgot() {
     const target = identifier.includes("@") ? identifier.trim() : "";
     if (!target) { notice("Enter your account email in the Email / Username field first"); return; }
-    showLoader("Sending reset link...", "Check your inbox shortly");
-    const supabase = createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(target, { redirectTo: `${window.location.origin}/auth/update-password` });
+    showLoader("Sending reset code...", "Check your inbox shortly");
+    const res = await fetch("/api/auth/password-reset/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: target }) });
+    const json = await res.json().catch(() => ({}));
     hideLoader();
-    if (error) notice(error.message);
-    else notice("Password reset email sent if that account exists");
+    if (!res.ok || !json.ok) { notice(json.error || "Could not send reset code"); return; }
+    notice("Reset code sent. Check your email.");
   }
 
   function resetOtpUi() {
