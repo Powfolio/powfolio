@@ -114,17 +114,17 @@ export default function AuthExperience({
                     <label className="field-notch-label">Username</label>
                   </div>
                   <div className="field-group relative">
-                    <input type="email" required autoComplete="email" className={a.emailVerified ? "pr-20 email-verified-border" : "pr-20"} value={a.email} onChange={(e) => a.setEmail(e.target.value)} />
+                    <input type="email" required autoComplete="email" className={a.emailVerified ? "email-verified-border" : ""} value={a.email} onChange={(e) => a.setEmail(e.target.value)} />
                     <label className="field-notch-label">Email Address</label>
-                    <div className="absolute right-2.5 top-2.5 z-20 flex items-center">
-                      {a.emailVerified ? (
-                        <span className="flex items-center gap-0.5 text-[10px] font-bold text-[#4C9A6A]">Verified</span>
-                      ) : (
-                        <button type="button" onClick={() => a.sendOtp(false)} className={a.sendBounce ? "text-[11px] font-semibold text-[#9C6F2C] hover:underline animate-bounce" : "text-[11px] font-semibold text-[#9C6F2C] hover:underline"}>
-                          Send Code
-                        </button>
-                      )}
-                    </div>
+                  </div>
+                  <div className="mt-1 flex justify-end">
+                    {a.emailVerified ? (
+                      <span className="text-[11px] font-semibold text-[#4C9A6A]">Verified</span>
+                    ) : (
+                      <button type="button" onClick={() => a.sendOtp(false)} className={a.sendBounce ? "text-[11px] font-semibold text-[#9C6F2C] hover:underline animate-bounce" : "text-[11px] font-semibold text-[#9C6F2C] hover:underline"}>
+                        Send Code
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
