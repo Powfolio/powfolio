@@ -118,15 +118,9 @@ export default function AuthExperience({
                   <div className="field-group relative">
                     <input type="email" required autoComplete="email" className={a.emailVerified ? "email-verified-border" : ""} value={a.email} onChange={(e) => a.setEmail(e.target.value)} />
                     <label className="field-notch-label">Email Address</label>
-                    <div className="absolute -bottom-2.5 right-2.5 bg-[#171715] px-1.5 leading-none">
-                      {a.emailVerified ? (
-                        <span className="text-[10px] font-semibold text-[#4C9A6A]">Verified</span>
-                      ) : (
-                        <button type="button" onClick={() => a.sendOtp(false)} className={a.sendBounce ? "text-[10px] font-semibold text-[#9C6F2C] hover:underline animate-bounce" : "text-[10px] font-semibold text-[#9C6F2C] hover:underline"}>
-                          Send Code
-                        </button>
-                      )}
-                    </div>
+                    <button type="button" onClick={() => a.sendOtp(false)} className="field-notch-action">
+                      {a.emailVerified ? "Verified" : "Send Code"}
+                    </button>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
