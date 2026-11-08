@@ -117,7 +117,7 @@ export default function AuthExperience({
                   <div className="field-group relative">
                     <input type="email" required autoComplete="email" className={a.emailVerified ? "email-verified-border" : ""} value={a.email} onChange={(e) => a.setEmail(e.target.value)} />
                     <label className="field-notch-label">Email Address</label>
-                    <div className="absolute -bottom-2 right-2.5 bg-[#171715] px-1.5">
+                    <div className="absolute -bottom-2.5 right-2.5 bg-[#171715] px-1.5 leading-none">
                       {a.emailVerified ? (
                         <span className="text-[10px] font-semibold text-[#4C9A6A]">Verified</span>
                       ) : (
@@ -143,7 +143,7 @@ export default function AuthExperience({
                 <div className="flex items-start pt-1">
                   <input id="agreeTerms" type="checkbox" checked={a.accepted} onChange={(e) => a.setAccepted(e.target.checked)} className="mt-0.5 h-3.5 w-3.5 cursor-pointer rounded accent-[#B8863B]" />
                   <label htmlFor="agreeTerms" className="ml-2 cursor-pointer text-[11px] leading-tight text-[#6B675F] dark:text-[#9C9890]">
-                    I accept the <Link href="/terms" className="text-[#9C6F2C] underline">Terms</Link> and <Link href="/privacy" className="text-[#9C6F2C] underline">Privacy Policy</Link>
+                    I confirm I am 18+ and I agree to the <Link href="/terms" className="text-[#9C6F2C] underline">Terms</Link> and <Link href="/privacy" className="text-[#9C6F2C] underline">Privacy Policy</Link>
                   </label>
                 </div>
                 <button type="submit" className={primaryBtn + " mt-1 text-xs sm:text-sm"}>
