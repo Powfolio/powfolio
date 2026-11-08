@@ -58,21 +58,23 @@ export function EyeButton({ hidden, onClick, compact }: { hidden: boolean; onCli
 
 export const socialBtn = "flex items-center justify-center transition-opacity hover:opacity-70 text-slate-800 dark:text-white";
 
-export function SocialRow({ compact, onGoogle, onX, onGithub, onWallet, titles }: { compact?: boolean; onGoogle: () => void; onX: () => void; onGithub: () => void; onWallet: () => void; titles: { google: string; x: string; github: string; wallet: string } }) {
+export function SocialRow({ compact, onGoogle, onX, onGithub, onWallet, titles, showDivider }: { compact?: boolean; onGoogle: () => void; onX: () => void; onGithub: () => void; onWallet: () => void; titles: { google: string; x: string; github: string; wallet: string }; showDivider?: boolean }) {
   const size = compact ? "h-5 w-5" : "h-6 w-6";
   return (
     <div className={compact ? "mb-2" : "mb-3"}>
-      <div className="mb-2 flex items-center gap-3">
-        <div className="h-px flex-1 bg-current opacity-10" />
-        <span className="text-[10px] uppercase tracking-wider opacity-40">or</span>
-        <div className="h-px flex-1 bg-current opacity-10" />
-      </div>
       <div className="flex items-center justify-center gap-6">
         <button type="button" className={socialBtn} title={titles.google} onClick={onGoogle}><GoogleIcon className={size} /></button>
         <button type="button" className={socialBtn} title={titles.x} onClick={onX}><XIcon className={size} /></button>
         <button type="button" className={socialBtn} title={titles.github} onClick={onGithub}><GithubIcon className={size} /></button>
         <button type="button" className={socialBtn} title={titles.wallet} onClick={onWallet}><WalletIcon className={size} /></button>
       </div>
+      {showDivider ? (
+        <div className="mt-2 flex items-center gap-3">
+          <div className="h-px flex-1 bg-current opacity-10" />
+          <span className="text-[10px] uppercase tracking-wider opacity-40">or</span>
+          <div className="h-px flex-1 bg-current opacity-10" />
+        </div>
+      ) : null}
     </div>
   );
 }
