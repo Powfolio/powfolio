@@ -91,6 +91,7 @@ export default function AuthExperience({
               </div>
               <SocialRow
                 compact
+                showDivider
                 onGoogle={() => a.signInWithProvider("google")}
                 onX={() => a.signInWithProvider("x")}
                 onGithub={() => a.signInWithProvider("github")}
@@ -149,9 +150,7 @@ export default function AuthExperience({
                   Create Account
                 </button>
               </form>
-              <p className="auth-switch">
-                Already have an account? <button type="button" onClick={() => a.setMode("signin")}>Sign in</button>
-              </p>
+              
             </div>
           </div>
           <div className="overlay-wrapper">
