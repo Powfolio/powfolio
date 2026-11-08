@@ -9,9 +9,21 @@
 .field-group input { width: 100%; height: 2.85rem; border: 1px solid rgba(148,163,184,.38); border-radius: .875rem; background: transparent; padding: 0 .875rem; font-size: .88rem; outline: none; color: #0F172A; position: relative; z-index: 2; transition: border-color .25s ease, box-shadow .25s ease; }
 .dark .field-group input { border-color: rgba(255,255,255,.14); color: #F8FAFC; background: rgba(255,255,255,.02); }
 .field-group input:focus { border-color: #C59B27; box-shadow: 0 0 0 3px rgba(197,155,39,.18); }
+
+.field-notch-action { position: absolute; bottom: -.52rem; right: .85rem; padding: 0 .35rem; font-size: .68rem; font-weight: 600; letter-spacing: .02em; background-color: #fff; color: #9C6F2C; pointer-events: auto; z-index: 3; border-radius: 4px; cursor: pointer; }
+.dark .field-notch-action { background-color: #101014; color: #C59B27; }
+.field-notch-action:hover { text-decoration: underline; }
 .field-notch-label { position: absolute; top: -.52rem; left: .85rem; padding: 0 .35rem; font-size: .68rem; font-weight: 600; letter-spacing: .02em; background-color: #fff; color: #64748B; pointer-events: none; transition: color .2s ease, background-color .3s ease; z-index: 3; border-radius: 4px; }
-.dark .field-notch-label { background-color: #101014; color: #A1A1AA; }
-.field-group input:focus ~ .field-notch-label { color: #C59B27; }
+.dark 
+.field-notch-action { position: absolute; bottom: -.52rem; right: .85rem; padding: 0 .35rem; font-size: .68rem; font-weight: 600; letter-spacing: .02em; background-color: #fff; color: #9C6F2C; pointer-events: auto; z-index: 3; border-radius: 4px; cursor: pointer; }
+.dark .field-notch-action { background-color: #101014; color: #C59B27; }
+.field-notch-action:hover { text-decoration: underline; }
+.field-notch-label { background-color: #101014; color: #A1A1AA; }
+.field-group input:focus ~ 
+.field-notch-action { position: absolute; bottom: -.52rem; right: .85rem; padding: 0 .35rem; font-size: .68rem; font-weight: 600; letter-spacing: .02em; background-color: #fff; color: #9C6F2C; pointer-events: auto; z-index: 3; border-radius: 4px; cursor: pointer; }
+.dark .field-notch-action { background-color: #101014; color: #C59B27; }
+.field-notch-action:hover { text-decoration: underline; }
+.field-notch-label { color: #C59B27; }
 @keyframes inputShakeRed { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} }
 @keyframes inputPulseGreen { 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
 .pw-mismatch { border-color: #EF4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,.25) !important; animation: inputShakeRed .35s ease-in-out; }
