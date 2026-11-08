@@ -28,7 +28,7 @@ export async function sendTransactionalEmail(opts: {
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     console.error("mail failed", res.status, body);
-    return { skipped: false as const, ok: false as const };
+    return { skipped: false as const, ok: false as const, status: res.status, body };
   }
   return { skipped: false as const, ok: true as const };
 }
