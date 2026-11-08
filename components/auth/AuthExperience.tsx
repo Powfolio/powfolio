@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import AuthOtpModal from "@/components/auth/AuthOtpModal";
-import { EyeButton, SocialRow, ThemeToggle } from "@/components/auth/auth-icons";
+import { EyeButton, SocialRow } from "@/components/auth/auth-icons";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { useAuthExperience, type AuthMode } from "@/components/auth/use-auth-experience";
 import BrandMark from "@/components/ui/BrandMark";
 
@@ -27,7 +28,7 @@ export default function AuthExperience({
       <div className="ambient-glow-2" />
       <header className="z-10 flex w-full max-w-5xl items-center justify-between py-2">
         <BrandMark compact href="/" />
-        <ThemeToggle dark={a.dark} onClick={a.toggleTheme} />
+        <AnimatedThemeToggler />
       </header>
       <main className="z-10 my-auto flex w-full items-center justify-center py-2">
         <div className={a.mode === "signup" ? "auth-container right-panel-active" : "auth-container"}>
