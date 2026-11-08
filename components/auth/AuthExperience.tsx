@@ -117,7 +117,7 @@ export default function AuthExperience({
                   <div className="field-group relative">
                     <input type="email" required autoComplete="email" className={a.emailVerified ? "email-verified-border" : ""} value={a.email} onChange={(e) => a.setEmail(e.target.value)} />
                     <label className="field-notch-label">Email Address</label>
-                    <div className="absolute bottom-1.5 right-2.5">
+                    <div className="absolute -bottom-2 right-2.5 bg-[#171715] px-1.5">
                       {a.emailVerified ? (
                         <span className="text-[10px] font-semibold text-[#4C9A6A]">Verified</span>
                       ) : (
