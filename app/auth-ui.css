@@ -94,6 +94,21 @@
 @keyframes errorShake { 0%,100%{transform:translate(-50%,-50%) rotate(0)} 20%,60%{transform:translate(calc(-50% - 8px),-50%) rotate(-4deg)} 40%,80%{transform:translate(calc(-50% + 8px),-50%) rotate(4deg)} }
 .shake-error { animation: errorShake .45s ease-in-out; }
 
+
+
+ }
+ }
+
+.otp-orbit-pos { position: absolute; width: 50px; height: 50px; }
+.otp-orbit-pos.pos-d-top { transform: translate(0, -70px); }
+.otp-orbit-pos.pos-d-right { transform: translate(70px, 0); }
+.otp-orbit-pos.pos-d-bottom { transform: translate(0, 70px); }
+.otp-orbit-pos.pos-d-left { transform: translate(-70px, 0); }
+.otp-orbit-pos.pos-h0 { transform: translate(-84px, 0); }
+.otp-orbit-pos.pos-h1 { transform: translate(-28px, 0); }
+.otp-orbit-pos.pos-h2 { transform: translate(28px, 0); }
+.otp-orbit-pos.pos-h3 { transform: translate(84px, 0); }
+.otp-orbit-pos.pos-merged { transform: translate(0, 0) scale(0.6); opacity: 0; }
 .otp-orbit-wrapper.orbiting-circular-5x { animation: spinOrbit 1.4s linear forwards; }
 .otp-orbit-wrapper.orbiting-circular-5x .otp-squircle { animation: counterSpin 1.4s linear forwards; }
 @keyframes spinOrbit { to { transform: rotate(1800deg); } }
