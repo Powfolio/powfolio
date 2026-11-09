@@ -53,7 +53,9 @@ export default function AuthOtpModal({
           <div className="otp-stage-container">
             <div className={`otp-orbit-wrapper ${orbiting ? "orbiting-circular-5x" : ""}`}>
               {[0, 1, 2, 3].map((i) => (
-                <input key={i} ref={(el) => { otpRefs.current[i] = el; }} type="text" inputMode="numeric" maxLength={1} readOnly={otpPhase !== "idle"} value={otpPhase === "idle" ? otp[i] : ""} onChange={(e) => onChange(i, e.target.value)} onKeyDown={(e) => onKey(i, e.key)} onPaste={(e) => { e.preventDefault(); onPaste(e.clipboardData.getData("text")); }} className={otpClass(i)} />
+                <div key={i} className={`otp-orbit-pos ${otpClass(i).replace("otp-squircle ", "")}`}>
+                  <input ref={(el) => { otpRefs.current[i] = el; }} type="text" inputMode="numeric" maxLength={1} readOnly={otpPhase !== "idle"} value={otpPhase === "idle" ? otp[i] : ""} onChange={(e) => onChange(i, e.target.value)} onKeyDown={(e) => onKey(i, e.key)} onPaste={(e) => { e.preventDefault(); onPaste(e.clipboardData.getData("text")); }} className="otp-squircle" />
+                </div>
               ))}
             </div>
             {otpPhase === "success" || otpPhase === "error" ? (
