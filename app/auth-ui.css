@@ -84,6 +84,12 @@
 .otp-squircle.pos-merged { transform: translate(0,0) scale(.6); opacity: 0; }
 @keyframes circularOrbit5Turns { from { transform: rotate(0deg); } to { transform: rotate(1800deg); } }
 .orbiting-circular-5x { animation: circularOrbit5Turns 1.4s cubic-bezier(.45,.05,.25,1) forwards; }
+.orbiting-circular-5x .otp-squircle { animation: counterOrbit 1.4s cubic-bezier(.45,.05,.25,1) forwards; }
+@keyframes counterOrbit { from { transform: rotate(0deg); } to { transform: rotate(-1800deg); } }
+.orbiting-circular-5x .pos-d-top { transform: translate(0,-68px); }
+.orbiting-circular-5x .pos-d-right { transform: translate(68px,0); }
+.orbiting-circular-5x .pos-d-bottom { transform: translate(0,68px); }
+.orbiting-circular-5x .pos-d-left { transform: translate(-68px,0); }
 @keyframes pulseRingExpand { from { transform: scale(.65); opacity: .85; } to { transform: scale(1.95); opacity: 0; } }
 .pulse-ring-1 { animation: pulseRingExpand 1.8s cubic-bezier(.25,.46,.45,.94) infinite; }
 .pulse-ring-2 { animation: pulseRingExpand 1.8s cubic-bezier(.25,.46,.45,.94) .6s infinite; }
