@@ -46,7 +46,6 @@
   .auth-container.right-panel-active .overlay-left-box { transform: translateX(0); }
   .overlay-right-box { right: 0; transform: translateX(0); }
   .auth-container.right-panel-active .overlay-right-box { transform: translateX(20%); }
-}
 @media (max-width: 767px) {
   .auth-container { max-width: 440px; min-height: 740px; position: relative; overflow: hidden; border-radius: 2rem; }
   .form-panel { position: absolute; left: 0; width: 100%; padding: 1.5rem 1.25rem; transition: transform .65s cubic-bezier(.77,0,.175,1), opacity .45s ease; display: flex; flex-direction: column; justify-content: center; }
@@ -62,7 +61,6 @@
   .overlay-right-box { opacity: 1; transform: translateY(0); }
   .auth-container.right-panel-active .overlay-left-box { opacity: 1; transform: translateY(0); pointer-events: auto; }
   .auth-container.right-panel-active .overlay-right-box { opacity: 0; transform: translateY(20px); pointer-events: none; }
-}
 .eye-slash-line { stroke-dasharray: 28; stroke-dashoffset: 0; transition: stroke-dashoffset .3s ease-in-out; }
 .eye-hidden .eye-slash-line { stroke-dashoffset: 28; }
 .eye-hidden .eye-pupil { opacity: .35; transform: scale(.85); transform-origin: center; transition: all .3s ease; }
@@ -73,15 +71,6 @@
 
 .otp-squircle { position: absolute; width: 50px; height: 50px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1.5px solid rgba(213,179,107,.35); color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; justify-content: center; text-align: center; outline: none; transition: all .45s cubic-bezier(.34,1.56,.64,1); box-shadow: 0 8px 20px rgba(0,0,0,.45); cursor: text; z-index: 10; }
 .otp-squircle:focus { border-color: #F59E0B !important; box-shadow: 0 0 15px rgba(245,158,11,.45); transform: scale(1.08); }
-
-
-
-
-
-
-
-
-
 
 @keyframes pulseRingExpand { from { transform: scale(.65); opacity: .85; } to { transform: scale(1.95); opacity: 0; } }
 .pulse-ring-1 { animation: pulseRingExpand 1.8s cubic-bezier(.25,.46,.45,.94) infinite; }
@@ -94,45 +83,21 @@
 @keyframes errorShake { 0%,100%{transform:translate(-50%,-50%) rotate(0)} 20%,60%{transform:translate(calc(-50% - 8px),-50%) rotate(-4deg)} 40%,80%{transform:translate(calc(-50% + 8px),-50%) rotate(4deg)} }
 .shake-error { animation: errorShake .45s ease-in-out; }
 
-
-
- }
- }
-
-
-
-
-
-
-
-
-
-
-
-
-
- }
- }
-
-
 .otp-orbit-stage {
   position: relative;
   width: 220px;
   height: 220px;
-}
 .otp-orbit-arm {
   position: absolute;
   left: 50%;
   top: 50%;
   width: 0;
   height: 0;
-}
 .otp-orbit-arm .otp-squircle {
   position: absolute;
   left: -25px;
   top: -25px;
   margin: 0;
-}
 /* Rest: four tiles in a row, none in the middle */
 .otp-orbit-arm:nth-child(1) .otp-squircle { transform: translateX(-90px); }
 .otp-orbit-arm:nth-child(2) .otp-squircle { transform: translateX(-30px); }
@@ -144,24 +109,19 @@
 .is-orbiting .otp-orbit-arm {
   animation: armSpin 1.4s linear forwards;
   animation-delay: var(--delay, 0s);
-}
 .is-orbiting .otp-orbit-arm .otp-squircle {
   animation: tileHold 1.4s linear forwards;
   animation-delay: var(--delay, 0s);
-}
 @keyframes armSpin {
   0%   { transform: rotate(var(--start, 0deg)); }
   100% { transform: rotate(calc(var(--start, 0deg) + 1800deg)); }
-}
 @keyframes tileHold {
   0%   { transform: translateX(78px) rotate(calc(var(--start, 0deg) * -1)); }
   90%  { transform: translateX(78px) rotate(calc((var(--start, 0deg) + 1620deg) * -1)); }
   100% { transform: translateX(0) rotate(calc((var(--start, 0deg) + 1800deg) * -1)) scale(0.85); }
-}
 
 /* After orbit, tiles are stacked at center; result mark covers them */
 .is-done .otp-orbit-arm .otp-squircle {
   transform: translateX(0) scale(0.6);
   opacity: 0;
   transition: transform .35s ease, opacity .35s ease;
-}
