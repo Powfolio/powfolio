@@ -70,18 +70,18 @@
 .glass-corner-tl { position: absolute; top: 14px; left: 14px; width: 42px; height: 42px; border-top: 1.5px solid rgba(213,179,107,.6); border-left: 1.5px solid rgba(213,179,107,.6); border-top-left-radius: 14px; clip-path: polygon(0 0,100% 0,0 100%); background: linear-gradient(135deg, rgba(213,179,107,.2), transparent 75%); pointer-events: none; }
 .glass-corner-br { position: absolute; bottom: 14px; right: 14px; width: 42px; height: 42px; border-bottom: 1.5px solid rgba(213,179,107,.6); border-right: 1.5px solid rgba(213,179,107,.6); border-bottom-right-radius: 14px; clip-path: polygon(100% 100%,0 100%,100% 0); background: linear-gradient(315deg, rgba(213,179,107,.2), transparent 75%); pointer-events: none; }
 .otp-stage-container { position: relative; width: 240px; height: 200px; margin: 1.25rem auto; display: flex; align-items: center; justify-content: center; }
-.otp-orbit-wrapper { position: absolute; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; transform-origin: center center; }
+
 .otp-squircle { position: absolute; width: 50px; height: 50px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1.5px solid rgba(213,179,107,.35); color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; justify-content: center; text-align: center; outline: none; transition: all .45s cubic-bezier(.34,1.56,.64,1); box-shadow: 0 8px 20px rgba(0,0,0,.45); cursor: text; z-index: 10; }
 .otp-squircle:focus { border-color: #F59E0B !important; box-shadow: 0 0 15px rgba(245,158,11,.45); transform: scale(1.08); }
-.otp-squircle.pos-h0 { transform: translate(-84px,0); }
-.otp-squircle.pos-h1 { transform: translate(-28px,0); }
-.otp-squircle.pos-h2 { transform: translate(28px,0); }
-.otp-squircle.pos-h3 { transform: translate(84px,0); }
-.otp-squircle.pos-d-top { transform: translate(0, -70px); }
-.otp-squircle.pos-d-right { transform: translate(70px, 0); }
-.otp-squircle.pos-d-bottom { transform: translate(0, 70px); }
-.otp-squircle.pos-d-left { transform: translate(-70px, 0); }
-.otp-squircle.pos-merged { transform: translate(0,0) scale(.6); opacity: 0; }
+
+
+
+
+
+
+
+
+
 
 @keyframes pulseRingExpand { from { transform: scale(.65); opacity: .85; } to { transform: scale(1.95); opacity: 0; } }
 .pulse-ring-1 { animation: pulseRingExpand 1.8s cubic-bezier(.25,.46,.45,.94) infinite; }
@@ -99,17 +99,69 @@
  }
  }
 
-.otp-orbit-pos { position: absolute; width: 50px; height: 50px; }
-.otp-orbit-pos.pos-d-top { transform: translate(0, -70px); }
-.otp-orbit-pos.pos-d-right { transform: translate(70px, 0); }
-.otp-orbit-pos.pos-d-bottom { transform: translate(0, 70px); }
-.otp-orbit-pos.pos-d-left { transform: translate(-70px, 0); }
-.otp-orbit-pos.pos-h0 { transform: translate(-84px, 0); }
-.otp-orbit-pos.pos-h1 { transform: translate(-28px, 0); }
-.otp-orbit-pos.pos-h2 { transform: translate(28px, 0); }
-.otp-orbit-pos.pos-h3 { transform: translate(84px, 0); }
-.otp-orbit-pos.pos-merged { transform: translate(0, 0) scale(0.6); opacity: 0; }
-.otp-orbit-wrapper.orbiting-circular-5x { animation: spinOrbit 1.4s linear forwards; }
-.otp-orbit-wrapper.orbiting-circular-5x .otp-squircle { animation: counterSpin 1.4s linear forwards; }
-@keyframes spinOrbit { to { transform: rotate(1800deg); } }
-@keyframes counterSpin { to { transform: rotate(-1800deg); } }
+
+
+
+
+
+
+
+
+
+
+
+
+ }
+ }
+
+
+.otp-orbit-stage {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+.otp-orbit-arm {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+.otp-orbit-arm .otp-squircle {
+  position: absolute;
+  left: -25px;
+  top: -25px;
+  margin: 0;
+}
+/* Rest: four tiles in a row, none in the middle */
+.otp-orbit-arm:nth-child(1) .otp-squircle { transform: translateX(-90px); }
+.otp-orbit-arm:nth-child(2) .otp-squircle { transform: translateX(-30px); }
+.otp-orbit-arm:nth-child(3) .otp-squircle { transform: translateX(30px); }
+.otp-orbit-arm:nth-child(4) .otp-squircle { transform: translateX(90px); }
+
+/* Orbit: arm spins on a circle, tile counter-rotates so it stays upright.
+   Rightmost (nth-child 4) starts first via --delay. Radius keeps the center empty. */
+.is-orbiting .otp-orbit-arm {
+  animation: armSpin 1.4s linear forwards;
+  animation-delay: var(--delay, 0s);
+}
+.is-orbiting .otp-orbit-arm .otp-squircle {
+  animation: tileHold 1.4s linear forwards;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes armSpin {
+  0%   { transform: rotate(var(--start, 0deg)); }
+  100% { transform: rotate(calc(var(--start, 0deg) + 1800deg)); }
+}
+@keyframes tileHold {
+  0%   { transform: translateX(78px) rotate(calc(var(--start, 0deg) * -1)); }
+  90%  { transform: translateX(78px) rotate(calc((var(--start, 0deg) + 1620deg) * -1)); }
+  100% { transform: translateX(0) rotate(calc((var(--start, 0deg) + 1800deg) * -1)) scale(0.85); }
+}
+
+/* After orbit, tiles are stacked at center; result mark covers them */
+.is-done .otp-orbit-arm .otp-squircle {
+  transform: translateX(0) scale(0.6);
+  opacity: 0;
+  transition: transform .35s ease, opacity .35s ease;
+}
