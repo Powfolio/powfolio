@@ -99,7 +99,7 @@ export default function CollectibleCard({ item, profileUrl }: Props) {
 
   const CardInner = (
     <>
-      <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-elevated">
+      <div className="aspect-square w-full overflow-hidden rounded-xl bg-surface-elevated">
         <NFTMediaRenderer src={src} type={kind} posterUrl={posterUrl} onExhausted={handleExhausted} />
       </div>
       <div className="mt-2 flex items-start justify-between gap-2">
@@ -118,12 +118,12 @@ export default function CollectibleCard({ item, profileUrl }: Props) {
         href={item.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="card flex flex-col p-3 transition-all duration-200 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-md"
+        className="group flex flex-col transition-transform duration-200 hover:-translate-y-0.5"
       >
         {CardInner}
       </a>
     );
   }
 
-  return <article className="card flex flex-col p-3">{CardInner}</article>;
+  return <article className="flex flex-col">{CardInner}</article>;
 }
