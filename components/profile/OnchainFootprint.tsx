@@ -59,7 +59,7 @@ function timeAgo(iso: string | null) {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex h-[72px] flex-col justify-between rounded-xl border border-border bg-surface p-3">
+    <div className="flex h-[72px] flex-col justify-between p-1">
       <p className="text-[10px] uppercase tracking-wide text-foreground-subtle">{label}</p>
       <p className="text-base font-semibold tabular-nums leading-none">{value}</p>
     </div>
@@ -424,7 +424,7 @@ export default function OnchainFootprint({
           </div>
         </div>
       )}
-      <div className="card p-3 sm:p-4 space-y-3">
+      <div className="space-y-2">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <h3 className={HEADING}>Wallet</h3>
@@ -435,13 +435,13 @@ export default function OnchainFootprint({
         </div>
         <div className="flex flex-wrap gap-1.5">
           {explorers.map((x) => (
-            <a key={x.label} href={x.href} target="_blank" rel="noopener noreferrer" className="rounded-full border border-border bg-surface-elevated px-2.5 py-1 text-[11px] font-medium hover:border-primary/40 hover:text-primary">{x.label}</a>
+            <a key={x.label} href={x.href} target="_blank" rel="noopener noreferrer" className="text-[11px] font-medium text-foreground-muted hover:text-primary">{x.label}</a>
           ))}
-          <a href={`https://zkcodex.com/id/${activeWallet}`} target="_blank" rel="noopener noreferrer" className="rounded-full border border-border bg-surface-elevated px-2.5 py-1 text-[11px] font-medium hover:border-primary/40 hover:text-primary">zkCodex</a>
+          <a href={`https://zkcodex.com/id/${activeWallet}`} target="_blank" rel="noopener noreferrer" className="text-[11px] font-medium text-foreground-muted hover:text-primary">zkCodex</a>
         </div>
       </div>
       {loading && (
-        <div className="card p-3 text-sm text-foreground-muted">
+        <div className="py-3 text-sm text-foreground-muted">
           <LatticeLoader label="Reading onchain footprint" />
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-border/60">
             <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(95, 20 + loadStage * 25)}%` }} />
@@ -471,7 +471,7 @@ export default function OnchainFootprint({
         </div>
       )}
       {error && (
-        <div className="card p-3 text-sm text-danger">
+        <div className="py-3 text-sm text-danger">
           {error === "stats-problem" ? (
             <>
               Stats fetching ran into a problem.{" "}
