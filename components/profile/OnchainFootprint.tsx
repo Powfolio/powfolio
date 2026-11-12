@@ -59,9 +59,9 @@ function timeAgo(iso: string | null) {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex h-[72px] flex-col justify-between p-1">
+    <div className="py-1">
       <p className="text-[10px] uppercase tracking-wide text-foreground-subtle">{label}</p>
-      <p className="text-base font-semibold tabular-nums leading-none">{value}</p>
+      <p className="mt-0.5 text-lg font-semibold tabular-nums leading-none">{value}</p>
     </div>
   );
 }
@@ -222,8 +222,8 @@ export default function OnchainFootprint({
   }, [activeWallet, chainId, customChains, data?.address]);
 
   const interacted = useMemo(
-    () => data?.chains.filter((c) => c.txCount > 0 || c.transferCount > 0 || c.imported || Number(c.balance) > 0 || customChains.some((x) => (x.name || "").toLowerCase() === c.name.toLowerCase())) ?? [],
-    [data]
+    () => data?.chains.filter((c) => c.txCount > 0 || c.transferCount > 0 || c.imported || Number(c.balance) > 0 || c.hasHoldings || customChains.some((x) => (x.name || "").toLowerCase() === c.name.toLowerCase())) ?? data?.chains ?? [],
+    [data, customChains]
   );
   const publicList = useMemo(() => {
     if (!visibleIds || visibleIds.length === 0) return interacted;
