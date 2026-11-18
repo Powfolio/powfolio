@@ -4,7 +4,7 @@
 
 One clean, shareable link for crypto professionals: traders, community managers, researchers, airdrop hunters and builders.
 
-Live URL: https://pow3folio.vercel.app
+Live URL: https://Powfolio.xyz
 
 ## Stack
 
